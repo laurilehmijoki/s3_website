@@ -12,6 +12,8 @@ Gem::Specification.new do |s|
   s.summary     = %q{Push your jekyll blog to S3"}
   s.description = %q{Push your jekyll blog to AWS S3}
 
+  s.default_executable = %q{jekyll-s3}
+
   s.add_dependency 'aws-s3'
 
   s.add_development_dependency 'rspec'
