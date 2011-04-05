@@ -26,7 +26,7 @@ s3_bucket: your.blog.bucket.com
       include AWS::S3
 
       def upload_to_s3!
-        puts "Uploading _site/* to #{@s3_bucket}"
+        puts "Deploying _site/* to #{@s3_bucket}"
 
         AWS::S3::Base.establish_connection!(
             :access_key_id     => @s3_id,
@@ -63,6 +63,8 @@ s3_bucket: your.blog.bucket.com
             puts("Delete #{f}: FAILURE!")
           end 
         end
+
+        puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"
       end
 
       def check_jekyll_project!
