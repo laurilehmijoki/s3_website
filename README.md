@@ -22,12 +22,13 @@ s3_bucket: your.blog.bucket.com
 
   * Run `jekyll-s3`. Done.
 
-## Want `http://www.my-awesome-blog.com/` to render `'index.html'`?
-  
-  * Setup Cloudfront to distribute your s3 bucket files (you can do that
-    through the [AWS management console](https://console.aws.amazon.com/s3/home))
-  * Set the cloudfront root object to index.html (you can use the
-    [aws-cloudfront gem](https://github.com/iltempo/aws-cloudfront) to do so)
+## Want the root url to render index.html?
+
+  * Log into https://console.aws.amazon.com/s3/home
+  * Set the Index document to index.html in Bucket Properties >
+    Website.
+  * Visit the website endpoint:
+    (http://yourblog.s3-website...amazonaws.com)
 
 ## Todo
 
