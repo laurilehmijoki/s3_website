@@ -32,7 +32,6 @@ s3_bucket: your.blog.bucket.com
 ## Todo
 
   * Upload new / updated files *only*
-  * Ask for confirmation before deleting files on S3
   * Setup Cloudfront distribution
   * Invalidate updated files on Cloudfront
 

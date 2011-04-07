@@ -25,6 +25,7 @@ s3_bucket: your.blog.bucket.com
 
       include AWS::S3
 
+      # Please spec me!
       def upload_to_s3!
         puts "Deploying _site/* to #{@s3_bucket}"
 
@@ -52,16 +53,32 @@ s3_bucket: your.blog.bucket.com
             puts("Upload #{f}: Success!")
           else
             puts("Upload #{f}: FAILURE!")
-          end 
+          end
         end
 
         to_delete = remote_files - local_files
+
+        delete_all = false
+        keep_all = false
         to_delete.each do |f| 
-          if S3Object.delete(f, @s3_bucket)
-            puts("Delete #{f}: Success!")
-          else
-            puts("Delete #{f}: FAILURE!")
-          end 
+          delete = false
+          keep = false
+          until delete || delete_all || keep || keep_all
+            puts "#{f} is on S3 but not in your _site directory anymore. Do you want to [d]elete, [D]elete all, [k]eep, [K]eep all?"
+            case STDIN.gets.chomp
+            when 'd' then delete = true
+            when 'D' then delete_all = true
+            when 'k' then keep = true
+            when 'K' then keep_all = true
+            end
+          end
+          if (delete_all || delete) && !(keep_all || keep)
+            if S3Object.delete(f, @s3_bucket)
+              puts("Delete #{f}: Success!")
+            else
+              puts("Delete #{f}: FAILURE!")
+            end
+          end
         end
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"

@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Philippe Creux"]
   s.email       = ["pcreux@gmail.com"]
-  s.homepage    = ""
+  s.homepage    = "https://github.com/versapay/jekyll-s3"
   s.summary     = %q{Push your jekyll blog to S3"}
   s.description = %q{Push your jekyll blog to AWS S3}
 
