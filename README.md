@@ -24,7 +24,7 @@ s3_bucket: your.blog.bucket.com
 
 ## Want the root url to render index.html?
 
-  * Log into https://console.aws.amazon.com/s3/home
+  * Log into <https://console.aws.amazon.com/s3/home>
   * Set the Index document to index.html in Bucket Properties >
     Website.
   * Visit the website endpoint:
@@ -32,9 +32,13 @@ s3_bucket: your.blog.bucket.com
 
 ## Todo
 
-  * Upload new / updated files *only*
-  * Setup Cloudfront distribution
-  * Invalidate updated files on Cloudfront
+  * Upload new / updated files *only* (using s3-sync?)
 
+## License
 
+MIT
+
+## Copyright
+
+Copyright (c) 2011 VersaPay, Philippe Creux.
   
