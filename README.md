@@ -33,6 +33,11 @@ s3_bucket: your.blog.bucket.com
 ## Todo
 
   * Upload new / updated files *only* (using s3-sync?)
+  
+## Development
+ 
+  * Install bundler and run `bundle install`
+  * Run the tests by running `bundle exec cucumber`
 
 ## License
 

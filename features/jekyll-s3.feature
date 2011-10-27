@@ -5,7 +5,7 @@ Feature: jekyll-s3
   I want to run jekyll-s3 and say OMG it just worked!
 
   Scenario: Run jekyll-s3 in the wrong directory
-    When I run "jekyll-s3"
+    When I run `jekyll-s3`
     Then the output should contain:
       """
       I can't find any directory called _site. Are you in the right directory?
@@ -13,7 +13,7 @@ Feature: jekyll-s3
 
   Scenario: Run jekyll-s3 for the first time
     Given a directory named "_site"
-    When I run "jekyll-s3"
+    When I run `jekyll-s3`
     Then the output should contain:
       """
       I've just generated a file called _jekyll_s3.yml. Go put your details in it!
@@ -28,7 +28,7 @@ Feature: jekyll-s3
   Scenario: Run jekyll-s3 with an empty configuration file
     Given a directory named "_site"
     And an empty file named "_jekyll_s3.yml"
-    When I run "jekyll-s3"
+    When I run `jekyll-s3`
     Then the output should contain:
       """
       I can't parse the file _jekyll_s3.yml. It should look like this:
@@ -44,7 +44,7 @@ Feature: jekyll-s3
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       this is not yaml
       """
-    When I run "jekyll-s3"
+    When I run `jekyll-s3`
     Then the output should contain:
       """
       I can't parse the file _jekyll_s3.yml. It should look like this:
@@ -61,7 +61,7 @@ Feature: jekyll-s3
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: 
       """
-    When I run "jekyll-s3"
+    When I run `jekyll-s3`
     Then the output should contain:
       """
       I can't parse the file _jekyll_s3.yml. It should look like this:
@@ -78,10 +78,10 @@ Feature: jekyll-s3
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
       """
-    When I run "jekyll-s3"
+    When I run `jekyll-s3`
     Then the output should contain:
       """
-      Uploading _site/* to your.blog.bucket.com
+      Deploying _site/* to your.blog.bucket.com
       """
 
 
