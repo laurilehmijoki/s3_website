@@ -22,8 +22,22 @@ s3_bucket: your.blog.bucket.com
       end
 
       protected
-
-      include AWS::S3
+      
+      def run_with_retry
+        begin
+          yield
+        rescue Exception => e
+          $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 5 seconds..."
+          sleep 5
+          retry
+        end
+      end
+      
+      def local_files
+        Dir[SITE_DIR + '/**/*'].
+          delete_if { |f| File.directory?(f) }.
+          map { |f| f.gsub(SITE_DIR + '/', '') }
+      end
 
       # Please spec me!
       def upload_to_s3!
@@ -34,25 +48,23 @@ s3_bucket: your.blog.bucket.com
             :secret_access_key => @s3_secret,
             :use_ssl => true
         )
-        unless Service.buckets.map(&:name).include?(@s3_bucket)
+        unless AWS::S3::Service.buckets.map(&:name).include?(@s3_bucket)
           puts("Creating bucket #{@s3_bucket}")
-          Bucket.create(@s3_bucket)
+          AWS::S3::Bucket.create(@s3_bucket)
         end
 
-        bucket = Bucket.find(@s3_bucket)
-
-        local_files = Dir[SITE_DIR + '/**/*'].
-          delete_if { |f| File.directory?(f) }.
-          map { |f| f.gsub(SITE_DIR + '/', '') }
+        bucket = AWS::S3::Bucket.find(@s3_bucket)
 
         remote_files = bucket.objects.map { |f| f.key }
 
         to_upload = local_files
-        to_upload.each do |f| 
-          if S3Object.store(f, open("#{SITE_DIR}/#{f}"), @s3_bucket, :access => 'public-read')
-            puts("Upload #{f}: Success!")
-          else
-            puts("Upload #{f}: FAILURE!")
+        to_upload.each do |f|
+          run_with_retry do
+            if AWS::S3::S3Object.store(f, open("#{SITE_DIR}/#{f}"), @s3_bucket, :access => 'public-read')
+              puts("Upload #{f}: Success!")
+            else
+              puts("Upload #{f}: FAILURE!")
+            end
           end
         end
 
@@ -73,15 +85,18 @@ s3_bucket: your.blog.bucket.com
             end
           end
           if (delete_all || delete) && !(keep_all || keep)
-            if S3Object.delete(f, @s3_bucket)
-              puts("Delete #{f}: Success!")
-            else
-              puts("Delete #{f}: FAILURE!")
+            run_with_retry do
+              if AWS::S3::S3Object.delete(f, @s3_bucket)
+                puts("Delete #{f}: Success!")
+              else
+                puts("Delete #{f}: FAILURE!")
+              end
             end
           end
         end
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"
+        true
       end
 
       def check_jekyll_project!

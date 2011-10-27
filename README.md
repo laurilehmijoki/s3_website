@@ -37,7 +37,8 @@ s3_bucket: your.blog.bucket.com
 ## Development
  
   * Install bundler and run `bundle install`
-  * Run the tests by running `bundle exec cucumber`
+  * Run the integration tests by running `bundle exec cucumber`
+  * Run the unit tests by running `bundle exec rspec spec/lib/*.rb`
 
 ## License
 

@@ -83,5 +83,3 @@ Feature: jekyll-s3
       """
       Deploying _site/* to your.blog.bucket.com
       """
-
-
