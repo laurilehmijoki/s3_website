@@ -26,7 +26,7 @@ describe Jekyll::S3::Uploader do
     end
     
     it "should properly handle exceptions on uploading to S3" do
-      AWS::S3::S3Object.expects(:store).raises(Exception).then.at_least(1).returns(true)
+      AWS::S3::S3Object.expects(:store).raises(AWS::S3::RequestTimeout.new('timeout', 'timeout')).then.at_least(1).returns(true)
       @uploader.send(:upload_to_s3!).should
     end
   end

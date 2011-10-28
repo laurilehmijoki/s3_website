@@ -26,7 +26,7 @@ s3_bucket: your.blog.bucket.com
       def run_with_retry
         begin
           yield
-        rescue Exception => e
+        rescue AWS::S3::RequestTimeout => e
           $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 5 seconds..."
           sleep 5
           retry
