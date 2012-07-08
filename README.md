@@ -14,6 +14,7 @@ Deploy your jekyll site to S3.
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
+cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 </pre>
 
   * Edit it with your details.
@@ -30,12 +31,23 @@ s3_bucket: your.blog.bucket.com
   * Visit the website endpoint:
     (http://yourblog.s3-website...amazonaws.com)
 
+## How to use Cloudfront to deliver your blog
+
+It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
+
+  * Go to <https://console.aws.amazon.com/cloudfront/home>
+  * Create a distribution and set the your Jekyll S3 bucket as the origin
+  * Add the `cloudfront\_distribution\_id: your-dist-id` setting into
+    `_jekyll_s3.yml`
+  * Run `jekyll-s3` to deploy your site to S3 and invalidate the Cloudfront
+    distribution
+
 ## Todo
 
   * Upload new / updated files *only* (using s3-sync?)
-  
+
 ## Development
- 
+
   * Install bundler and run `bundle install`
   * Run the integration tests by running `bundle exec cucumber`
   * Run the unit tests by running `bundle exec rspec spec/lib/*.rb`
@@ -47,4 +59,4 @@ MIT
 ## Copyright
 
 Copyright (c) 2011 VersaPay, Philippe Creux.
-  
+
