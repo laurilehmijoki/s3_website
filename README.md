@@ -37,7 +37,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
   * Go to <https://console.aws.amazon.com/cloudfront/home>
   * Create a distribution and set the your Jekyll S3 bucket as the origin
-  * Add the `cloudfront\_distribution\_id: your-dist-id` setting into
+  * Add the `cloudfront_distribution_id: your-dist-id` setting into
     `_jekyll_s3.yml`
   * Run `jekyll-s3` to deploy your site to S3 and invalidate the Cloudfront
     distribution
