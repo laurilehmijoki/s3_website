@@ -8,8 +8,9 @@ module Jekyll
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
+cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       EOF
-        
+
 
       def self.run!
         new.run!
@@ -19,10 +20,18 @@ s3_bucket: your.blog.bucket.com
         check_jekyll_project!
         check_s3_configuration!
         upload_to_s3!
+        invalidate_cf_dist_if_configured!
       end
 
       protected
-      
+
+      def invalidate_cf_dist_if_configured!
+        cloudfront_configured = @cloudfront_distribution_id != nil && @cloudfront_distribution_id != ''
+        Jekyll::Cloudfront::Invalidator.invalidate(
+          @s3_id, @s3_secret, @s3_bucket, @cloudfront_distribution_id
+          ) if cloudfront_configured
+      end
+
       def run_with_retry
         begin
           yield
@@ -32,7 +41,7 @@ s3_bucket: your.blog.bucket.com
           retry
         end
       end
-      
+
       def local_files
         Dir[SITE_DIR + '/**/*'].
           delete_if { |f| File.directory?(f) }.
@@ -72,7 +81,7 @@ s3_bucket: your.blog.bucket.com
 
         delete_all = false
         keep_all = false
-        to_delete.each do |f| 
+        to_delete.each do |f|
           delete = false
           keep = false
           until delete || delete_all || keep || keep_all
@@ -115,7 +124,7 @@ s3_bucket: your.blog.bucket.com
       end
 
       # Load configuration from _jekyll_s3.yml
-      # Return true if all values are set and not emtpy
+      # Return true if all required values are set and not emtpy
       def load_configuration
         config = YAML.load_file(CONFIGURATION_FILE) rescue nil
         return false unless config
@@ -123,6 +132,7 @@ s3_bucket: your.blog.bucket.com
         @s3_id = config['s3_id']
         @s3_secret = config['s3_secret']
         @s3_bucket = config['s3_bucket']
+        @cloudfront_distribution_id = config['cloudfront_distribution_id']
 
         [@s3_id, @s3_secret, @s3_bucket].select { |k| k.nil? || k == '' }.empty?
       end
