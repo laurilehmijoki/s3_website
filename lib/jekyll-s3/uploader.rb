@@ -11,7 +11,6 @@ s3_bucket: your.blog.bucket.com
 cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       EOF
 
-
       def self.run!
         new.run!
       end
@@ -19,6 +18,7 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       def run!
         check_jekyll_project!
         check_s3_configuration!
+        load_configuration
         upload_to_s3!
         invalidate_cf_dist_if_configured!
       end
@@ -113,28 +113,26 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       end
 
       # Raise NoConfigurationFileError if the configuration file does not exists
-      # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
-      # Loads the configuration if everything looks cool
       def check_s3_configuration!
         unless File.exists?(CONFIGURATION_FILE)
           create_template_configuration_file
           raise NoConfigurationFileError
         end
-        raise MalformedConfigurationFileError unless load_configuration
       end
 
       # Load configuration from _jekyll_s3.yml
-      # Return true if all required values are set and not emtpy
+      # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
       def load_configuration
         config = YAML.load_file(CONFIGURATION_FILE) rescue nil
-        return false unless config
+        raise MalformedConfigurationFileError unless config
 
         @s3_id = config['s3_id']
         @s3_secret = config['s3_secret']
         @s3_bucket = config['s3_bucket']
         @cloudfront_distribution_id = config['cloudfront_distribution_id']
 
-        [@s3_id, @s3_secret, @s3_bucket].select { |k| k.nil? || k == '' }.empty?
+        raise MalformedConfigurationFileError unless
+          [@s3_id, @s3_secret, @s3_bucket].select { |k| k.nil? || k == '' }.empty?
       end
 
       def create_template_configuration_file
