@@ -54,13 +54,13 @@ describe Jekyll::S3::Uploader do
     end
 
     def configure_uploader(config)
-      def disable_methods_with_side_effects
+      def disable_methods_that_interact_with_world
         Jekyll::S3::Uploader.any_instance.expects(:upload_to_s3!).returns nil
         Jekyll::S3::Uploader.any_instance.expects(:check_jekyll_project!).returns nil
         Jekyll::S3::Uploader.any_instance.expects(:check_s3_configuration!).returns nil
       end
       YAML.expects(:load_file).with('_jekyll_s3.yml').returns(config)
-      disable_methods_with_side_effects
+      disable_methods_that_interact_with_world
     end
   end
 end
