@@ -1,8 +1,4 @@
-require  File.dirname(__FILE__) + "/../../lib/jekyll-s3.rb"
-
-RSpec.configure do |config|
-  config.mock_framework = :mocha
-end
+require 'spec_helper'
 
 describe Jekyll::S3::Uploader do
   describe "#upload_to_s3" do
