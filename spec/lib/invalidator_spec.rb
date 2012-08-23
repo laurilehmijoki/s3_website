@@ -7,7 +7,7 @@ describe Jekyll::Cloudfront::Invalidator do
       s3_objects = s3_object_keys.map { |key| S3Object.new(key) }
       @s3_bucket_name = "my-s3-bucket"
       AWS::S3::Bucket.expects(:find).with(@s3_bucket_name).returns(S3Bucket.new(s3_objects))
-      CloudfrontS3Invalidator::CloudfrontClient.any_instance.
+      SimpleCloudfrontInvalidator::CloudfrontClient.any_instance.
         expects(:invalidate).with(s3_object_keys)
 
       Jekyll::Cloudfront::Invalidator.invalidate("", "", @s3_bucket_name, "")
