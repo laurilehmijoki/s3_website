@@ -17,7 +17,7 @@ distribution, making it easy to deliver your blog via the CDN.}
   s.default_executable = %q{jekyll-s3}
 
   s.add_dependency 'aws-s3'
-  s.add_dependency 'cf-s3-invalidator'
+  s.add_dependency 'simple-cloudfront-invalidator'
 
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'mocha'
