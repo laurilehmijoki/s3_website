@@ -123,7 +123,7 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       # Load configuration from _jekyll_s3.yml
       # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
       def load_configuration
-        config = YAML.load_file(CONFIGURATION_FILE) rescue nil
+        config = load_yaml_file
         raise MalformedConfigurationFileError unless config
 
         @s3_id = config['s3_id']
@@ -138,6 +138,14 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       def create_template_configuration_file
         File.open(CONFIGURATION_FILE, 'w') { |f| f.write(CONFIGURATION_FILE_TEMPLATE) }
 
+      end
+
+      def load_yaml_file
+        begin
+          config = YAML.load_file(CONFIGURATION_FILE)
+        rescue Exception
+          raise MalformedConfigurationFileError
+        end
       end
     end
   end
