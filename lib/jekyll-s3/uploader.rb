@@ -35,7 +35,7 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       def run_with_retry
         begin
           yield
-        rescue AWS::S3::RequestTimeout => e
+        rescue Exception => e
           $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 5 seconds..."
           sleep 5
           retry
@@ -52,24 +52,23 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       def upload_to_s3!
         puts "Deploying _site/* to #{@s3_bucket}"
 
-        AWS::S3::Base.establish_connection!(
-            :access_key_id     => @s3_id,
-            :secret_access_key => @s3_secret,
-            :use_ssl => true
-        )
-        unless AWS::S3::Service.buckets.map(&:name).include?(@s3_bucket)
+        s3 = AWS::S3.new(
+          :access_key_id => @s3_id,
+          :secret_access_key => @s3_secret)
+
+        unless s3.buckets.map(&:name).include?(@s3_bucket)
           puts("Creating bucket #{@s3_bucket}")
-          AWS::S3::Bucket.create(@s3_bucket)
+          s3.buckets.create(@s3_bucket)
         end
 
-        bucket = AWS::S3::Bucket.find(@s3_bucket)
+        bucket = s3.buckets[@s3_bucket]
 
         remote_files = bucket.objects.map { |f| f.key }
 
         to_upload = local_files
         to_upload.each do |f|
           run_with_retry do
-            if AWS::S3::S3Object.store(f, open("#{SITE_DIR}/#{f}"), @s3_bucket, :access => 'public-read')
+            if s3.buckets[@s3_bucket].objects[f].write(File.read("#{SITE_DIR}/#{f}"))
               puts("Upload #{f}: Success!")
             else
               puts("Upload #{f}: FAILURE!")
@@ -95,11 +94,8 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
           end
           if (delete_all || delete) && !(keep_all || keep)
             run_with_retry do
-              if AWS::S3::S3Object.delete(f, @s3_bucket)
-                puts("Delete #{f}: Success!")
-              else
-                puts("Delete #{f}: FAILURE!")
-              end
+              s3.buckets[@s3_bucket].objects[f].delete
+              puts("Delete #{f}: Success!")
             end
           end
         end

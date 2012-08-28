@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'yaml'
-require 'aws/s3'
+require 'aws'
 require 'simple-cloudfront-invalidator'
 
 module Jekyll
