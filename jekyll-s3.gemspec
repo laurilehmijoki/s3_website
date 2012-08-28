@@ -6,9 +6,9 @@ Gem::Specification.new do |s|
   s.name        = "jekyll-s3"
   s.version     = Jekyll::S3::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Philippe Creux"]
-  s.email       = ["pcreux@gmail.com"]
-  s.homepage    = "https://github.com/versapay/jekyll-s3"
+  s.authors     = ["Philippe Creux", "Lauri Lehmijoki"]
+  s.email       = ["pcreux@gmail.com", "lauri.lehmijoki@iki.fi"]
+  s.homepage    = "https://github.com/laurilehmijoki/jekyll-s3"
   s.summary     = %q{Push your Jekyll blog to S3}
   s.description = %q{This Gem allows you to push your Jekyll blog to AWS S3.
 In addition, you can use this Gem to invalidate the related Cloudfront
