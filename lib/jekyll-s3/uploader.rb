@@ -16,12 +16,14 @@ module Jekyll
       protected
 
       def run_with_retry
+        attempt = 0
         begin
           yield
         rescue Exception => e
           $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 5 seconds..."
           sleep 5
-          retry
+          attempt += 1
+          retry if attempt <= 3
         end
       end
 
