@@ -1,36 +1,19 @@
 module Jekyll
   module S3
     class Uploader
-
-      SITE_DIR = "_site"
-      CONFIGURATION_FILE = '_jekyll_s3.yml'
-      CONFIGURATION_FILE_TEMPLATE = <<-EOF
-s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
-s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
-s3_bucket: your.blog.bucket.com
-cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
-      EOF
-
-      def self.run!
-        new.run!
+      def initialize(site_dir = '_site', s3_id, s3_secret, s3_bucket, cloudfront_distribution_id)
+        @site_dir = site_dir
+        @s3_id = s3_id
+        @s3_secret = s3_secret
+        @s3_bucket = s3_bucket
+        @cloudfront_distribution_id = cloudfront_distribution_id
       end
 
       def run!
-        check_jekyll_project!
-        check_s3_configuration!
-        load_configuration
         upload_to_s3!
-        invalidate_cf_dist_if_configured!
       end
 
       protected
-
-      def invalidate_cf_dist_if_configured!
-        cloudfront_configured = @cloudfront_distribution_id != nil && @cloudfront_distribution_id != ''
-        Jekyll::Cloudfront::Invalidator.invalidate(
-          @s3_id, @s3_secret, @s3_bucket, @cloudfront_distribution_id
-          ) if cloudfront_configured
-      end
 
       def run_with_retry
         begin
@@ -43,9 +26,9 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       end
 
       def local_files
-        Dir[SITE_DIR + '/**/*'].
+        Dir[@site_dir + '/**/*'].
           delete_if { |f| File.directory?(f) }.
-          map { |f| f.gsub(SITE_DIR + '/', '') }
+          map { |f| f.gsub(@site_dir + '/', '') }
       end
 
       # Please spec me!
@@ -68,7 +51,7 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
         to_upload = local_files
         to_upload.each do |f|
           run_with_retry do
-            if s3.buckets[@s3_bucket].objects[f].write(File.read("#{SITE_DIR}/#{f}"))
+            if s3.buckets[@s3_bucket].objects[f].write(File.read("#{@site_dir}/#{f}"))
               puts("Upload #{f}: Success!")
             else
               puts("Upload #{f}: FAILURE!")
@@ -102,46 +85,6 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"
         true
-      end
-
-      def check_jekyll_project!
-        raise NotAJekyllProjectError unless File.directory?(SITE_DIR)
-      end
-
-      # Raise NoConfigurationFileError if the configuration file does not exists
-      def check_s3_configuration!
-        unless File.exists?(CONFIGURATION_FILE)
-          create_template_configuration_file
-          raise NoConfigurationFileError
-        end
-      end
-
-      # Load configuration from _jekyll_s3.yml
-      # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
-      def load_configuration
-        config = load_yaml_file
-        raise MalformedConfigurationFileError unless config
-
-        @s3_id = config['s3_id']
-        @s3_secret = config['s3_secret']
-        @s3_bucket = config['s3_bucket']
-        @cloudfront_distribution_id = config['cloudfront_distribution_id']
-
-        raise MalformedConfigurationFileError unless
-          [@s3_id, @s3_secret, @s3_bucket].select { |k| k.nil? || k == '' }.empty?
-      end
-
-      def create_template_configuration_file
-        File.open(CONFIGURATION_FILE, 'w') { |f| f.write(CONFIGURATION_FILE_TEMPLATE) }
-
-      end
-
-      def load_yaml_file
-        begin
-          config = YAML.load_file(CONFIGURATION_FILE)
-        rescue Exception
-          raise MalformedConfigurationFileError
-        end
       end
     end
   end

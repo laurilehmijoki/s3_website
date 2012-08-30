@@ -16,7 +16,7 @@ module Jekyll
     end
 
     class MalformedConfigurationFileError < JekyllS3Error
-      def initialize(message = "I can't parse the file _jekyll_s3.yml. It should look like this:\n#{Uploader::CONFIGURATION_FILE_TEMPLATE}")
+      def initialize(message = "I can't parse the file _jekyll_s3.yml. It should look like this:\n#{ConfigLoader::CONFIGURATION_FILE_TEMPLATE}")
         super(message)
       end
     end
