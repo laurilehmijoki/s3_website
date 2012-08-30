@@ -4,6 +4,11 @@ Feature: jekyll-s3
   As a blogger
   I want to run jekyll-s3 and say OMG it just worked!
 
+  @s3-and-cloudfront
+  Scenario: Push Jekyll site to S3
+    When my Jekyll site is in "spec/test_site_dirs/my.blog.com"
+    Then jekyll-s3 will push my blog to S3
+
   Scenario: Run jekyll-s3 in the wrong directory
     When I run `jekyll-s3`
     Then the output should contain:
