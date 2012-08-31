@@ -20,7 +20,7 @@ distribution, making it easy to deliver your blog via the CDN.}
   s.add_dependency 'simple-cloudfront-invalidator'
 
   s.add_development_dependency 'rspec'
-  s.add_development_dependency 'mocha'
+  s.add_development_dependency 'rspec-expectations'
   s.add_development_dependency 'cucumber'
   s.add_development_dependency 'aruba', '>= 0.4.7'
   s.add_development_dependency 'rake'

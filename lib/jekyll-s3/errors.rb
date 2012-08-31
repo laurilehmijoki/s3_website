@@ -21,5 +21,10 @@ module Jekyll
       end
     end
 
+    class RetryAttemptsExhaustedError < JekyllS3Error
+      def initialize(message = "Operation failed even though we tried to recover from it")
+        super(message)
+      end
+    end
   end
 end
