@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Jekyll::S3::Uploader do
   describe "#upload_to_s3" do
     before :each do
-      @uploader = Jekyll::S3::Uploader.new("", "", "", "")
+      @uploader = Jekyll::S3::Uploader.new("", "", "", "", "")
     end
 
     it "should retry to upload a few times" do
