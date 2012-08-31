@@ -21,9 +21,13 @@ module Jekyll
           yield
         rescue Exception => e
           $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 5 seconds..."
-          sleep 5
+          sleep 3
           attempt += 1
-          retry if attempt <= 3
+          if attempt <= 3
+            retry
+          else
+            raise RetryAttemptsExhaustedError
+          end
         end
       end
 
@@ -52,13 +56,7 @@ module Jekyll
 
         to_upload = local_files
         to_upload.each do |f|
-          run_with_retry do
-            if s3.buckets[@s3_bucket].objects[f].write(File.read("#{@site_dir}/#{f}"))
-              puts("Upload #{f}: Success!")
-            else
-              puts("Upload #{f}: FAILURE!")
-            end
-          end
+          upload(f, s3)
         end
 
         to_delete = remote_files - local_files
@@ -87,6 +85,16 @@ module Jekyll
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"
         true
+      end
+
+      def upload(file, s3)
+        run_with_retry do
+          if s3.buckets[@s3_bucket].objects[file].write( File.read("#{@site_dir}/#{file}"))
+            puts("Upload #{file}: Success!")
+          else
+            puts("Upload #{file}: FAILURE!")
+          end
+        end
       end
     end
   end
