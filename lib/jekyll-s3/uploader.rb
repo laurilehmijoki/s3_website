@@ -20,7 +20,7 @@ module Jekyll
         begin
           yield
         rescue Exception => e
-          $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 5 seconds..."
+          $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 3 seconds..."
           sleep 3
           attempt += 1
           if attempt <= 3
