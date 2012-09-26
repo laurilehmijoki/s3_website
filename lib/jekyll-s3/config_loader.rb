@@ -46,7 +46,7 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 
       def self.load_yaml_file(site_dir)
         begin
-          config = YAML.load_file(get_configuration_file(site_dir))
+          config = YAML.load(Erubis::Eruby.new(File.read(get_configuration_file(site_dir))).result)
         rescue Exception
           raise MalformedConfigurationFileError
         end

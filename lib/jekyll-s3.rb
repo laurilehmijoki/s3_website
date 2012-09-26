@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'yaml'
+require 'erubis'
 require 'aws-sdk'
 require 'simple-cloudfront-invalidator'
 
