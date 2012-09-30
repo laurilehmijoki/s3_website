@@ -4,8 +4,13 @@
 Status](https://secure.travis-ci.org/laurilehmijoki/jekyll-s3.png)]
 (http://travis-ci.org/laurilehmijoki/jekyll-s3)
 
-
 Deploy your jekyll site to S3.
+
+## What jekyll-s3 can do for you
+
+* Upload your site to AWS S3
+* Distribute your site via AWS Cloudfront
+* Create the S3 bucket for you
 
 ## Install
 
