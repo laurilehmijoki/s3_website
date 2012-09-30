@@ -53,7 +53,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 Jekyll-s3 supports only S3 buckets that are in the US Standard region. If your 
 bucket is currently on some other region, you can set a non-existing 
-bucket in *_jekyll_s3.yml* and then run *jekyll-s3*. Jekyll-s3 will then create
+bucket in *_jekyll_s3.yml* and then run `jekyll-s3`. Jekyll-s3 will then create
 the bucket in the US Standard region.
 
 ## Todo
