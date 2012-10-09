@@ -1,12 +1,11 @@
 module Jekyll
   module S3
     class Uploader
-      def initialize(site_dir, s3_id, s3_secret, s3_bucket, cloudfront_distribution_id)
+      def initialize(site_dir, s3_id, s3_secret, s3_bucket)
         @site_dir = site_dir
         @s3_id = s3_id
         @s3_secret = s3_secret
         @s3_bucket = s3_bucket
-        @cloudfront_distribution_id = cloudfront_distribution_id
       end
 
       def run!
