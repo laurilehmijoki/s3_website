@@ -25,19 +25,16 @@ module Jekyll
 
         create_bucket_if_needed(s3)
 
-        bucket = s3.buckets[@s3_bucket]
-
-        remote_files = bucket.objects.map { |f| f.key }
+        remote_files = s3.buckets[@s3_bucket].objects.map { |f| f.key }
 
         to_upload = local_files
         to_upload.each do |f|
           upload(f, s3)
         end
 
-        delete_remote_files_if_user_confirms(remote_files, local_files)
+        delete_remote_files_if_user_confirms(remote_files - local_files)
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"
-        true
       end
 
       def upload(file, s3)
@@ -50,8 +47,7 @@ module Jekyll
         end
       end
 
-      def delete_remote_files_if_user_confirms(remote_files, local_files)
-        to_delete = remote_files - local_files
+      def delete_remote_files_if_user_confirms(to_delete)
         unless to_delete.empty?
           Keyboard.keep_or_delete(to_delete) { |s3_object_key|
             Retry.run_with_retry do
