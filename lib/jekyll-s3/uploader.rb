@@ -23,10 +23,7 @@ module Jekyll
           :access_key_id => @s3_id,
           :secret_access_key => @s3_secret)
 
-        unless s3.buckets.map(&:name).include?(@s3_bucket)
-          puts("Creating bucket #{@s3_bucket}")
-          s3.buckets.create(@s3_bucket)
-        end
+        create_bucket_if_needed(s3)
 
         bucket = s3.buckets[@s3_bucket]
 
@@ -37,16 +34,7 @@ module Jekyll
           upload(f, s3)
         end
 
-        to_delete = remote_files - local_files
-
-        unless to_delete.empty?
-          Keyboard.keep_or_delete(to_delete) { |s3_object_key|
-            Retry.run_with_retry do
-              s3.buckets[@s3_bucket].objects[s3_object_key].delete
-              puts("Delete #{s3_object_key}: Success!")
-            end
-          }
-        end
+        delete_remote_files_if_user_confirms(remote_files, local_files)
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"
         true
@@ -59,6 +47,25 @@ module Jekyll
           else
             puts("Upload #{file}: FAILURE!")
           end
+        end
+      end
+
+      def delete_remote_files_if_user_confirms(remote_files, local_files)
+        to_delete = remote_files - local_files
+        unless to_delete.empty?
+          Keyboard.keep_or_delete(to_delete) { |s3_object_key|
+            Retry.run_with_retry do
+              s3.buckets[@s3_bucket].objects[s3_object_key].delete
+              puts("Delete #{s3_object_key}: Success!")
+            end
+          }
+        end
+      end
+
+      def create_bucket_if_needed(s3)
+        unless s3.buckets.map(&:name).include?(@s3_bucket)
+          puts("Creating bucket #{@s3_bucket}")
+          s3.buckets.create(@s3_bucket)
         end
       end
 
