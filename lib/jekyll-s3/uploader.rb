@@ -45,26 +45,13 @@ module Jekyll
 
         to_delete = remote_files - local_files
 
-        delete_all = false
-        keep_all = false
-        to_delete.each do |f|
-          delete = false
-          keep = false
-          until delete || delete_all || keep || keep_all
-            puts "#{f} is on S3 but not in your _site directory anymore. Do you want to [d]elete, [D]elete all, [k]eep, [K]eep all?"
-            case STDIN.gets.chomp
-            when 'd' then delete = true
-            when 'D' then delete_all = true
-            when 'k' then keep = true
-            when 'K' then keep_all = true
-            end
-          end
-          if (delete_all || delete) && !(keep_all || keep)
+        unless to_delete.empty?
+          Keyboard.keep_or_delete(to_delete) { |s3_object_key|
             Retry.run_with_retry do
-              s3.buckets[@s3_bucket].objects[f].delete
-              puts("Delete #{f}: Success!")
+              s3.buckets[@s3_bucket].objects[s3_object_key].delete
+              puts("Delete #{s3_object_key}: Success!")
             end
-          end
+          }
         end
 
         puts "Done! Go visit: http://#{@s3_bucket}.s3.amazonaws.com/index.html"

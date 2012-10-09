@@ -8,7 +8,7 @@ module Jekyll
   end
 end
 
-%w{errors uploader cli config_loader retry}.each do |file|
+%w{errors uploader cli config_loader retry keyboard}.each do |file|
   require File.dirname(__FILE__) + "/jekyll-s3/#{file}"
 end
 
