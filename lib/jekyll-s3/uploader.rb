@@ -15,12 +15,6 @@ module Jekyll
 
       protected
 
-      def local_files
-        Dir[@site_dir + '/**/*'].
-          delete_if { |f| File.directory?(f) }.
-          map { |f| f.gsub(@site_dir + '/', '') }
-      end
-
       # Please spec me!
       def upload_to_s3!
         puts "Deploying _site/* to #{@s3_bucket}"
@@ -66,6 +60,12 @@ module Jekyll
             puts("Upload #{file}: FAILURE!")
           end
         end
+      end
+
+      def local_files
+        Dir[@site_dir + '/**/*'].
+          delete_if { |f| File.directory?(f) }.
+          map { |f| f.gsub(@site_dir + '/', '') }
       end
     end
   end
