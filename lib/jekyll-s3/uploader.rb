@@ -1,14 +1,14 @@
 module Jekyll
   module S3
     class Uploader
-      def run!(site_dir, s3_id, s3_secret, s3_bucket)
-        upload_to_s3!(site_dir, s3_id, s3_secret, s3_bucket)
+      def run(site_dir, s3_id, s3_secret, s3_bucket)
+        upload_to_s3(site_dir, s3_id, s3_secret, s3_bucket)
       end
 
       protected
 
       # Please spec me!
-      def upload_to_s3!(site_dir, s3_id, s3_secret, s3_bucket)
+      def upload_to_s3(site_dir, s3_id, s3_secret, s3_bucket)
         puts "Deploying _site/* to #{s3_bucket}"
 
         s3 = AWS::S3.new(

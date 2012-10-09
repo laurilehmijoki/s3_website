@@ -15,5 +15,5 @@ Then /^jekyll-s(\d+) will push my blog to S(\d+) and invalidate the Cloudfront d
 end
 
 def do_run
-  Jekyll::S3::CLI.new.run!("#{@blog_dir}/_site")
+  Jekyll::S3::CLI.new.run("#{@blog_dir}/_site")
 end

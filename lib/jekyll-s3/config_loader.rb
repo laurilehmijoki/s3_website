@@ -14,7 +14,7 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       end
 
       # Raise NoConfigurationFileError if the configuration file does not exists
-      def self.check_s3_configuration!(site_dir)
+      def self.check_s3_configuration(site_dir)
         unless File.exists?(get_configuration_file(site_dir))
           create_template_configuration_file site_dir
           raise NoConfigurationFileError
