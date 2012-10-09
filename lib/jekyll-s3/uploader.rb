@@ -15,22 +15,6 @@ module Jekyll
 
       protected
 
-      def run_with_retry
-        attempt = 0
-        begin
-          yield
-        rescue Exception => e
-          $stderr.puts "Exception Occurred:  #{e.message} (#{e.class})  Retrying in 3 seconds..."
-          sleep 3
-          attempt += 1
-          if attempt <= 3
-            retry
-          else
-            raise RetryAttemptsExhaustedError
-          end
-        end
-      end
-
       def local_files
         Dir[@site_dir + '/**/*'].
           delete_if { |f| File.directory?(f) }.
@@ -76,7 +60,7 @@ module Jekyll
             end
           end
           if (delete_all || delete) && !(keep_all || keep)
-            run_with_retry do
+            Retry.run_with_retry do
               s3.buckets[@s3_bucket].objects[f].delete
               puts("Delete #{f}: Success!")
             end
@@ -88,7 +72,7 @@ module Jekyll
       end
 
       def upload(file, s3)
-        run_with_retry do
+        Retry.run_with_retry do
           if s3.buckets[@s3_bucket].objects[file].write( File.read("#{@site_dir}/#{file}"))
             puts("Upload #{file}: Success!")
           else
