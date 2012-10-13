@@ -2,6 +2,7 @@ require 'rubygems'
 require 'yaml'
 require 'aws-sdk'
 require 'simple-cloudfront-invalidator'
+require 'filey-diff'
 
 module Jekyll
   module S3
