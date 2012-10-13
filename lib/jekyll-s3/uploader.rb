@@ -24,6 +24,8 @@ module Jekyll
         puts "Done! Go visit: http://#{s3_bucket}.s3.amazonaws.com/index.html"
       end
 
+      private
+
       def upload(file, s3, s3_bucket, site_dir)
         Retry.run_with_retry do
           if s3.buckets[s3_bucket].objects[file].write( File.read("#{site_dir}/#{file}"))
