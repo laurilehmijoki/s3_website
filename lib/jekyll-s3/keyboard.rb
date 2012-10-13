@@ -1,7 +1,7 @@
 module Jekyll
   module S3
     class Keyboard
-      def self.keep_or_delete(to_delete, standard_input=STDIN)
+      def self.if_user_confirms_delete(to_delete, standard_input=STDIN)
         delete_all = false
         keep_all = false
         to_delete.each do |f|

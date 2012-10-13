@@ -55,7 +55,8 @@ describe Jekyll::S3::Keyboard do
 
     def call_keyboard(s3_object_keys, standard_input)
       deleted_keys = []
-      Jekyll::S3::Keyboard.keep_or_delete(s3_object_keys, standard_input) { |key|
+      Jekyll::S3::Keyboard.if_user_confirms_delete(s3_object_keys, 
+                                                   standard_input) { |key|
         deleted_keys << key
       }
       deleted_keys

@@ -36,7 +36,7 @@ module Jekyll
 
       def delete_remote_files_if_user_confirms(to_delete, s3, s3_bucket)
         unless to_delete.empty?
-          Keyboard.keep_or_delete(to_delete) { |s3_object_key|
+          Keyboard.if_user_confirms_delete(to_delete) { |s3_object_key|
             Retry.run_with_retry do
               s3.buckets[s3_bucket].objects[s3_object_key].delete
               puts("Delete #{s3_object_key}: Success!")
