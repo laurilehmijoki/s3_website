@@ -1,34 +1,53 @@
 module Jekyll
   module S3
     class Uploader
-      def run(site_dir, s3_id, s3_secret, s3_bucket)
-        puts "Deploying _site/* to #{s3_bucket}"
+      def self.run(site_dir, s3_id, s3_secret, s3_bucket_name)
+        puts "Deploying _site/* to #{s3_bucket_name}"
 
-        s3 = AWS::S3.new(
-          :access_key_id => s3_id,
-          :secret_access_key => s3_secret)
+        s3 = AWS::S3.new(:access_key_id => s3_id,
+                         :secret_access_key => s3_secret)
 
-        create_bucket_if_needed(s3, s3_bucket)
+        create_bucket_if_needed(s3, s3_bucket_name)
 
-        remote_files = s3.buckets[s3_bucket].objects.map { |f| f.key }
+        upload_files(s3, s3_bucket_name, site_dir)
 
-        local_files = load_local_files(site_dir)
-        to_upload = local_files
-        to_upload.each do |f|
-          upload(f, s3, s3_bucket, site_dir)
-        end
+        remove_superfluous_files(s3, s3_bucket_name, site_dir)
 
-        delete_remote_files_if_user_confirms(
-          remote_files - local_files, s3, s3_bucket)
-
-        puts "Done! Go visit: http://#{s3_bucket}.s3.amazonaws.com/index.html"
+        puts "Done! Go visit: http://#{s3_bucket_name}.s3.amazonaws.com/index.html"
       end
 
       private
 
-      def upload(file, s3, s3_bucket, site_dir)
+      def self.create_bucket_if_needed(s3, s3_bucket_name)
+        unless s3.buckets.map(&:name).include?(s3_bucket_name)
+          puts("Creating bucket #{s3_bucket_name}")
+          s3.buckets.create(s3_bucket_name)
+        end
+      end
+
+      def self.upload_files(s3, s3_bucket_name, site_dir)
+        changed_files, new_files = DiffHelper.resolve_files_to_upload(
+          s3.buckets[s3_bucket_name], site_dir)
+        to_upload = changed_files + new_files
+        if to_upload.empty?
+          puts "No new or changed files to upload"
+        else
+          pre_upload_report = []
+          pre_upload_report << "Uploading"
+          pre_upload_report << "#{new_files.length} new" if new_files.length > 0
+          pre_upload_report << "and" if new_files.length > 0
+          pre_upload_report << "#{changed_files.length} changed" if changed_files.length > 0
+          pre_upload_report << "files"
+          puts pre_upload_report.join(' ')
+          to_upload.each do |f|
+            upload_file(f, s3, s3_bucket_name, site_dir)
+          end
+        end
+      end
+
+      def self.upload_file(file, s3, s3_bucket_name, site_dir)
         Retry.run_with_retry do
-          if s3.buckets[s3_bucket].objects[file].write( File.read("#{site_dir}/#{file}"))
+          if s3.buckets[s3_bucket_name].objects[file].write( File.read("#{site_dir}/#{file}"))
             puts("Upload #{file}: Success!")
           else
             puts("Upload #{file}: FAILURE!")
@@ -36,25 +55,25 @@ module Jekyll
         end
       end
 
-      def delete_remote_files_if_user_confirms(to_delete, s3, s3_bucket)
+      def self.remove_superfluous_files(s3, s3_bucket_name, site_dir)
+        remote_files = s3.buckets[s3_bucket_name].objects.map { |f| f.key }
+        local_files = load_all_local_files(site_dir)
+        delete_remote_files_if_user_confirms(
+          remote_files - local_files, s3, s3_bucket_name)
+      end
+
+      def self.delete_remote_files_if_user_confirms(to_delete, s3, s3_bucket_name)
         unless to_delete.empty?
           Keyboard.if_user_confirms_delete(to_delete) { |s3_object_key|
             Retry.run_with_retry do
-              s3.buckets[s3_bucket].objects[s3_object_key].delete
+              s3.buckets[s3_bucket_name].objects[s3_object_key].delete
               puts("Delete #{s3_object_key}: Success!")
             end
           }
         end
       end
 
-      def create_bucket_if_needed(s3, s3_bucket)
-        unless s3.buckets.map(&:name).include?(s3_bucket)
-          puts("Creating bucket #{s3_bucket}")
-          s3.buckets.create(s3_bucket)
-        end
-      end
-
-      def load_local_files(site_dir)
+      def self.load_all_local_files(site_dir)
         Dir[site_dir + '/**/*'].
           delete_if { |f| File.directory?(f) }.
           map { |f| f.gsub(site_dir + '/', '') }

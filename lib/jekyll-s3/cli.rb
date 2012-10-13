@@ -11,8 +11,7 @@ module Jekyll
         CLI.check_configuration site_dir
         s3_id, s3_secret, s3_bucket, cloudfront_distribution_id =
           Jekyll::S3::ConfigLoader.load_configuration site_dir
-        uploader = Uploader.new
-        uploader.run(site_dir, s3_id, s3_secret, s3_bucket)
+        Uploader.run(site_dir, s3_id, s3_secret, s3_bucket)
         CLI.invalidate_cf_dist_if_configured s3_id, s3_secret, s3_bucket, cloudfront_distribution_id
       rescue JekyllS3Error => e
         puts e.message
