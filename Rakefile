@@ -7,5 +7,5 @@ task :default => 'test'
 desc "Run tests"
 task :test do
     sh "bundle exec rspec"
-    sh "bundle exec cucumber"
+    sh "bundle exec cucumber --tags ~@skip"
 end
