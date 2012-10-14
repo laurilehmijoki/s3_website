@@ -35,9 +35,9 @@ module Jekyll
           pre_upload_report = []
           pre_upload_report << "Uploading"
           pre_upload_report << "#{new_files.length} new" if new_files.length > 0
-          pre_upload_report << "and" if changed_files.length > 0
+          pre_upload_report << "and" if changed_files.length > 0 and new_files.length > 0
           pre_upload_report << "#{changed_files.length} changed" if changed_files.length > 0
-          pre_upload_report << "files"
+          pre_upload_report << "file(s)"
           puts pre_upload_report.join(' ')
           to_upload.each do |f|
             upload_file(f, s3, s3_bucket_name, site_dir)
