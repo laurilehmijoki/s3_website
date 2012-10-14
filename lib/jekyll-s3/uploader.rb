@@ -9,11 +9,12 @@ module Jekyll
 
         create_bucket_if_needed(s3, s3_bucket_name)
 
-        upload_files(s3, s3_bucket_name, site_dir)
+        amount_of_uploaded_files = upload_files(s3, s3_bucket_name, site_dir)
 
         remove_superfluous_files(s3, s3_bucket_name, site_dir)
 
         puts "Done! Go visit: http://#{s3_bucket_name}.s3.amazonaws.com/index.html"
+        amount_of_uploaded_files
       end
 
       private
@@ -31,6 +32,7 @@ module Jekyll
         to_upload = changed_files + new_files
         if to_upload.empty?
           puts "No new or changed files to upload"
+          uploaded_files = 0
         else
           pre_upload_report = []
           pre_upload_report << "Uploading"
@@ -42,6 +44,7 @@ module Jekyll
           to_upload.each do |f|
             upload_file(f, s3, s3_bucket_name, site_dir)
           end
+          to_upload.length
         end
       end
 

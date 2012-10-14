@@ -14,6 +14,10 @@ Then /^jekyll-s(\d+) will push my blog to S(\d+) and invalidate the Cloudfront d
   do_run
 end
 
+Then /^report that it uploaded (\d+) files into S3$/ do |upload_count_expectation|
+  raise unless @amount_of_uploaded_files == upload_count_expectation.to_i
+end
+
 def do_run
-  Jekyll::S3::CLI.new.run("#{@blog_dir}/_site")
+  @amount_of_uploaded_files = Jekyll::S3::CLI.new.run("#{@blog_dir}/_site")
 end
