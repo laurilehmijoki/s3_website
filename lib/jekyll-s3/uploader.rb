@@ -35,7 +35,7 @@ module Jekyll
           pre_upload_report = []
           pre_upload_report << "Uploading"
           pre_upload_report << "#{new_files.length} new" if new_files.length > 0
-          pre_upload_report << "and" if new_files.length > 0
+          pre_upload_report << "and" if changed_files.length > 0
           pre_upload_report << "#{changed_files.length} changed" if changed_files.length > 0
           pre_upload_report << "files"
           puts pre_upload_report.join(' ')
