@@ -9,6 +9,11 @@ Feature: jekyll-s3
     When my Jekyll site is in "spec/test_site_dirs/my.blog.com"
     Then jekyll-s3 will push my blog to S3
 
+  @new-and-changed-files
+  Scenario: Upload a new blog post and change an old post
+    When my Jekyll site is in "spec/test_site_dirs/new-and-changed-files.com"
+    Then jekyll-s3 will push my blog to S3
+
   @only-changed-files
   Scenario: Update an existing blog post
     When my Jekyll site is in "spec/test_site_dirs/only-changed-files.com"
