@@ -7,6 +7,7 @@ end
 
 VCR.cucumber_tags do |t|
   t.tag '@new-files'
+  t.tag '@only-changed-files'
   t.tag '@no-new-or-changed-files'
   t.tag '@s3-and-cloudfront'
 end
