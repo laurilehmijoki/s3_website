@@ -19,6 +19,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
+      cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       """
 
   Scenario: Run jekyll-s3 with an empty configuration file
