@@ -61,10 +61,6 @@ bucket is currently on some other region, you can set a non-existing
 bucket in *_jekyll_s3.yml* and then run `jekyll-s3`. Jekyll-s3 will then create
 the bucket in the US Standard region.
 
-## Todo
-
-  * Upload new / updated files *only* (using s3-sync?)
-
 ## Development
 
   * Install bundler and run `bundle install`
