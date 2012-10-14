@@ -8,3 +8,8 @@ Feature: jekyll-s3
   Scenario: Push a new Jekyll site to S3
     When my Jekyll site is in "spec/test_site_dirs/my.blog.com"
     Then jekyll-s3 will push my blog to S3
+
+  @no-new-or-changed-files
+  Scenario: The user runs jekyll-s3 even though he doesn't have new or changed posts
+    When my Jekyll site is in "spec/test_site_dirs/no-new-or-changed-files.com"
+    Then jekyll-s3 will push my blog to S3
