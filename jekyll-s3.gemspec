@@ -17,7 +17,7 @@ distribution, making it easy to deliver your blog via the CDN.}
   s.default_executable = %q{jekyll-s3}
 
   s.add_dependency 'aws-sdk', '~> 1.5.6'
-  s.add_dependency 'filey-diff', '~> 0.0.1'
+  s.add_dependency 'filey-diff', '~> 0.0.2'
   s.add_dependency 'simple-cloudfront-invalidator', '~> 0.0.1'
 
   s.add_development_dependency 'rspec'
