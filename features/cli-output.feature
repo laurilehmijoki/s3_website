@@ -8,7 +8,7 @@ Feature: Command-line interface feedback
       """
 
   # For some reason this scenario fails on Travis but on on localhost
-  @skip
+  @skip-on-travis
   Scenario: Run jekyll-s3 for the first time
     Given a directory named "_site"
     When I run `jekyll-s3`
