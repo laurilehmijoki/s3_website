@@ -52,6 +52,12 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
   * Run `jekyll-s3` to deploy your site to S3 and invalidate the Cloudfront
     distribution
 
+## Changelog
+
+### 0.0.5
+
+Invalidate the Cloudfront distribution of the Jekyll S3 bucket.
+
 ## Known issues
 
 ### Only S3 buckets in the US Standard region work
