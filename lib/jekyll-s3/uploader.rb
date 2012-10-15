@@ -32,7 +32,6 @@ module Jekyll
         to_upload = changed_files + new_files
         if to_upload.empty?
           puts "No new or changed files to upload"
-          uploaded_files = 0
         else
           pre_upload_report = []
           pre_upload_report << "Uploading"
@@ -44,8 +43,8 @@ module Jekyll
           to_upload.each do |f|
             upload_file(f, s3, s3_bucket_name, site_dir)
           end
-          to_upload.length
         end
+        [new_files.length, changed_files.length]
       end
 
       def self.upload_file(file, s3, s3_bucket_name, site_dir)
