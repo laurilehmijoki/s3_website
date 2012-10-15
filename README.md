@@ -81,5 +81,7 @@ MIT
 
 Copyright (c) 2011 VersaPay, Philippe Creux.
 
-Contributions from Chris Kelly and Lauri Lehmijoki.
-
+Contributors (in alphabetical order)
+* Cory Kaufman-Schofield
+* Chris Kelly
+* Lauri Lehmijoki
