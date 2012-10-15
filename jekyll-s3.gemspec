@@ -19,6 +19,7 @@ distribution, making it easy to deliver your blog via the CDN.}
   s.add_dependency 'aws-sdk', '~> 1.5.6'
   s.add_dependency 'filey-diff', '~> 0.0.2'
   s.add_dependency 'simple-cloudfront-invalidator', '~> 0.0.1'
+  s.add_dependency 'erubis', '~> 2.7.0'
 
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rspec-expectations'
