@@ -17,8 +17,8 @@ end
 
 Then /^report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
   |new_count, changed_count|
-  raise unless @amount_of_new_files = new_count
-  raise unless @amount_of_changed_files = changed_count
+  raise unless @amount_of_new_files == new_count.to_i
+  raise unless @amount_of_changed_files == changed_count.to_i
 end
 
 def do_run
