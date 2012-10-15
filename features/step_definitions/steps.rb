@@ -22,6 +22,6 @@ Then /^report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
 end
 
 def do_run
-  @amount_of_changed_files, @amount_of_new_files =
+  @amount_of_new_files, @amount_of_changed_files =
     Jekyll::S3::CLI.new.run("#{@blog_dir}/_site")
 end
