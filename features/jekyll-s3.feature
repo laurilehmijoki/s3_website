@@ -20,7 +20,7 @@ Feature: jekyll-s3
   Scenario: Update an existing blog post
     When my Jekyll site is in "features/support/test_site_dirs/only-changed-files.com"
     Then jekyll-s3 will push my blog to S3
-    And report that it uploaded 0 new and 2 changed files into S3
+    And report that it uploaded 0 new and 1 changed files into S3
 
   @no-new-or-changed-files
   Scenario: The user runs jekyll-s3 even though he doesn't have new or changed posts
