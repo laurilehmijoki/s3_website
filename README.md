@@ -58,19 +58,19 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 ### 0.0.6
 
-* Upload only new or changed files.
+* Upload only new or changed files
 * Support ERB syntax in `_jekyll_s3.yml`
 
 ### 0.0.5
 
-Invalidate the Cloudfront distribution of the Jekyll S3 bucket.
+* Invalidate the Cloudfront distribution of the Jekyll S3 bucket.
 
 ## Known issues
 
 ### Only S3 buckets in the US Standard region work
 
-Jekyll-s3 supports only S3 buckets that are in the US Standard region. If your 
-bucket is currently on some other region, you can set a non-existing 
+Jekyll-s3 supports only S3 buckets that are in the US Standard region. If your
+bucket is currently on some other region, you can set a non-existing
 bucket in *_jekyll_s3.yml* and then run `jekyll-s3`. Jekyll-s3 will then create
 the bucket in the US Standard region.
 
