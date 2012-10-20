@@ -56,6 +56,11 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 ## Changelog
 
+### 0.0.6
+
+* Upload only new or changed files.
+* Support ERB syntax in `_jekyll_s3.yml`
+
 ### 0.0.5
 
 Invalidate the Cloudfront distribution of the Jekyll S3 bucket.
