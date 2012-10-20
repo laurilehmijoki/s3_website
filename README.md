@@ -28,6 +28,8 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 </pre>
 
   * Edit it with your details.
+  * Hint: you can use ERB syntax in `_jekyll_s3.yml`. This is handy, if you
+    want to store the AWS credentials as environmental variables.
 
 ## Deploy!
 
