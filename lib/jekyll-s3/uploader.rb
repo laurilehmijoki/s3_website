@@ -1,7 +1,10 @@
 module Jekyll
   module S3
     class Uploader
-      def self.run(site_dir, s3_id, s3_secret, s3_bucket_name)
+      def self.run(site_dir, config)
+        s3_id = config['s3_id']
+        s3_secret = config['s3_secret']
+        s3_bucket_name = config['s3_bucket']
         puts "Deploying _site/* to #{s3_bucket_name}"
 
         s3 = AWS::S3.new(:access_key_id => s3_id,

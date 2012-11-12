@@ -9,11 +9,9 @@ module Jekyll
 
       def run(site_dir)
         CLI.check_configuration site_dir
-        s3_id, s3_secret, s3_bucket, cloudfront_distribution_id =
-          Jekyll::S3::ConfigLoader.load_configuration site_dir
-        amount_of_uploaded_files =
-          Uploader.run(site_dir, s3_id, s3_secret, s3_bucket)
-        CLI.invalidate_cf_dist_if_configured s3_id, s3_secret, s3_bucket, cloudfront_distribution_id
+        config = Jekyll::S3::ConfigLoader.load_configuration site_dir
+        amount_of_uploaded_files = Uploader.run(site_dir, config)
+        CLI.invalidate_cf_dist_if_configured config
         amount_of_uploaded_files
       rescue JekyllS3Error => e
         puts e.message
@@ -22,12 +20,10 @@ module Jekyll
 
       private
 
-      def self.invalidate_cf_dist_if_configured(s3_id, s3_secret, s3_bucket, cloudfront_distribution_id)
-        cloudfront_configured = cloudfront_distribution_id != nil &&
-          cloudfront_distribution_id != ''
-        Jekyll::Cloudfront::Invalidator.invalidate(
-          s3_id, s3_secret, s3_bucket, cloudfront_distribution_id
-        ) if cloudfront_configured
+      def self.invalidate_cf_dist_if_configured(config)
+        cloudfront_configured = config['cloudfront_distribution_id'] &&
+          (not config['cloudfront_distribution_id'].empty?)
+        Jekyll::Cloudfront::Invalidator.invalidate(config) if cloudfront_configured
       end
 
       def self.check_configuration(site_dir)

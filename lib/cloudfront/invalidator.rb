@@ -1,8 +1,11 @@
 module Jekyll
   module Cloudfront
     class Invalidator
-      def self.invalidate(
-        aws_key, aws_secret, s3_bucket_name, cloudfront_distribution_id)
+      def self.invalidate(config)
+        aws_key = config['s3_id']
+        aws_secret = config['s3_secret']
+        s3_bucket_name = config['s3_bucket']
+        cloudfront_distribution_id = config['cloudfront_distribution_id']
         s3 = AWS::S3.new(
           :access_key_id => aws_key,
           :secret_access_key => aws_secret)
