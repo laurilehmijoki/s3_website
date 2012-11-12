@@ -1,7 +1,7 @@
 module Jekyll
   module S3
     class Uploader
-      def self.run(site_dir, config)
+      def self.run(site_dir, config, in_headless_mode = false)
         s3_id = config['s3_id']
         s3_secret = config['s3_secret']
         s3_bucket_name = config['s3_bucket']
@@ -12,12 +12,13 @@ module Jekyll
 
         create_bucket_if_needed(s3, s3_bucket_name)
 
-        amount_of_uploaded_files = upload_files(s3, s3_bucket_name, site_dir)
+        new_files_count, changed_files_count = upload_files(s3, s3_bucket_name, site_dir)
 
-        remove_superfluous_files(s3, s3_bucket_name, site_dir)
+        deleted_files_count = remove_superfluous_files(
+          s3, s3_bucket_name, site_dir, in_headless_mode)
 
         puts "Done! Go visit: http://#{s3_bucket_name}.s3.amazonaws.com/index.html"
-        amount_of_uploaded_files
+        [new_files_count, changed_files_count, deleted_files_count]
       end
 
       private
@@ -60,21 +61,29 @@ module Jekyll
         end
       end
 
-      def self.remove_superfluous_files(s3, s3_bucket_name, site_dir)
+      def self.remove_superfluous_files(s3, s3_bucket_name, site_dir, in_headless_mode)
         remote_files = s3.buckets[s3_bucket_name].objects.map { |f| f.key }
         local_files = load_all_local_files(site_dir)
-        delete_remote_files_if_user_confirms(
-          remote_files - local_files, s3, s3_bucket_name)
+        files_to_delete = remote_files - local_files
+        deleted_files_count = 0
+        if in_headless_mode
+          files_to_delete.each { |s3_object_key|
+            delete_s3_object s3, s3_bucket_name, s3_object_key
+            deleted_files_count += 1
+          }
+        else
+          Keyboard.if_user_confirms_delete(files_to_delete) { |s3_object_key|
+            delete_s3_object s3, s3_bucket_name, s3_object_key
+            deleted_files_count += 1
+          }
+        end
+        deleted_files_count
       end
 
-      def self.delete_remote_files_if_user_confirms(to_delete, s3, s3_bucket_name)
-        unless to_delete.empty?
-          Keyboard.if_user_confirms_delete(to_delete) { |s3_object_key|
-            Retry.run_with_retry do
-              s3.buckets[s3_bucket_name].objects[s3_object_key].delete
-              puts("Delete #{s3_object_key}: Success!")
-            end
-          }
+      def self.delete_s3_object(s3, s3_bucket_name, s3_object_key)
+        Retry.run_with_retry do
+          s3.buckets[s3_bucket_name].objects[s3_object_key].delete
+          puts("Delete #{s3_object_key}: Success!")
         end
       end
 

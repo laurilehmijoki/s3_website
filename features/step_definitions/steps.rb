@@ -21,7 +21,12 @@ Then /^report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
   raise unless @amount_of_changed_files == changed_count.to_i
 end
 
+Then /^report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
+  raise unless @amount_of_deleted_files == amount_of_deleted_files.to_i
+end
+
 def do_run
-  @amount_of_new_files, @amount_of_changed_files =
-    Jekyll::S3::CLI.new.run("#{@blog_dir}/_site")
+  in_headless_mode = true
+  @amount_of_new_files, @amount_of_changed_files, @amount_of_deleted_files =
+    Jekyll::S3::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
 end

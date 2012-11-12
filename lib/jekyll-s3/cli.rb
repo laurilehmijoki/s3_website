@@ -3,16 +3,17 @@ module Jekyll
     class CLI
       SITE_DIR = '_site'
 
-      def self.run
-        CLI.new.run SITE_DIR
+      def self.run(in_headless_mode)
+        CLI.new.run SITE_DIR, in_headless_mode
       end
 
-      def run(site_dir)
+      def run(site_dir, in_headless_mode = false)
         CLI.check_configuration site_dir
         config = Jekyll::S3::ConfigLoader.load_configuration site_dir
-        amount_of_uploaded_files = Uploader.run(site_dir, config)
+        new_files_count, changed_files_count, deleted_files_count = 
+          Uploader.run(site_dir, config, in_headless_mode)
         CLI.invalidate_cf_dist_if_configured config
-        amount_of_uploaded_files
+        [new_files_count, changed_files_count, deleted_files_count]
       rescue JekyllS3Error => e
         puts e.message
         exit 1
