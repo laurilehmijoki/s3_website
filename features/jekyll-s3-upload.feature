@@ -1,4 +1,4 @@
-Feature: jekyll-s3
+Feature: upload Jekyll site to S3
 
   In order to push my jekyll site to s3
   As a blogger
