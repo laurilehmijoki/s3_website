@@ -32,9 +32,9 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
         s3_bucket = config['s3_bucket']
         cloudfront_distribution_id = config['cloudfront_distribution_id']
 
-        raise MalformedConfigurationFileError unless
-          [s3_id, s3_secret, s3_bucket].select { |k| k.nil? || k == '' }.empty?
         return s3_id, s3_secret, s3_bucket, cloudfront_distribution_id
+        raise MalformedConfigurationFileError if
+          [s3_id, s3_secret, s3_bucket].any? { |k| k.nil? || k == '' }
       end
 
       def self.create_template_configuration_file(site_dir)
