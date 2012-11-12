@@ -24,16 +24,11 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       # Load configuration from _jekyll_s3.yml
       # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
       def self.load_configuration(site_dir)
-        config = load_yaml_file site_dir
-        raise MalformedConfigurationFileError unless config
-
+        config = load_yaml_file_and_validate site_dir
         s3_id = config['s3_id']
         s3_secret = config['s3_secret']
         s3_bucket = config['s3_bucket']
         cloudfront_distribution_id = config['cloudfront_distribution_id']
-
-        raise MalformedConfigurationFileError if
-          [s3_id, s3_secret, s3_bucket].any? { |k| k.nil? || k == '' }
         return config
       end
 
@@ -44,12 +39,19 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
         }
       end
 
-      def self.load_yaml_file(site_dir)
+      def self.load_yaml_file_and_validate(site_dir)
         begin
           config = YAML.load(Erubis::Eruby.new(File.read(get_configuration_file(site_dir))).result)
         rescue Exception
           raise MalformedConfigurationFileError
         end
+        raise MalformedConfigurationFileError unless config
+        raise MalformedConfigurationFileError if
+          ['s3_id', 's3_secret', 's3_bucket'].any? { |key|
+            mandatory_config_value = config[key]
+            mandatory_config_value.nil? || mandatory_config_value == ''
+          }
+        config
       end
 
       def self.get_configuration_file(site_dir)
