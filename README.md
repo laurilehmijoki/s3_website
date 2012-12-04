@@ -68,6 +68,11 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 
 ## Changelog
 
+### 1.0.0
+
+* CloudFront invalidation on changed files only
+* Start using [Semantic versioning](http://semver.org/)
+
 ### 0.0.7
 
 * Headless mode
