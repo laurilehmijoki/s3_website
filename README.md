@@ -112,4 +112,5 @@ Copyright (c) 2011 VersaPay, Philippe Creux.
 Contributors (in alphabetical order)
 * Cory Kaufman-Schofield
 * Chris Kelly
+* Chris Moos
 * Lauri Lehmijoki
