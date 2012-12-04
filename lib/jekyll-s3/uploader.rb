@@ -12,13 +12,13 @@ module Jekyll
 
         create_bucket_if_needed(s3, s3_bucket_name)
 
-        new_files_count, changed_files_count = upload_files(s3, s3_bucket_name, site_dir)
+        new_files_count, changed_files_count, changed_files = upload_files(s3, s3_bucket_name, site_dir)
 
         deleted_files_count = remove_superfluous_files(
           s3, s3_bucket_name, site_dir, in_headless_mode)
 
         puts "Done! Go visit: http://#{s3_bucket_name}.s3.amazonaws.com/index.html"
-        [new_files_count, changed_files_count, deleted_files_count]
+        [new_files_count, changed_files_count, deleted_files_count, changed_files]
       end
 
       private
@@ -48,7 +48,7 @@ module Jekyll
             upload_file(f, s3, s3_bucket_name, site_dir)
           end
         end
-        [new_files.length, changed_files.length]
+        [new_files.length, changed_files.length, changed_files]
       end
 
       def self.upload_file(file, s3, s3_bucket_name, site_dir)
