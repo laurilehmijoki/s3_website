@@ -1,0 +1,4 @@
+s3_id: foo
+s3_secret: foo
+s3_bucket: jekyll-s3-test.net
+cloudfront_distribution_id: foo

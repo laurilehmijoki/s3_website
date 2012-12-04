@@ -14,7 +14,8 @@ module Jekyll
         report = SimpleCloudfrontInvalidator::CloudfrontClient.new(
           aws_key, aws_secret, cloudfront_distribution_id).invalidate(
             s3_object_keys)
-        puts report
+        puts report[:text_report]
+        report[:invalidated_items_count]
       end
     end
   end
