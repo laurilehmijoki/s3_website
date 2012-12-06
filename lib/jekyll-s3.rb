@@ -4,6 +4,7 @@ require 'erubis'
 require 'aws-sdk'
 require 'simple-cloudfront-invalidator'
 require 'filey-diff'
+require 'mime/types'
 
 module Jekyll
   module S3
