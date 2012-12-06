@@ -68,6 +68,12 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 
 ## Changelog
 
+### 2.0.0
+
+* Set content type of the uploaded files
+* (Increment major version because of the changed return value in
+  Jekyll::S3::CLI::run)
+
 ### 1.0.0
 
 * CloudFront invalidation on changed files only
