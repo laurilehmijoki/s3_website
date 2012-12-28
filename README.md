@@ -19,7 +19,7 @@ Deploy your jekyll site to S3.
 ## Setup
 
 * Go to your jekyll site directory
-* Run `jekyll-s3`. It generates a configuration file called `_jekyll_s3.yml` that looks like that:
+* Run `jekyll-s3`. It generates a configuration file called `_jekyll_s3.yml` that looks like this:
 <pre>
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
