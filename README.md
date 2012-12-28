@@ -18,8 +18,8 @@ Deploy your jekyll site to S3.
 
 ## Setup
 
-  * Go to your jekyll site directory
-  * Run `jekyll-s3`. It generates a configuration file called `_jekyll_s3.yml` that looks like that:
+* Go to your jekyll site directory
+* Run `jekyll-s3`. It generates a configuration file called `_jekyll_s3.yml` that looks like that:
 <pre>
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
@@ -27,9 +27,11 @@ s3_bucket: your.blog.bucket.com
 cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 </pre>
 
-  * Edit it with your details.
-  * Hint: you can use ERB syntax in `_jekyll_s3.yml`. This is handy, if you
-    want to store the AWS credentials as environmental variables.
+* Edit it with your details
+ * Hint: you can use ERB syntax in `_jekyll_s3.yml`. This is handy, if you
+   want to store the AWS credentials as environmental variables.
+* [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
+* Run `jekyll-s3` again to upload your Jekyll site to S3
 
 ## Deploy!
 
