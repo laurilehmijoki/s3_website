@@ -27,9 +27,7 @@ s3_bucket: your.blog.bucket.com
 cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 </pre>
 
-* Edit it with your details
- * Hint: you can use ERB syntax in `_jekyll_s3.yml`. This is handy, if you
-   want to store the AWS credentials as environmental variables.
+* Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
 * [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
 * Run `jekyll-s3` again to upload your Jekyll site to S3
 
