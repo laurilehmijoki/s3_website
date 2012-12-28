@@ -37,14 +37,6 @@ cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
 
   * Run `jekyll-s3`. Done.
 
-## Want the root url to render index.html?
-
-  * Log into <https://console.aws.amazon.com/s3/home>
-  * Set the Index document to index.html in Bucket Properties >
-    Website.
-  * Visit the website endpoint:
-    (http://yourblog.s3-website...amazonaws.com)
-
 ## How to use Cloudfront to deliver your blog
 
 It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
