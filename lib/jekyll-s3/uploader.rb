@@ -5,6 +5,8 @@ module Jekyll
         s3_id = config['s3_id']
         s3_secret = config['s3_secret']
         s3_bucket_name = config['s3_bucket']
+        s3_reduced_redundancy = config['s3_reduced_redundancy']
+
         puts "Deploying _site/* to #{s3_bucket_name}"
 
         s3 = AWS::S3.new(:access_key_id => s3_id,
@@ -12,7 +14,7 @@ module Jekyll
 
         create_bucket_if_needed(s3, s3_bucket_name)
 
-        new_files_count, changed_files_count, changed_files = upload_files(s3, s3_bucket_name, site_dir)
+        new_files_count, changed_files_count, changed_files = upload_files(s3, s3_bucket_name, site_dir, s3_reduced_redundancy)
 
         deleted_files_count = remove_superfluous_files(
           s3, s3_bucket_name, site_dir, in_headless_mode)
@@ -30,7 +32,7 @@ module Jekyll
         end
       end
 
-      def self.upload_files(s3, s3_bucket_name, site_dir)
+      def self.upload_files(s3, s3_bucket_name, site_dir, s3_rrs)
         changed_files, new_files = DiffHelper.resolve_files_to_upload(
           s3.buckets[s3_bucket_name], site_dir)
         to_upload = changed_files + new_files
@@ -45,18 +47,20 @@ module Jekyll
           pre_upload_report << "file(s)"
           puts pre_upload_report.join(' ')
           to_upload.each do |f|
-            upload_file(f, s3, s3_bucket_name, site_dir)
+            upload_file(f, s3, s3_bucket_name, site_dir, s3_rrs)
           end
         end
         [new_files.length, changed_files.length, changed_files]
       end
 
-      def self.upload_file(file, s3, s3_bucket_name, site_dir)
+      def self.upload_file(file, s3, s3_bucket_name, site_dir, s3_rrs)
         Retry.run_with_retry do
           mime_type = MIME::Types.type_for(file)
+          puts s3_rrs.to_s
           upload_succeeded = s3.buckets[s3_bucket_name].objects[file].write(
             File.read("#{site_dir}/#{file}"),
-            :content_type => mime_type.first
+            :content_type => mime_type.first ,
+            :reduced_redundancy => s3_rrs ,
           )
           if upload_succeeded
             puts("Upload #{file}: Success!")
