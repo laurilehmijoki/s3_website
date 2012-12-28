@@ -6,6 +6,7 @@ module Jekyll
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
+s3_reduced_redundancy: false
 cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       EOF
 

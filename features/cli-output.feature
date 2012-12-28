@@ -21,6 +21,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
+      s3_reduced_redundancy: false
       cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
       """
 
@@ -34,6 +35,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
+      s3_reduced_redundancy: false
       """
 
   Scenario: Run jekyll-s3 with a malformed configuration file
@@ -50,6 +52,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
+      s3_reduced_redundancy: false
       """
 
   Scenario: Run jekyll-s3 with a configuration file that does not contain a bucket
@@ -59,6 +62,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket:
+      s3_reduced_redundancy: false
       """
     When I run `jekyll-s3`
     Then the output should contain:
@@ -67,6 +71,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
+      s3_reduced_redundancy: false
       """
 
   Scenario: Run jekyll-s3
@@ -76,6 +81,7 @@ Feature: Command-line interface feedback
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
+      s3_reduced_redundancy: false
       """
     When I run `jekyll-s3`
     Then the output should contain:
