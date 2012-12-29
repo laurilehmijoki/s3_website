@@ -8,7 +8,8 @@ describe Jekyll::S3::Uploader do
                                 file_to_upload,
                                 create_content_type_verifying_s3(file_to_upload),
                                 'some_bucket_name',
-                                'features/support/test_site_dirs/my.blog.com/_site')
+                                'features/support/test_site_dirs/my.blog.com/_site',
+                                s3_rrs = false)
     end
 
     it 'adds the content type of the uploaded HTML file into the S3 object' do
@@ -17,7 +18,8 @@ describe Jekyll::S3::Uploader do
                                 file_to_upload,
                                 create_content_type_verifying_s3(file_to_upload),
                                 'some_bucket_name',
-                                'features/support/test_site_dirs/my.blog.com/_site')
+                                'features/support/test_site_dirs/my.blog.com/_site',
+                                s3_rrs = false)
     end
 
     def create_content_type_verifying_s3(file_to_upload)
@@ -28,7 +30,8 @@ describe Jekyll::S3::Uploader do
           s3_object.should_receive(:write).with(
             anything(),
             # Ensure that the write method is called with the correct content type:
-            :content_type => content_type
+            :content_type => content_type,
+            :reduced_redundancy => false
           )
           s3_object
         end
