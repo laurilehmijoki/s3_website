@@ -10,6 +10,7 @@ require 'cucumber/rspec/doubles'
 Before do
   @__aruba_original_paths = (ENV['PATH'] || '').split(File::PATH_SEPARATOR)
   ENV['PATH'] = ([File.expand_path('bin')] + @__aruba_original_paths).join(File::PATH_SEPARATOR)
+  @aruba_timeout_seconds = 5
 end
 
 After do

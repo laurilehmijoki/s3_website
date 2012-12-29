@@ -24,16 +24,28 @@ Deploy your jekyll site to S3.
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
-cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID (OPTIONAL)
+s3_reduced_redundancy: false
+cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID
 </pre>
 
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
 * [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
-* Run `jekyll-s3` again to upload your Jekyll site to S3
+
+(Settings `s3_reduced_redundancy` and `cloudfront_distribution_id` are
+optional. By default, `jekyll-s3` uses the Standard Storage, not the Reduced
+Redundancy Storage.)
 
 ## Deploy!
 
   * Run `jekyll-s3`. Done.
+
+## Reduced Redundancy
+
+You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy Storage:
+
+  * In `_jekyll_s3.yml`, set `s3_reduced_redundancy: true`
+  * All objects uploaded after this change will use the Reduced Redundancy Storage.
+  * If you want to change all of the files in the bucket, you can change them through the AWS console, or update the timestamp on the files before running `jekyll-s3` again
 
 ## How to use Cloudfront to deliver your blog
 
@@ -59,6 +71,10 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 `jekyll-s3`.
 
 ## Changelog
+
+### 2.1.0
+
+* Added support for S3 reduced redundancy storage
 
 ### 2.0.0
 
@@ -112,3 +128,4 @@ Contributors (in alphabetical order)
 * Chris Kelly
 * Chris Moos
 * Lauri Lehmijoki
+* Mason Turner
