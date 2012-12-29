@@ -69,8 +69,9 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 
 ## Changelog
 
-### 2.0.1
-* Added support for S3 reduced redundancy storage. Requires aws-sdk 1.8.0.
+### 2.1.0
+
+* Added support for S3 reduced redundancy storage
 
 ### 2.0.0
 
