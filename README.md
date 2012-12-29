@@ -76,6 +76,7 @@ the bucket in the US Standard region.
 ## Development
 
   * Install bundler and run `bundle install`
+  * Run all tests with `rake`
   * Run the integration tests by running `bundle exec cucumber`
   * Run the unit tests by running `bundle exec rspec spec/lib/*.rb`
 
