@@ -24,16 +24,10 @@ Deploy your jekyll site to S3.
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
-s3_reduced_redundancy: false
-cloudfront_distribution_id: YOUR_CLOUDFRONT_DIST_ID
 </pre>
 
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
 * [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
-
-(Settings `s3_reduced_redundancy` and `cloudfront_distribution_id` are
-optional. By default, `jekyll-s3` uses the Standard Storage, not the Reduced
-Redundancy Storage.)
 
 ## Deploy!
 
