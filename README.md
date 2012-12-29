@@ -52,12 +52,10 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 ### The headless mode
 
-Jekyll-s3 has a headless mode, in which the interactions with a user are
-disabled.
+Jekyll-s3 has a headless mode, where human interactions are disabled.
 
-In the headless mode, Jekyll-s3 will automatically delete the files on the S3
-bucket that are not on your local computer. (You can use the delete feature to
-unpublish blog posts.)
+In the headless mode, `jekyll-s3` will automatically delete the files on the S3
+bucket that are not on your local computer. 
 
 Enable the headless mode by adding the `--headless` or `-h` argument after
 `jekyll-s3`.
