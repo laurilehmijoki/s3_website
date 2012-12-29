@@ -25,7 +25,6 @@ s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
 </pre>
-
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
 * [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
 
