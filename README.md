@@ -33,7 +33,9 @@ s3_bucket: your.blog.bucket.com
 
   * Run `jekyll-s3`. Done.
 
-## Reduced Redundancy
+## Additional features
+
+### Reduced Redundancy
 
 You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy Storage:
 
@@ -41,7 +43,7 @@ You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy S
   * All objects uploaded after this change will use the Reduced Redundancy Storage.
   * If you want to change all of the files in the bucket, you can change them through the AWS console, or update the timestamp on the files before running `jekyll-s3` again
 
-## How to use Cloudfront to deliver your blog
+### How to use Cloudfront to deliver your blog
 
 It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
@@ -52,7 +54,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
   * Run `jekyll-s3` to deploy your site to S3 and invalidate the Cloudfront
     distribution
 
-## The headless mode
+### The headless mode
 
 Jekyll-s3 has a headless mode, in which the interactions with a user are
 disabled.
