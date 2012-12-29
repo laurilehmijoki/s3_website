@@ -16,7 +16,7 @@ Deploy your jekyll site to S3.
 
     gem install jekyll-s3
 
-## Setup
+## Usage
 
 * Go to your jekyll site directory
 * Run `jekyll-s3`. It generates a configuration file called `_jekyll_s3.yml` that looks like this:
@@ -27,10 +27,7 @@ s3_bucket: your.blog.bucket.com
 </pre>
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
 * [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
-
-## Deploy!
-
-  * Run `jekyll-s3`. Done.
+* Run `jekyll-s3` to push your Jekyll blog to S3
 
 ## Additional features
 
