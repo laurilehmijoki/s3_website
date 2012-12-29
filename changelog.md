@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+* Remove optional settings from the generated `_jekyll_s3.yml` file
+
 ## 2.1.0
 
 * Added support for S3 reduced redundancy storage
