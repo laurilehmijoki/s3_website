@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Jekyll::S3::Uploader do
   describe 'reduced redundancy setting' do
+    let(:config) {
+      { 's3_reduced_redundancy' => true }
+    }
+
     it 'allows storing a file under the Reduced Redundancy Storage' do
       file_to_upload = 'index.html'
       s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
@@ -14,13 +18,16 @@ describe Jekyll::S3::Uploader do
       Jekyll::S3::Uploader.send(:upload_file,
                                 file_to_upload,
                                 s3_client,
-                                'some_bucket_name',
-                                'features/support/test_site_dirs/my.blog.com/_site',
-                                s3_rrs = true)
+                                config,
+                                'features/support/test_site_dirs/my.blog.com/_site')
     end
   end
 
   describe 'content type resolving' do
+    let(:config) {
+      { 's3_reduced_redundancy' => false }
+    }
+
     it 'adds the content type of the uploaded CSS file into the S3 object' do
       file_to_upload = 'css/styles.css'
       s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
@@ -33,9 +40,8 @@ describe Jekyll::S3::Uploader do
       Jekyll::S3::Uploader.send(:upload_file,
                                 file_to_upload,
                                 s3_client,
-                                'some_bucket_name',
-                                'features/support/test_site_dirs/my.blog.com/_site',
-                                s3_rrs = false)
+                                config,
+                                'features/support/test_site_dirs/my.blog.com/_site')
     end
 
     it 'adds the content type of the uploaded HTML file into the S3 object' do
@@ -50,9 +56,8 @@ describe Jekyll::S3::Uploader do
       Jekyll::S3::Uploader.send(:upload_file,
                                 file_to_upload,
                                 s3_client,
-                                'some_bucket_name',
-                                'features/support/test_site_dirs/my.blog.com/_site',
-                                s3_rrs = false)
+                                config,
+                                'features/support/test_site_dirs/my.blog.com/_site')
     end
   end
 
