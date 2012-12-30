@@ -67,9 +67,9 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 ### Only S3 buckets in the US Standard region work
 
 Jekyll-s3 supports only S3 buckets that are in the US Standard region. If your
-bucket is currently on some other region, you can set a non-existing
-bucket in `_jekyll_s3.yml` and then run `jekyll-s3`. Jekyll-s3 will then create
-the bucket in the US Standard region.
+bucket is currently on some other region, you can set a non-existing bucket in
+`_jekyll_s3.yml` and then run `configure-s3-website --config-file
+_jekyll_s3.yml`. This creates you a bucket in the US Standard region.
 
 ## Development
 
