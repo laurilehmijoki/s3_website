@@ -1,8 +1,7 @@
 # jekyll-s3
 
-[![Build
-Status](https://secure.travis-ci.org/laurilehmijoki/jekyll-s3.png)]
-(http://travis-ci.org/laurilehmijoki/jekyll-s3)
+[![Build Status](https://secure.travis-ci.org/laurilehmijoki/jekyll-s3.png)] (http://travis-ci.org/laurilehmijoki/jekyll-s3)
+[![Gem Version](https://fury-badge.herokuapp.com/rb/jekyll-s3.png)](http://badge.fury.io/rb/jekyll-s3)
 
 Deploy your jekyll site to S3.
 
