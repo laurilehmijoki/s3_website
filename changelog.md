@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.2
+
+* Remove a superfluous comma from uploader.rb. The comma might have caused
+  problems for some Ruby 1.8.7 users.
+
 ## 2.1.1
 
 * Remove optional settings from the generated `_jekyll_s3.yml` file
