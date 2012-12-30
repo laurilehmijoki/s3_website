@@ -55,8 +55,8 @@ module Jekyll
           mime_type = MIME::Types.type_for(file)
           upload_succeeded = s3.buckets[config['s3_bucket']].objects[file].write(
             File.read("#{site_dir}/#{file}"),
-            :content_type => mime_type.first ,
-            :reduced_redundancy => config['s3_reduced_redundancy'],
+            :content_type => mime_type.first,
+            :reduced_redundancy => config['s3_reduced_redundancy']
           )
           if upload_succeeded
             puts("Upload #{file}: Success!")
