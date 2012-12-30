@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.0
+
+* Automatically configure the S3 bucket to function as a website.
+
+  This makes it easier to start hosting a Jekyll site on S3. It removes the need
+  to manually configure the S3 bucket in the Amazon AWS console.
+
 ## 2.1.2
 
 * Remove a superfluous comma from uploader.rb. The comma might have caused

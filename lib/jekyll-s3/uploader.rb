@@ -7,8 +7,6 @@ module Jekyll
         s3 = AWS::S3.new(:access_key_id => config['s3_id'],
                          :secret_access_key => config['s3_secret'])
 
-        create_bucket_if_needed(s3, config['s3_bucket'])
-
         new_files_count, changed_files_count, changed_files = upload_files(
           s3, config, site_dir
         )
@@ -21,13 +19,6 @@ module Jekyll
       end
 
       private
-
-      def self.create_bucket_if_needed(s3, s3_bucket_name)
-        unless s3.buckets.map(&:name).include?(s3_bucket_name)
-          puts("Creating bucket #{s3_bucket_name}")
-          s3.buckets.create(s3_bucket_name)
-        end
-      end
 
       def self.upload_files(s3, config, site_dir)
         changed_files, new_files = DiffHelper.resolve_files_to_upload(

@@ -25,8 +25,12 @@ s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
 </pre>
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
-* [Configure your S3 bucket to function like a website](http://docs.amazonwebservices.com/AmazonS3/latest/dev/HostingWebsiteOnS3Setup.html)
-* Run `jekyll-s3` to push your Jekyll blog to S3
+* Run `configure-s3-website --config-file _jekyll_s3.yml`
+
+  This will configure your bucket to function as an S3 website. If the bucket
+  does not exist, `configure-s3-website` will create it for you.
+
+* Run `jekyll-s3` to push your Jekyll blog to S3. Congratulations! You are live.
 
 ## Additional features
 
@@ -54,7 +58,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 Jekyll-s3 has a headless mode, where human interactions are disabled.
 
 In the headless mode, `jekyll-s3` will automatically delete the files on the S3
-bucket that are not on your local computer. 
+bucket that are not on your local computer.
 
 Enable the headless mode by adding the `--headless` or `-h` argument after
 `jekyll-s3`.
