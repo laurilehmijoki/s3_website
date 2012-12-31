@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.2
+
+* Remove debug code that wrote the list of site files into /tmp/test.txt
+
 ## 2.2.1
 
 * Upload also dot files
