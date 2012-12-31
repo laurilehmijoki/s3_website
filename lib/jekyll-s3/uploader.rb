@@ -93,7 +93,7 @@ module Jekyll
       end
 
       def self.load_all_local_files(site_dir)
-        Dir[site_dir + '/**/*'].
+        Dir[site_dir + '/**/{*,.*}'].
           delete_if { |f| File.directory?(f) }.
           map { |f| f.gsub(site_dir + '/', '') }
       end
