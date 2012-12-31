@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.1
+
+* Upload also dot files
+  ([#16](https://github.com/laurilehmijoki/jekyll-s3/pull/16))
+
 ## 2.2.0
 
 * Automatically configure the S3 bucket to function as a website.
