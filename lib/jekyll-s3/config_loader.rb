@@ -33,7 +33,6 @@ s3_bucket: your.blog.bucket.com
 
       def self.create_template_configuration_file(site_dir)
         File.open(get_configuration_file(site_dir), 'w') { |f|
-          `ls #{get_configuration_file(site_dir)} >> /tmp/test.txt`
           f.write(CONFIGURATION_FILE_TEMPLATE)
         }
       end
