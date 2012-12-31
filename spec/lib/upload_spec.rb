@@ -85,4 +85,14 @@ describe Jekyll::S3::Uploader do
       s3
     end
   end
+
+  context '#load_all_local_files' do
+    describe 'dotfile support' do
+      it 'loads also dotfiles' do
+        files = Jekyll::S3::Uploader.send(:load_all_local_files,
+                                        'spec/sample_files/hyde_site/_site')
+        files.should eq(['index.html', '.vimrc'])
+      end
+    end
+  end
 end
