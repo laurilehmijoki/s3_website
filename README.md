@@ -9,7 +9,7 @@ Deploy your jekyll site to S3.
 
 * Upload your site to AWS S3
 * Help you use AWS Cloudfront to distribute your Jekyll blog
-* Create the S3 bucket for you
+* Create an S3 website for you
 
 ## Install
 
