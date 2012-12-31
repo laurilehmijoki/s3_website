@@ -92,3 +92,4 @@ Contributors (in alphabetical order)
 * Chris Moos
 * Lauri Lehmijoki
 * Mason Turner
+* stanislas
