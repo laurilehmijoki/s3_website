@@ -11,12 +11,33 @@ Feature: Invalidate the Cloudfront distribution
     When my Jekyll site is in "features/support/test_site_dirs/cdn-powered.blog.fi"
     And the configuration contains the Cloudfront distribution id
     Then jekyll-s3 will push my blog to S3 and invalidate the Cloudfront distribution
-    And report that it uploaded 2 new and 0 changed files into S3
+    And the output should equal
+      """
+      Deploying _site/* to jekyll-s3-test.net
+      Uploading 2 new file(s)
+      Upload css/styles.css: Success!
+      Upload index.html: Success!
+      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Invalidating Cloudfront items...
+        /
+      succeeded
+
+      """
 
   @s3-and-cloudfront-when-updating-a-file
   Scenario: Update a blog entry and then upload
     When my Jekyll site is in "features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi"
     And the configuration contains the Cloudfront distribution id
     Then jekyll-s3 will push my blog to S3 and invalidate the Cloudfront distribution
-    And report that it uploaded 0 new and 1 changed files into S3
-    And report that it invalidated only the changed file on Cloudfront
+    And the output should equal
+      """
+      Deploying _site/* to jekyll-s3-test.net
+      Uploading 1 changed file(s)
+      Upload index.html: Success!
+      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Invalidating Cloudfront items...
+        /index.html
+        /
+      succeeded
+
+      """

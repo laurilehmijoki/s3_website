@@ -25,19 +25,30 @@ Then /^report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
   raise unless @amount_of_deleted_files == amount_of_deleted_files.to_i
 end
 
-Then /^report that it invalidated only the changed file on Cloudfront$/ do
-  # The Cloudfront root object is always invalidated;
-  # it counts as an invalidation.
-  root_object_count = 1
-  changed_files = 1
-  raise unless @amount_of_invalidated_items == root_object_count + changed_files
+Then /^the output should equal$/ do |expected_console_output|
+  @console_output.should eq(expected_console_output)
 end
 
 def do_run
-  in_headless_mode = true
-  result = Jekyll::S3::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
-  @amount_of_new_files = result[:new_files_count]
-  @amount_of_changed_files = result[:changed_files_count]
-  @amount_of_deleted_files = result[:deleted_files_count]
-  @amount_of_invalidated_items = result[:invalidated_items_count]
+  @console_output = capture_stdout {
+    in_headless_mode = true
+    result = Jekyll::S3::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
+    @amount_of_new_files = result[:new_files_count]
+    @amount_of_changed_files = result[:changed_files_count]
+    @amount_of_deleted_files = result[:deleted_files_count]
+    @amount_of_invalidated_items = result[:invalidated_items_count]
+  }
+end
+
+module Kernel
+  require 'stringio'
+
+  def capture_stdout
+    out = StringIO.new
+    $stdout = out
+    yield
+    out.string
+  ensure
+    $stdout = STDOUT
+  end
 end
