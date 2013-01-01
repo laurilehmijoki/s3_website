@@ -18,11 +18,7 @@ end
 def do_run
   @console_output = capture_stdout {
     in_headless_mode = true
-    result = Jekyll::S3::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
-    @amount_of_new_files = result[:new_files_count]
-    @amount_of_changed_files = result[:changed_files_count]
-    @amount_of_deleted_files = result[:deleted_files_count]
-    @amount_of_invalidated_items = result[:invalidated_items_count]
+    Jekyll::S3::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
   }
 end
 
