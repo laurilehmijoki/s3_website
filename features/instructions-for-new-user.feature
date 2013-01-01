@@ -1,4 +1,4 @@
-Feature: Command-line interface feedback
+Feature: Instructions for a new user
 
   Scenario: Run jekyll-s3 in the wrong directory
     When I run `jekyll-s3`
