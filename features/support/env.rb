@@ -18,10 +18,6 @@ After do
 end
 # End of following from 'aruba/cucumber'
 
-Then /^the file "([^"]*)" should contain:$/ do |file, exact_content|
-  check_file_content(file, exact_content, true)
-end
-
 # Disable colored gem. Its difficult to test output when it contains colored strings.
 module Colored
   def colorize(string, options = {})
