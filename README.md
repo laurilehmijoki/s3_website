@@ -90,7 +90,8 @@ We (users and developers of Jekyll-s3) welcome patches, pull requests and
 ideas for improvement.
 
 When sending pull requests, please accompany them with tests. Favor BDD-style
-in test descriptions. Use VCR-backed integration tests where possible.
+in test descriptions. Use VCR-backed integration tests where possible. For
+reference, you can look at the existing Jekyll-s3 tests.
 
 If you are not sure how to test your pull request, you can ask the main
 developer (currently Lauri Lehmijoki) to supplement the request with tests.
