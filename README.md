@@ -96,7 +96,7 @@ reference, you can look at the existing Jekyll-s3 tests.
 If you are not sure how to test your pull request, you can ask the main
 developer (currently Lauri Lehmijoki) to supplement the request with tests.
 However, by including proper tests, you increase the chances of your pull
-request being incorporated in future releases.
+request being incorporated into future releases.
 
 ## License
 
