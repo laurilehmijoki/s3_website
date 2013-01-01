@@ -11,16 +11,6 @@ Then /^jekyll-s(\d+) will push my blog to S(\d+) and invalidate the Cloudfront d
   do_run
 end
 
-Then /^report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
-  |new_count, changed_count|
-  raise unless @amount_of_new_files == new_count.to_i
-  raise unless @amount_of_changed_files == changed_count.to_i
-end
-
-Then /^report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
-  raise unless @amount_of_deleted_files == amount_of_deleted_files.to_i
-end
-
 Then /^the output should equal$/ do |expected_console_output|
   @console_output.should eq(expected_console_output)
 end
