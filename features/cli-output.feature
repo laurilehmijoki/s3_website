@@ -67,17 +67,3 @@ Feature: Command-line interface feedback
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket: your.blog.bucket.com
       """
-
-  Scenario: Run jekyll-s3
-    Given a directory named "_site"
-    And a file named "_jekyll_s3.yml" with:
-      """
-      s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
-      s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
-      s3_bucket: your.blog.bucket.com
-      """
-    When I run `jekyll-s3`
-    Then the output should contain:
-      """
-      Deploying _site/* to your.blog.bucket.com
-      """
