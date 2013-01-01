@@ -6,10 +6,6 @@ When /^jekyll-s3 will push my blog to S3$/ do
   do_run
 end
 
-When /^the configuration contains the Cloudfront distribution id$/ do
-  # Just here for readability
-end
-
 Then /^jekyll-s(\d+) will push my blog to S(\d+) and invalidate the Cloudfront distribution$/ do
   |arg1, arg2|
   do_run

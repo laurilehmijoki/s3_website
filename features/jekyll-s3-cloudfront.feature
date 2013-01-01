@@ -9,7 +9,6 @@ Feature: Invalidate the Cloudfront distribution
   @s3-and-cloudfront
   Scenario: Upload to S3 and then invalidate the Cloudfront distribution
     When my Jekyll site is in "features/support/test_site_dirs/cdn-powered.blog.fi"
-    And the configuration contains the Cloudfront distribution id
     Then jekyll-s3 will push my blog to S3 and invalidate the Cloudfront distribution
     And the output should equal
       """
@@ -27,7 +26,6 @@ Feature: Invalidate the Cloudfront distribution
   @s3-and-cloudfront-when-updating-a-file
   Scenario: Update a blog entry and then upload
     When my Jekyll site is in "features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi"
-    And the configuration contains the Cloudfront distribution id
     Then jekyll-s3 will push my blog to S3 and invalidate the Cloudfront distribution
     And the output should equal
       """
