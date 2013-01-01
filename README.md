@@ -84,6 +84,19 @@ Jekyll-s3 uses [Semantic Versioning](http://semver.org).
   * Run the integration tests by running `bundle exec cucumber`
   * Run the unit tests by running `bundle exec rspec spec/lib/*.rb`
 
+### Contributing
+
+We (users and developers of Jekyll-s3) welcome patches, pull requests and
+ideas for improvement.
+
+When sending pull requests, please accompany them with tests. Favor BDD-style
+in test descriptions. Use VCR-backed integration tests where possible.
+
+If you are not sure how to test your pull request, you can ask the main
+developer (currently Lauri Lehmijoki) to supplement the request with tests.
+However, by including proper tests, you increase the chances of your pull
+request being incorporated in future releases.
+
 ## License
 
 MIT
