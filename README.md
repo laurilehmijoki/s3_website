@@ -89,7 +89,7 @@ Jekyll-s3 uses [Semantic Versioning](http://semver.org).
 We (users and developers of Jekyll-s3) welcome patches, pull requests and
 ideas for improvement.
 
-When sending pull requests, please accompany them with tests. Favor BDD-style
+When sending pull requests, please accompany them with tests. Favor BDD style
 in test descriptions. Use VCR-backed integration tests where possible. For
 reference, you can look at the existing Jekyll-s3 tests.
 
