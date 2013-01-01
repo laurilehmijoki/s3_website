@@ -73,6 +73,12 @@ _jekyll_s3.yml`. This creates you a bucket in the US Standard region.
 
 ## Development
 
+### Versioning
+
+Jekyll-s3 uses [Semantic Versioning](http://semver.org).
+
+### Tests
+
   * Install bundler and run `bundle install`
   * Run all tests by invoking `rake test`
   * Run the integration tests by running `bundle exec cucumber`
