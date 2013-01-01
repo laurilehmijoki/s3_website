@@ -8,5 +8,11 @@ Feature: remove a Jekyll blog post from S3
   Scenario: The user deletes a blog post
     When my Jekyll site is in "features/support/test_site_dirs/unpublish-a-post.com"
     Then jekyll-s3 will push my blog to S3
-    And report that it uploaded 0 new and 0 changed files into S3
-    And report that it deleted 1 file from S3
+    And the output should equal
+      """
+      Deploying _site/* to jekyll-s3-test.net
+      No new or changed files to upload
+      Delete index.html: Success!
+      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+
+      """
