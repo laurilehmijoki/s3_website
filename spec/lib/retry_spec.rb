@@ -11,7 +11,7 @@ describe Jekyll::S3::Retry do
         }
       rescue
       end
-      retries.should be (4)
+      retries.should be(4)
     end
 
     it "throws an error if all retries fail" do
@@ -28,7 +28,7 @@ describe Jekyll::S3::Retry do
         retries += 1
         raise Exception if retries < 2
       }
-      retries.should be (2)
+      retries.should be(2)
     end
   end
 end
