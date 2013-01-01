@@ -7,8 +7,6 @@ Feature: Instructions for a new user
       I can't find any directory called _site. Are you in the right directory?
       """
 
-  # For some reason this scenario fails on Travis but on on localhost
-  @skip-on-travis
   Scenario: Run jekyll-s3 for the first time
     Given a directory named "_site"
     When I run `jekyll-s3`
