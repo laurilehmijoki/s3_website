@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.3
+
+* Allow bugfixes for transitive dependencies *filey-diff*,
+  *simple-cloudfront-invalidator* and *configure-s3-website*, since they are
+  semantically versioned
+
 ## 2.2.2
 
 * Remove debug code that wrote the list of site files into /tmp/test.txt
