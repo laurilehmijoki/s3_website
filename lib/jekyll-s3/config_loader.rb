@@ -24,10 +24,6 @@ s3_bucket: your.blog.bucket.com
       # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
       def self.load_configuration(site_dir)
         config = load_yaml_file_and_validate site_dir
-        s3_id = config['s3_id']
-        s3_secret = config['s3_secret']
-        s3_bucket = config['s3_bucket']
-        cloudfront_distribution_id = config['cloudfront_distribution_id']
         return config
       end
 
