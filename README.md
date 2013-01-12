@@ -23,7 +23,6 @@ Deploy your jekyll site to S3.
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
-s3_endpoint: YOUR_ENDPOINT
 </pre>
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
 * Run `configure-s3-website --config-file _jekyll_s3.yml` This will configure
@@ -33,6 +32,20 @@ s3_endpoint: YOUR_ENDPOINT
 * Run `jekyll-s3` to push your Jekyll blog to S3. Congratulations! You are live.
 
 ## Additional features
+
+### Using non-standard AWS regions
+
+By default, `jekyll-s3` uses the US Standard Region. You can upload your Jekyll
+site to other regions by adding the setting `s3_endpoint` into the
+`_jekyll_s3.yml` file.
+
+For example, the following line in `_jekyll_s3.yml` will instruct `jekyll_s3` to
+push your site into the Tokyo region:
+
+    s3_endpoint: ap-northeast-1
+
+The valid `s3_endpoint` values consist of the [S3 location constraint
+values](http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region).
 
 ### Reduced Redundancy
 

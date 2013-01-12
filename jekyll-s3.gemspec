@@ -20,7 +20,7 @@ distribution, making it easy to deliver your blog via the CDN.}
   s.add_dependency 'simple-cloudfront-invalidator', '~> 1.0'
   s.add_dependency 'erubis', '~> 2.7.0'
   s.add_dependency 'mime-types', '= 1.19'
-  s.add_dependency 'configure-s3-website', '~> 1.0'
+  s.add_dependency 'configure-s3-website', '~> 1.1'
 
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rspec-expectations'

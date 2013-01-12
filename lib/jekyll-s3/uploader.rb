@@ -6,7 +6,7 @@ module Jekyll
 
         s3 = AWS::S3.new(:access_key_id => config['s3_id'],
                          :secret_access_key => config['s3_secret'],
-                         :s3_endpoint => config['s3_endpoint'])
+                         :s3_endpoint => Endpoint.new(config['s3_endpoint']).hostname )
 
         new_files_count, changed_files_count, changed_files = upload_files(
           s3, config, site_dir
@@ -24,10 +24,10 @@ module Jekyll
 
       def self.print_done_report(config)
         bucket_name = config['s3_bucket']
-        s3_end_point = "us-east-1"
-        web_site_host_name =
-          "%s.s3-website-%s.amazonaws.com" % [bucket_name, s3_end_point]
-        puts "Done! Go visit: http://#{web_site_host_name}/index.html"
+        website_hostname_suffix = Endpoint.new(config['s3_endpoint']).website_hostname
+        website_hostname_with_bucket =
+          "%s.%s" % [bucket_name, website_hostname_suffix]
+        puts "Done! Go visit: http://#{website_hostname_with_bucket}/index.html"
       end
 
       def self.upload_files(s3, config, site_dir)
@@ -99,5 +99,38 @@ module Jekyll
           map { |f| f.gsub(site_dir + '/', '') }
       end
     end
+  end
+end
+
+private
+
+module Jekyll
+  module S3
+    class Endpoint
+      attr_reader :region, :location_constraint, :hostname, :website_hostname
+
+      def initialize(location_constraint)
+        raise "Invalid S3 location constraint #{location_constraint}" unless
+          location_constraints.has_key?location_constraint
+        @region = location_constraints.fetch(location_constraint)[:region]
+        @hostname = location_constraints.fetch(location_constraint)[:endpoint]
+        @website_hostname = location_constraints.fetch(location_constraint)[:website_hostname]
+        @location_constraint = location_constraint
+      end
+
+      # http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
+      def location_constraints
+        {
+          'us-east-1'      => { :region => 'US Standard',                   :website_hostname => 's3-website-us-east-1.amazonaws.com',      :endpoint => 's3.amazonaws.com' },
+          'us-west-2'      => { :region => 'US West (Oregon)',              :website_hostname => 's3-website-us-west-2.amazonaws.com',      :endpoint => 's3-us-west-2.amazonaws.com' },
+          'us-west-1'      => { :region => 'US West (Northern California)', :website_hostname => 's3-website-us-west-1.amazonaws.com',      :endpoint => 's3-us-west-1.amazonaws.com' },
+          'EU'             => { :region => 'EU (Ireland)',                  :website_hostname => 's3-website-eu-west-1.amazonaws.com',      :endpoint => 's3-eu-west-1.amazonaws.com' },
+          'ap-southeast-1' => { :region => 'Asia Pacific (Singapore)',      :website_hostname => 's3-website-ap-southeast-1.amazonaws.com', :endpoint => 's3-ap-southeast-1.amazonaws.com' },
+          'ap-southeast-2' => { :region => 'Asia Pacific (Sydney)',         :website_hostname => 's3-website-ap-southeast-2.amazonaws.com', :endpoint => 's3-ap-southeast-2.amazonaws.com' },
+          'ap-northeast-1' => { :region => 'Asia Pacific (Tokyo)',          :website_hostname => 's3-website-ap-northeast-1.amazonaws.com', :endpoint => 's3-ap-northeast-1.amazonaws.com' },
+          'sa-east-1'      => { :region => 'South America (Sao Paulo)',     :website_hostname => 's3-website-sa-east-1.amazonaws.com',      :endpoint => 's3-sa-east-1.amazonaws.com' }
+        }
+      end
+  end
   end
 end
