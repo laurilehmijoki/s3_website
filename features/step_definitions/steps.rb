@@ -17,6 +17,10 @@ Then /^the output should equal$/ do |expected_console_output|
   @console_output.should eq(expected_console_output)
 end
 
+Then /^the output should contain$/ do |expected_console_output|
+  @console_output.should include(expected_console_output)
+end
+
 Then /^report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
   |new_count, changed_count|
   @amount_of_new_files.should == new_count.to_i

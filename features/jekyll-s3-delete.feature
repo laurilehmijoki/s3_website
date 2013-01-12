@@ -13,6 +13,6 @@ Feature: remove a Jekyll blog post from S3
       Deploying _site/* to jekyll-s3-test.net
       No new or changed files to upload
       Delete index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """

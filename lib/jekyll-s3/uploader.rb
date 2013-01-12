@@ -14,11 +14,20 @@ module Jekyll
         deleted_files_count = remove_superfluous_files(
           s3, config['s3_bucket'], site_dir, in_headless_mode)
 
-        puts "Done! Go visit: http://#{config['s3_bucket']}.s3.amazonaws.com/index.html"
+        print_done_report config
+
         [new_files_count, changed_files_count, deleted_files_count, changed_files]
       end
 
       private
+
+      def self.print_done_report(config)
+        bucket_name = config['s3_bucket']
+        s3_end_point = "us-east-1"
+        web_site_host_name =
+          "%s.s3-website-%s.amazonaws.com" % [bucket_name, s3_end_point]
+        puts "Done! Go visit: http://#{web_site_host_name}/index.html"
+      end
 
       def self.upload_files(s3, config, site_dir)
         changed_files, new_files = DiffHelper.resolve_files_to_upload(

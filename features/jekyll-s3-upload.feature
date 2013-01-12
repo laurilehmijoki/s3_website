@@ -14,7 +14,7 @@ Feature: upload Jekyll site to S3
       Uploading 2 new file(s)
       Upload css/styles.css: Success!
       Upload index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
 
@@ -28,7 +28,7 @@ Feature: upload Jekyll site to S3
       Uploading 1 new and 1 changed file(s)
       Upload css/styles.css: Success!
       Upload index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
 
@@ -41,7 +41,7 @@ Feature: upload Jekyll site to S3
       Deploying _site/* to jekyll-s3-test.net
       Uploading 1 changed file(s)
       Upload index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
 
@@ -53,6 +53,6 @@ Feature: upload Jekyll site to S3
       """
       Deploying _site/* to jekyll-s3-test.net
       No new or changed files to upload
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """

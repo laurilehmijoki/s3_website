@@ -16,7 +16,7 @@ Feature: Invalidate the Cloudfront distribution
       Uploading 2 new file(s)
       Upload css/styles.css: Success!
       Upload index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
       Invalidating Cloudfront items...
         /
       succeeded
@@ -32,7 +32,7 @@ Feature: Invalidate the Cloudfront distribution
       Deploying _site/* to jekyll-s3-test.net
       Uploading 1 changed file(s)
       Upload index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3.amazonaws.com/index.html
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
       Invalidating Cloudfront items...
         /index.html
         /
