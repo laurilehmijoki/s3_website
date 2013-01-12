@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.4
+
+* Print the web site URL instead of the bucket URL
+  [#22](https://github.com/laurilehmijoki/jekyll-s3/issues/22).
+
 ## 2.2.3
 
 * Allow bugfixes for transitive dependencies *filey-diff*,
