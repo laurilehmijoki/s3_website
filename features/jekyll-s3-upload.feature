@@ -18,6 +18,16 @@ Feature: upload Jekyll site to S3
 
       """
 
+  @new-files-for-sydney
+  @wip
+  Scenario: Push a new Jekyll site to an S3 bucket in Sydney
+    When my Jekyll site is in "features/support/test_site_dirs/my.sydney.blog.au"
+    Then jekyll-s3 will push my blog to S3
+    And the output should contain
+      """
+      Done! Go visit: http://jekyll-s3-test.net.s3-website-ap-southeast-2.amazonaws.com/index.html
+      """
+
   @new-and-changed-files
   Scenario: Upload a new blog post and change an old post
     When my Jekyll site is in "features/support/test_site_dirs/new-and-changed-files.com"
