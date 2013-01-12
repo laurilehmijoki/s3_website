@@ -5,7 +5,8 @@ module Jekyll
         puts "Deploying _site/* to #{config['s3_bucket']}"
 
         s3 = AWS::S3.new(:access_key_id => config['s3_id'],
-                         :secret_access_key => config['s3_secret'])
+                         :secret_access_key => config['s3_secret'],
+                         :s3_endpoint => Endpoint.new(config['s3_endpoint']).hostname )
 
         new_files_count, changed_files_count, changed_files = upload_files(
           s3, config, site_dir
@@ -23,10 +24,10 @@ module Jekyll
 
       def self.print_done_report(config)
         bucket_name = config['s3_bucket']
-        s3_end_point = "us-east-1"
-        web_site_host_name =
-          "%s.s3-website-%s.amazonaws.com" % [bucket_name, s3_end_point]
-        puts "Done! Go visit: http://#{web_site_host_name}/index.html"
+        website_hostname_suffix = Endpoint.new(config['s3_endpoint']).website_hostname
+        website_hostname_with_bucket =
+          "%s.%s" % [bucket_name, website_hostname_suffix]
+        puts "Done! Go visit: http://#{website_hostname_with_bucket}/index.html"
       end
 
       def self.upload_files(s3, config, site_dir)

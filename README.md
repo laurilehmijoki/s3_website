@@ -33,6 +33,20 @@ s3_bucket: your.blog.bucket.com
 
 ## Additional features
 
+### Using non-standard AWS regions
+
+By default, `jekyll-s3` uses the US Standard Region. You can upload your Jekyll
+site to other regions by adding the setting `s3_endpoint` into the
+`_jekyll_s3.yml` file.
+
+For example, the following line in `_jekyll_s3.yml` will instruct `jekyll_s3` to
+push your site into the Tokyo region:
+
+    s3_endpoint: ap-northeast-1
+
+The valid `s3_endpoint` values consist of the [S3 location constraint
+values](http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region).
+
 ### Reduced Redundancy
 
 You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy Storage:
