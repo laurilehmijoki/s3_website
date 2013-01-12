@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.3.0
+
+* Add support for non-standard AWS regions
+
+  You can now define the region with the `s3_endpoint` in the configuration
+  file.
+
 ## 2.2.4
 
 * Print the web site URL instead of the bucket URL
