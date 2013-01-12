@@ -5,7 +5,8 @@ module Jekyll
         puts "Deploying _site/* to #{config['s3_bucket']}"
 
         s3 = AWS::S3.new(:access_key_id => config['s3_id'],
-                         :secret_access_key => config['s3_secret'])
+                         :secret_access_key => config['s3_secret'],
+                         :s3_endpoint => config['s3_endpoint'])
 
         new_files_count, changed_files_count, changed_files = upload_files(
           s3, config, site_dir
