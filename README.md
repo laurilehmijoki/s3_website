@@ -33,6 +33,25 @@ s3_bucket: your.blog.bucket.com
 
 ## Additional features
 
+### Cache Control
+
+You can use the `max_age` configuration option to enable more effective browser
+caching of your static assets. There are two possible ways to use the option:
+you can specify a single age (in seconds) like so:
+
+```yaml
+max_age: 300
+```
+
+Or you can specify a hash of globs, and all files matching those globs will have
+the specified age:
+
+```yaml
+max_age:
+  "assets/*": 6000
+  "*": 300
+```
+
 ### Using non-standard AWS regions
 
 By default, `jekyll-s3` uses the US Standard Region. You can upload your Jekyll
@@ -42,7 +61,9 @@ site to other regions by adding the setting `s3_endpoint` into the
 For example, the following line in `_jekyll_s3.yml` will instruct `jekyll_s3` to
 push your site into the Tokyo region:
 
-    s3_endpoint: ap-northeast-1
+```yaml
+s3_endpoint: ap-northeast-1
+```
 
 The valid `s3_endpoint` values consist of the [S3 location constraint
 values](http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region).
