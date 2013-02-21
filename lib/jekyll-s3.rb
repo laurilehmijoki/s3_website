@@ -8,6 +8,7 @@ require 'mime/types'
 
 module Jekyll
   module S3
+  	DEFAULT_GZIP_EXTENSIONS = %w(.html .css .js .svg .txt)
   end
 end
 

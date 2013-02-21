@@ -58,6 +58,15 @@ describe Jekyll::S3::Upload do
     end
   end
 
+  describe 'gzip compression' do
+    let(:config){
+      {
+        's3_reduced_redundancy' => false,
+        'gzip' => true
+      }
+    }
+  end
+
   def create_verifying_s3_client(file_to_upload, &block)
     def create_objects(file_to_upload, &block)
       def create_html_s3_object(file_to_upload, &block)
