@@ -53,13 +53,9 @@ module Jekyll
 
       def self.upload_file(file, s3, config, site_dir)
         Retry.run_with_retry do
-          mime_type = MIME::Types.type_for(file)
-          upload_succeeded = s3.buckets[config['s3_bucket']].objects[file].write(
-            File.read("#{site_dir}/#{file}"),
-            :content_type => mime_type.first,
-            :reduced_redundancy => config['s3_reduced_redundancy']
-          )
-          if upload_succeeded
+          upload = Upload.new(file, s3, config, site_dir)
+
+          if upload.perform!
             puts("Upload #{file}: Success!")
           else
             puts("Upload #{file}: FAILURE!")
