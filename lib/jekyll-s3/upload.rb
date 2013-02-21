@@ -52,8 +52,26 @@ module Jekyll
           :reduced_redundancy => config['s3_reduced_redundancy']
         }
 
-        opts[:content_encoding] = "gzip" if config['gzip']
+        opts[:content_encoding] = "gzip" if gzip?
+        opts[:cache_control] = "max-age=#{max_age}" if cache_control?
+        puts opts[:cache_control]
         opts
+      end
+
+      def cache_control?
+        !!config['max_age']
+      end
+
+      def max_age
+        if config['max_age'].is_a?(Hash)
+          config['max_age'].each_pair do |glob, age|
+            return age if File.fnmatch(glob, path)
+          end
+        else
+          return config['max_age']
+        end
+
+        return 0
       end
 
       def mime_type
