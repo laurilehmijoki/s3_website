@@ -25,7 +25,10 @@ module Jekyll
       end
 
       def gzip?
-        !!config['gzip'] && Jekyll::S3::DEFAULT_GZIP_EXTENSIONS.include?(File.extname(path))
+        return false unless !!config['gzip']
+
+        extensions = config['gzip'].is_a?(Array) ? config['gzip'] : Jekyll::S3::DEFAULT_GZIP_EXTENSIONS
+        extensions.include?(File.extname(path))
       end
 
       def gzipped_file
