@@ -52,15 +52,15 @@ module Jekyll
       end
 
       def self.upload_file(file, s3, config, site_dir)
-        # Retry.run_with_retry do
+        Retry.run_with_retry do
           upload = Upload.new(file, s3, config, site_dir)
 
           if upload.perform!
-            puts("Upload #{file}: Success!")
+            puts "Upload #{upload.details}: Success!"
           else
-            puts("Upload #{file}: FAILURE!")
+            puts "Upload #{upload.details}: FAILURE!"
           end
-        # end
+        end
       end
 
       def self.remove_superfluous_files(s3, s3_bucket_name, site_dir, in_headless_mode)

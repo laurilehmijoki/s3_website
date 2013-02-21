@@ -46,6 +46,10 @@ module Jekyll
         tempfile
       end
 
+      def details
+        "#{path}#{" [gzipped]" if gzip?}#{" [max-age=#{max_age}]" if cache_control?}"
+      end
+
       def upload_options
         opts = {
           :content_type => mime_type,
@@ -54,7 +58,7 @@ module Jekyll
 
         opts[:content_encoding] = "gzip" if gzip?
         opts[:cache_control] = "max-age=#{max_age}" if cache_control?
-        puts opts[:cache_control]
+        
         opts
       end
 
