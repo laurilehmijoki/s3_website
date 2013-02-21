@@ -33,6 +33,32 @@ s3_bucket: your.blog.bucket.com
 
 ## Additional features
 
+### Gzip Compression
+
+If you choose, you can use compress certain file types before uploading them to
+S3. This is a recommended practice for maximizing page speed and minimizing
+bandwidth usage.
+
+To enable Gzip compression, simply add a `gzip` option to your `_jekyll_s3.yml`
+configuration file:
+
+```yaml
+gzip: true
+```
+
+Note that you can additionally specify the file extensions you want to Gzip
+(`.html`, `.css`, `.js`, and `.txt` will be compressed when `gzip: true`):
+
+```yaml
+gzip:
+  - .html
+  - .css
+  - .md
+```
+
+Remember that the extensions here are referring to the *compiled* extensions,
+not the pre-processed extensions.
+
 ### Using non-standard AWS regions
 
 By default, `jekyll-s3` uses the US Standard Region. You can upload your Jekyll
