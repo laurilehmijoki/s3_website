@@ -32,14 +32,17 @@ module Jekyll
         tempfile = Tempfile.new(File.basename(path))
         
         gz = Zlib::GzipWriter.new(tempfile, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
+        
         gz.mtime = File.mtime(full_path)
         gz.orig_name = File.basename(path)
-        
         gz.write(file.read)
+        
         gz.flush
-
         tempfile.flush
-        tempfile.rewind
+        
+        gz.close
+        tempfile.open
+
         tempfile
       end
 
