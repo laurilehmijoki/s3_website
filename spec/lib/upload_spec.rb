@@ -65,6 +65,37 @@ describe Jekyll::S3::Upload do
         'gzip' => true
       }
     }
+
+    subject{ Jekyll::S3::Upload.new("index.html", mock(), config, 'features/support/test_site_dirs/my.blog.com/_site') }
+
+    describe '#gzip?' do
+      it 'should be false if the config does not specify gzip' do
+        config.delete 'gzip'
+        subject.should_not be_gzip
+      end
+
+      it 'should be false if gzip is true but does not match a default extension' do
+        subject.stub(:path).and_return("index.bork")
+        subject.should_not be_gzip
+      end
+
+      it 'should be true if gzip is true and file extension matches' do
+        subject.should be_gzip
+      end
+
+      it 'should be true if gzip is true and file extension matches custom supplied' do
+        config['gzip'] = %w(.bork)
+        subject.stub(:path).and_return('index.bork')
+        subject.should be_gzip
+      end
+    end
+
+    describe '#gzipped_file' do
+      it 'should return a gzipped version of the file' do
+        gz = Zlib::GzipReader.new(subject.gzipped_file)
+        gz.read.should == File.read('features/support/test_site_dirs/my.blog.com/_site/index.html')
+      end
+    end
   end
 
   def create_verifying_s3_client(file_to_upload, &block)
