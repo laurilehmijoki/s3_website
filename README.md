@@ -168,5 +168,6 @@ Contributors (in alphabetical order)
 * Chris Moos
 * Lauri Lehmijoki
 * Mason Turner
+* Michael Bleigh
 * Shigeaki Matsumura
 * stanislas
