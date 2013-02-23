@@ -52,6 +52,8 @@ max_age:
   "*": 300
 ```
 
+Place the configuration into the file `_jekyll_s3.yml`.
+
 ### Gzip Compression
 
 If you choose, you can use compress certain file types before uploading them to
