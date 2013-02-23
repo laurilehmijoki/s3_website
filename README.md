@@ -80,6 +80,8 @@ gzip:
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
 
+The gzip'ed files are always re-uploaded (see issue #29 for more info).
+
 ### Using non-standard AWS regions
 
 By default, `jekyll-s3` uses the US Standard Region. You can upload your Jekyll
