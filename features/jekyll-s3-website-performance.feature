@@ -33,7 +33,7 @@ Feature: improve response times of your Jekyll website
       """
 
   @new-files
-  Scenario: Set Content-Encoding: gzip HTTP header
+  Scenario: Set Content-Encoding: gzip HTTP header for HTML files
     When my Jekyll site is in "features/support/test_site_dirs/site.with.gzipped-html.com"
     Then jekyll-s3 will push my blog to S3
     And the output should equal
