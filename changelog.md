@@ -4,7 +4,7 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ## 2.4.0
 
-* Add gzip support
+* Add support for specifying `Content-Encoding: gzip` HTTP header
 * Add support for specifying `Cache-Control: max-age` HTTP header
 
 ## 2.3.0
