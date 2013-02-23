@@ -1,0 +1,4 @@
+s3_id: key
+s3_secret: pass
+s3_bucket: jekyll-s3-test.net
+max_age: 120
