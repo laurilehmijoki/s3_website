@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.0
+
+* Add gzip support
+* Add support for specifying `Cache-Control: max-age` HTTP header
+
 ## 2.3.0
 
 * Add support for non-standard AWS regions
