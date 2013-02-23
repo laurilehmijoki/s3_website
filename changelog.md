@@ -1,5 +1,7 @@
 # Changelog
 
+This project uses [Semantic Versioning](http://semver.org).
+
 ## 2.4.0
 
 * Add gzip support
