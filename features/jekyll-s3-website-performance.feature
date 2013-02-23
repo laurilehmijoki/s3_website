@@ -47,7 +47,6 @@ Feature: improve response times of your Jekyll website
       """
 
   @new-files
-  @wip
   Scenario: Set both the Content-Encoding: gzip and Cache-Control: max-age headers
     When my Jekyll site is in "features/support/test_site_dirs/site.with.gzipped-and-max-aged-content.com"
     Then jekyll-s3 will push my blog to S3

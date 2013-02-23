@@ -19,7 +19,6 @@ Feature: upload Jekyll site to S3
       """
 
   @new-files-for-sydney
-  @wip
   Scenario: Push a new Jekyll site to an S3 bucket in Sydney
     When my Jekyll site is in "features/support/test_site_dirs/my.sydney.blog.au"
     Then jekyll-s3 will push my blog to S3
