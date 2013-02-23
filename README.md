@@ -80,7 +80,8 @@ gzip:
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
 
-The gzip'ed files are always re-uploaded (see issue #29 for more info).
+The gzip'ed files are always re-uploaded (see issue
+[#29](https://github.com/laurilehmijoki/jekyll-s3/issues/29) for more info).
 
 ### Using non-standard AWS regions
 
