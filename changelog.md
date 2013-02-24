@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.4.1
+
+* Declare internal methods private in `upload.rb`
+
+  This eases future refactorings
+
 ## 2.4.0
 
 * Add support for specifying `Content-Encoding: gzip` HTTP header
