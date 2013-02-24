@@ -20,6 +20,12 @@ module Jekyll
         success
       end
 
+      def details
+        "#{path}#{" [gzipped]" if gzip?}#{" [max-age=#{max_age}]" if cache_control?}"
+      end
+
+      private
+
       def upload_file
         @upload_file ||= gzip? ? gzipped_file : file
       end
@@ -33,24 +39,20 @@ module Jekyll
 
       def gzipped_file
         tempfile = Tempfile.new(File.basename(path))
-        
+
         gz = Zlib::GzipWriter.new(tempfile, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
-        
+
         gz.mtime = File.mtime(full_path)
         gz.orig_name = File.basename(path)
         gz.write(file.read)
-        
+
         gz.flush
         tempfile.flush
-        
+
         gz.close
         tempfile.open
 
         tempfile
-      end
-
-      def details
-        "#{path}#{" [gzipped]" if gzip?}#{" [max-age=#{max_age}]" if cache_control?}"
       end
 
       def upload_options
@@ -61,7 +63,7 @@ module Jekyll
 
         opts[:content_encoding] = "gzip" if gzip?
         opts[:cache_control] = "max-age=#{max_age}" if cache_control?
-        
+
         opts
       end
 

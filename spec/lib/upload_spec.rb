@@ -92,7 +92,7 @@ describe Jekyll::S3::Upload do
 
     describe '#gzipped_file' do
       it 'should return a gzipped version of the file' do
-        gz = Zlib::GzipReader.new(subject.gzipped_file)
+        gz = Zlib::GzipReader.new(subject.send(:gzipped_file))
         gz.read.should == File.read('features/support/test_site_dirs/my.blog.com/_site/index.html')
       end
     end
@@ -126,17 +126,17 @@ describe Jekyll::S3::Upload do
 
     describe '#max_age' do
       it 'should be the universal value if one is set' do
-        subject.max_age.should == 300
+        subject.send(:max_age).should == 300
       end
 
       it 'should be the file-specific value if one is set' do
         config['max_age'] = {'*index.html' => 500}
-        subject.max_age.should == 500
+        subject.send(:max_age).should == 500
       end
 
       it 'should be zero if no file-specific value hit' do
         config['max_age'] = {'*.js' => 500}
-        subject.max_age.should == 0
+        subject.send(:max_age).should == 0
       end
     end
   end
