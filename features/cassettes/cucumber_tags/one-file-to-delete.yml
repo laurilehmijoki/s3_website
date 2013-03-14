@@ -2,47 +2,6 @@
 http_interactions:
 - request:
     method: get
-    uri: https://s3.amazonaws.com/
-    body:
-      encoding: US-ASCII
-      string: ''
-    headers:
-      Content-Type:
-      - ''
-      User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
-      Date:
-      - Mon, 12 Nov 2012 18:04:05 +0200
-      Authorization:
-      - AWS foo
-      Accept:
-      - ! '*/*'
-  response:
-    status:
-      code: 200
-      message: OK
-    headers:
-      X-Amz-Id-2:
-      - UtUBSslAwcVq5q0QwmXNFmbWhUMJTO6RzFFpVqdplXFMUAB/EV1i8y8Nl6wWB9mK
-      X-Amz-Request-Id:
-      - C418CD7D3B1A94A0
-      Date:
-      - Mon, 12 Nov 2012 16:04:06 GMT
-      Content-Type:
-      - application/xml
-      Transfer-Encoding:
-      - chunked
-      Server:
-      - AmazonS3
-    body:
-      encoding: US-ASCII
-      string: ! '<?xml version="1.0" encoding="UTF-8"?>
-
-        <ListAllMyBucketsResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>foo</DisplayName></Owner><Buckets><Bucket><Name>jekyll-s3-test.net</Name><CreationDate>2012-10-14T12:58:37.000Z</CreationDate></Bucket></Buckets></ListAllMyBucketsResult>'
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:06 GMT
-- request:
-    method: get
     uri: https://s3.amazonaws.com/jekyll-s3-test.net?max-keys=1000
     body:
       encoding: US-ASCII
@@ -51,11 +10,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:06 +0200
+      - Thu, 14 Mar 2013 21:02:19 GMT
       Authorization:
-      - AWS 
+      - AWS :53fcykfEaeNXKJAQop9mckgLw2E=
       Accept:
       - ! '*/*'
   response:
@@ -64,11 +23,11 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - fdsRJtd8iQjs86DoPoDH7oN4DatGZD68MeX2z3DK9js8zFODEewFsBsPc0Qk9ahv
+      - JHpaB/9W0hWLVLT3oxAD57/C+8h1/EVpFw6cQXdKtuJ01eHmCoOfbxxvtlP9Qo4I
       X-Amz-Request-Id:
-      - 41A328772547F5CE
+      - 04CE9634B3D270C7
       Date:
-      - Mon, 12 Nov 2012 16:04:07 GMT
+      - Thu, 14 Mar 2013 21:02:20 GMT
       Content-Type:
       - application/xml
       Transfer-Encoding:
@@ -79,9 +38,9 @@ http_interactions:
       encoding: US-ASCII
       string: ! '<?xml version="1.0" encoding="UTF-8"?>
 
-        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>jekyll-s3-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2012-10-14T14:20:04.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2012-11-12T16:03:45.000Z</LastModified><ETag>&quot;8a8892a2b0fad281f26c0dedbff7011a&quot;</ETag><Size>60</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>'
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:06 GMT
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>jekyll-s3-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2013-03-14T20:58:31.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2013-03-14T20:59:00.000Z</LastModified><ETag>&quot;af57cd2c1da58734749af7f49e38952c&quot;</ETag><Size>117</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>'
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:20 GMT
 - request:
     method: head
     uri: https://s3.amazonaws.com/jekyll-s3-test.net/css/styles.css
@@ -92,11 +51,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:06 +0200
+      - Thu, 14 Mar 2013 21:02:20 GMT
       Authorization:
-      - AWS
+      - AWS :7H4jZMTFejjgpFNUoNglM2WH+YI=
       Accept:
       - ! '*/*'
   response:
@@ -105,19 +64,19 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - VVKukQx/SJjzviiFnW+vR+AY6hPDh0UcGZ4vTgxUu5xuzTo/sfLZ3fv/i2uMTt8y
+      - inBqe8zLc9rspvWzQFicWFaBC8r1t4OWtbqTwzbII2cmZhLVHofMFLdsmBMFfMS4
       X-Amz-Request-Id:
-      - C6FD6AB27A3AB708
+      - A31D6786D7DE23FC
       Date:
-      - Mon, 12 Nov 2012 16:04:07 GMT
+      - Thu, 14 Mar 2013 21:02:20 GMT
       Last-Modified:
-      - Sun, 14 Oct 2012 14:20:04 GMT
+      - Thu, 14 Mar 2013 20:58:31 GMT
       Etag:
       - ! '"8fcf43a38cbf0c502f029a50645f2374"'
       Accept-Ranges:
       - bytes
       Content-Type:
-      - ''
+      - text/css
       Content-Length:
       - '10'
       Server:
@@ -125,8 +84,8 @@ http_interactions:
     body:
       encoding: US-ASCII
       string: ''
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:07 GMT
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:21 GMT
 - request:
     method: head
     uri: https://s3.amazonaws.com/jekyll-s3-test.net/css/styles.css
@@ -137,11 +96,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:07 +0200
+      - Thu, 14 Mar 2013 21:02:21 GMT
       Authorization:
-      - AWS
+      - AWS :T8TYe5uIeNWSvkYsF1HHfjxv9dk=
       Accept:
       - ! '*/*'
   response:
@@ -150,19 +109,19 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - lJ05yU2+Hpmjr75Ailh685mfkhRivsIrH0eRjfUN25lfg0kEOETv85tUNcjuAM/g
+      - s0K2kHB+nUKVYZ67sEXCkQd6cxXiIS6MRlPkDtAz64sWgpnIew7Ut7KBIVlcYsPV
       X-Amz-Request-Id:
-      - 93363578095BC286
+      - 48425A1F9E1FA2C5
       Date:
-      - Mon, 12 Nov 2012 16:04:08 GMT
+      - Thu, 14 Mar 2013 21:02:21 GMT
       Last-Modified:
-      - Sun, 14 Oct 2012 14:20:04 GMT
+      - Thu, 14 Mar 2013 20:58:31 GMT
       Etag:
       - ! '"8fcf43a38cbf0c502f029a50645f2374"'
       Accept-Ranges:
       - bytes
       Content-Type:
-      - ''
+      - text/css
       Content-Length:
       - '10'
       Server:
@@ -170,8 +129,53 @@ http_interactions:
     body:
       encoding: US-ASCII
       string: ''
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:07 GMT
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:22 GMT
+- request:
+    method: head
+    uri: https://s3.amazonaws.com/jekyll-s3-test.net/css/styles.css
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-Type:
+      - ''
+      User-Agent:
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
+      Date:
+      - Thu, 14 Mar 2013 21:02:22 GMT
+      Authorization:
+      - AWS :u6MCJf1vRmR2/9yb+TIBZTCO5mo=
+      Accept:
+      - ! '*/*'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - xizdMuDsHrr3B2zQhw6dmfKylRVJeoxeYC5/xYfTYIedROD2T277yz09x9FbRLCA
+      X-Amz-Request-Id:
+      - 26A50E1F2534AF69
+      Date:
+      - Thu, 14 Mar 2013 21:02:22 GMT
+      Last-Modified:
+      - Thu, 14 Mar 2013 20:58:31 GMT
+      Etag:
+      - ! '"8fcf43a38cbf0c502f029a50645f2374"'
+      Accept-Ranges:
+      - bytes
+      Content-Type:
+      - text/css
+      Content-Length:
+      - '10'
+      Server:
+      - AmazonS3
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:24 GMT
 - request:
     method: head
     uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
@@ -182,11 +186,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:07 +0200
+      - Thu, 14 Mar 2013 21:02:24 GMT
       Authorization:
-      - AWS
+      - AWS :1tMtb4RmHS++NJK1F+ZvgipEL3M=
       Accept:
       - ! '*/*'
   response:
@@ -195,28 +199,28 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - xnoD03ghUvW6Lms7N0Pai0sEhh4ulWhuswYghePx/PU7ep9wr18nfS02oTyNJIic
+      - rViUb2cK20K84nD7LMobkWfQHxEZlFUaAllJR24TbrmDvqTkp7cVVJnl9kN0PhDV
       X-Amz-Request-Id:
-      - 93C1F004A5E9FC7C
+      - 128CC990B612C290
       Date:
-      - Mon, 12 Nov 2012 16:04:09 GMT
+      - Thu, 14 Mar 2013 21:02:24 GMT
       Last-Modified:
-      - Mon, 12 Nov 2012 16:03:45 GMT
+      - Thu, 14 Mar 2013 20:59:00 GMT
       Etag:
-      - ! '"8a8892a2b0fad281f26c0dedbff7011a"'
+      - ! '"af57cd2c1da58734749af7f49e38952c"'
       Accept-Ranges:
       - bytes
       Content-Type:
       - text/html
       Content-Length:
-      - '60'
+      - '117'
       Server:
       - AmazonS3
     body:
       encoding: US-ASCII
       string: ''
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:08 GMT
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:25 GMT
 - request:
     method: head
     uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
@@ -227,11 +231,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:08 +0200
+      - Thu, 14 Mar 2013 21:02:25 GMT
       Authorization:
-      - AWS
+      - AWS :Wr702OB5zHWXro3qaromvUVDyTU=
       Accept:
       - ! '*/*'
   response:
@@ -240,28 +244,73 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - YSTZ/ljVpRfsE8esm1vzqipkScBP40LUOwo1QU3/9Vx1YaR7suE0OY7mUfPuqVV2
+      - fG7jpa8uCBQQr2fDiKhwJji1mokz+GU85V6R4zAV4HdommE5I03CgDmBnOZYfVI9
       X-Amz-Request-Id:
-      - FB412B911EB2705E
+      - FC76529D518677D3
       Date:
-      - Mon, 12 Nov 2012 16:04:09 GMT
+      - Thu, 14 Mar 2013 21:02:25 GMT
       Last-Modified:
-      - Mon, 12 Nov 2012 16:03:45 GMT
+      - Thu, 14 Mar 2013 20:59:00 GMT
       Etag:
-      - ! '"8a8892a2b0fad281f26c0dedbff7011a"'
+      - ! '"af57cd2c1da58734749af7f49e38952c"'
       Accept-Ranges:
       - bytes
       Content-Type:
       - text/html
       Content-Length:
-      - '60'
+      - '117'
       Server:
       - AmazonS3
     body:
       encoding: US-ASCII
       string: ''
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:09 GMT
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:25 GMT
+- request:
+    method: head
+    uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-Type:
+      - ''
+      User-Agent:
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
+      Date:
+      - Thu, 14 Mar 2013 21:02:25 GMT
+      Authorization:
+      - AWS :Wr702OB5zHWXro3qaromvUVDyTU=
+      Accept:
+      - ! '*/*'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - /WHHRSRmyhTmdiKD+4U6xHRnS9o9MMslKJj7Rghkevil3wGXb3kQ+8QSS4PuM+uo
+      X-Amz-Request-Id:
+      - 43143FA771E1EE92
+      Date:
+      - Thu, 14 Mar 2013 21:02:26 GMT
+      Last-Modified:
+      - Thu, 14 Mar 2013 20:59:00 GMT
+      Etag:
+      - ! '"af57cd2c1da58734749af7f49e38952c"'
+      Accept-Ranges:
+      - bytes
+      Content-Type:
+      - text/html
+      Content-Length:
+      - '117'
+      Server:
+      - AmazonS3
+    body:
+      encoding: US-ASCII
+      string: ''
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:26 GMT
 - request:
     method: get
     uri: https://s3.amazonaws.com/jekyll-s3-test.net?max-keys=1000
@@ -272,11 +321,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:09 +0200
+      - Thu, 14 Mar 2013 21:02:26 GMT
       Authorization:
-      - AWS 
+      - AWS :fzSYQSeF8IuGX77Oc32E/Gy6vtc=
       Accept:
       - ! '*/*'
   response:
@@ -285,11 +334,11 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - W3AqIHSMcW0OZcNHeSvGh4WOjDv0TAmwI8zZlAgh0qhYeJ1cnDTuOBaEKlrKVF17
+      - dfDMwPfsXH6qovDj0rucvPgBzyAAwXyCiGq54YRseMSJ6Aq7X4NuuTUYbE3nWkdK
       X-Amz-Request-Id:
-      - C5E23FFE6D568DFC
+      - 93DC6C1BE827BE0B
       Date:
-      - Mon, 12 Nov 2012 16:04:10 GMT
+      - Thu, 14 Mar 2013 21:02:26 GMT
       Content-Type:
       - application/xml
       Transfer-Encoding:
@@ -300,9 +349,9 @@ http_interactions:
       encoding: US-ASCII
       string: ! '<?xml version="1.0" encoding="UTF-8"?>
 
-        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>jekyll-s3-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2012-10-14T14:20:04.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2012-11-12T16:03:45.000Z</LastModified><ETag>&quot;8a8892a2b0fad281f26c0dedbff7011a&quot;</ETag><Size>60</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>'
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:09 GMT
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>jekyll-s3-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2013-03-14T20:58:31.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2013-03-14T20:59:00.000Z</LastModified><ETag>&quot;af57cd2c1da58734749af7f49e38952c&quot;</ETag><Size>117</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>'
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:27 GMT
 - request:
     method: delete
     uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
@@ -313,11 +362,11 @@ http_interactions:
       Content-Type:
       - ''
       User-Agent:
-      - aws-sdk-ruby/1.5.8 ruby/1.9.3 x86_64-darwin11.4.0
+      - aws-sdk-ruby/1.8.5 ruby/1.9.3 x86_64-darwin11.4.0
       Date:
-      - Mon, 12 Nov 2012 18:04:09 +0200
+      - Thu, 14 Mar 2013 21:02:27 GMT
       Authorization:
-      - AWS AKIAIFB7KCPAR6YNNZLA:ail6+cNPu7thlzkBPkMQsA9G8QA=
+      - AWS :wLwsd1JLmT7NeP4Ar1V3tpSN+Pw=
       Accept:
       - ! '*/*'
   response:
@@ -326,16 +375,16 @@ http_interactions:
       message: No Content
     headers:
       X-Amz-Id-2:
-      - qHi5ypZ5LlelraO05VBE2I8lQtvPhyV4FdSZBWLyQ0xWwNq9eo1RKqrTyhoo3G5u
+      - a1pz+Ek2Q7Rj/5Z2xv8HNahqlnIr2FFTldpMcA71dVqx4Vdsbwf/Rw6EZN7Im4lq
       X-Amz-Request-Id:
-      - A25BE3288715EE97
+      - 56390C640DD2991E
       Date:
-      - Mon, 12 Nov 2012 16:04:10 GMT
+      - Thu, 14 Mar 2013 21:02:27 GMT
       Server:
       - AmazonS3
     body:
       encoding: US-ASCII
       string: ''
-    http_version:
-  recorded_at: Mon, 12 Nov 2012 16:04:10 GMT
-recorded_with: VCR 2.2.4
+    http_version: 
+  recorded_at: Thu, 14 Mar 2013 21:02:27 GMT
+recorded_with: VCR 2.3.0
