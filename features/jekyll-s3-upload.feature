@@ -8,14 +8,18 @@ Feature: upload Jekyll site to S3
   Scenario: Push a new Jekyll site to S3
     When my Jekyll site is in "features/support/test_site_dirs/my.blog.com"
     Then jekyll-s3 will push my blog to S3
-    And the output should equal
+    And the output should contain
       """
       Deploying _site/* to jekyll-s3-test.net
       Uploading 2 new file(s)
+      """
+    And the output should contain
+      """
       Upload css/styles.css: Success!
+      """
+    And the output should contain
+      """
       Upload index.html: Success!
-      Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
-
       """
 
   @new-files-for-sydney

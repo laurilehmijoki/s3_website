@@ -17,7 +17,6 @@ Feature: Using Jekyll-s3 as a library
     And report that it uploaded 1 new and 1 changed files into S3
 
   @s3-and-cloudfront-when-updating-a-file
-  @wip
   Scenario: Developer wants feedback on how many Cloudfront items Jekyll-s3 invalidated
     When my Jekyll site is in "features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi"
     Then jekyll-s3 will push my blog to S3 and invalidate the Cloudfront distribution
