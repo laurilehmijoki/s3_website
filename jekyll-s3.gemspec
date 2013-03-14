@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "jekyll-s3"
-  s.version     = "2.4.1"
+  s.version     = "2.4.2"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Philippe Creux", "Lauri Lehmijoki"]
   s.email       = ["pcreux@gmail.com", "lauri.lehmijoki@iki.fi"]
@@ -15,8 +15,8 @@ distribution, making it easy to deliver your blog via the CDN.}
 
   s.default_executable = %q{jekyll-s3}
 
-  s.add_dependency 'aws-sdk', '~> 1.8.0'
-  s.add_dependency 'filey-diff', '~> 1.0'
+  s.add_dependency 'aws-sdk', '~> 1.8.5'
+  s.add_dependency 'filey-diff', '~> 1.1'
   s.add_dependency 'simple-cloudfront-invalidator', '~> 1.0'
   s.add_dependency 'erubis', '~> 2.7.0'
   s.add_dependency 'mime-types', '= 1.19'

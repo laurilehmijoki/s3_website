@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.4.2
+
+* Fix problem where gzipped files were always re-uploaded
+
+  See the issue
+  [#29](https://github.com/laurilehmijoki/jekyll-s3/issues/29) for more info.
+
 ## 2.4.1
 
 * Declare internal methods private in `upload.rb`
