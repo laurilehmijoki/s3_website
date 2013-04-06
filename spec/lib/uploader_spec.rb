@@ -1,9 +1,6 @@
 require 'spec_helper'
 
 describe Jekyll::S3::Uploader do
-  context '#upload_file' do
-  end
-
   context '#load_all_local_files' do
     let(:files) {
       Jekyll::S3::Uploader.send(:load_all_local_files,
