@@ -42,12 +42,6 @@ describe Jekyll::S3::Keyboard do
     end
 
     it 'can keep all s3 objects' do
-      standard_input.stub(:gets).and_return("k", "k", "k")
-      deleted_keys = call_keyboard(s3_object_keys, standard_input)
-      deleted_keys.should eq([])
-    end
-
-    it 'can keep all s3 objects' do
       standard_input.stub(:gets).and_return("K")
       deleted_keys = call_keyboard(s3_object_keys, standard_input)
       deleted_keys.should eq([])
