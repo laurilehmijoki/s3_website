@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## HEAD
+
+* Load dotfiles also with Ruby 2.0.0
+
+  The `Dir.glob` implementation changed a bit in Ruby 2, and this resulted in
+  `jekyll-s3` not uploading files that start with a dot.
+
 ## 2.4.2
 
 * Fix problem where gzipped files were always re-uploaded
