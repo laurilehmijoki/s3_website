@@ -24,7 +24,6 @@ s3_bucket: your.blog.bucket.com
       # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
       def self.load_configuration(site_dir)
         config = load_yaml_file_and_validate site_dir
-        config['s3_endpoint'] = config['s3_endpoint'] || 'us-east-1'
         return config
       end
 

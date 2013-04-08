@@ -1,9 +1,11 @@
 module Jekyll
   module S3
     class Endpoint
+      DEFAULT_LOCATION_CONSTRAINT = 'us-east-1'
       attr_reader :region, :location_constraint, :hostname, :website_hostname
 
-      def initialize(location_constraint)
+      def initialize(location_constraint=nil)
+        location_constraint = DEFAULT_LOCATION_CONSTRAINT if location_constraint.nil?
         raise "Invalid S3 location constraint #{location_constraint}" unless
           location_constraints.has_key?location_constraint
         @region = location_constraints.fetch(location_constraint)[:region]
