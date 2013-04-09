@@ -2,8 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## HEAD
+## 2.4.3
 
+* Make `s3_endpoint` optional in `_jekyll_s3.yml` when using `jekyll-s3` as a
+  library
 * Load dotfiles also with Ruby 2.0.0
 
   The `Dir.glob` implementation changed a bit in Ruby 2, and this resulted in
