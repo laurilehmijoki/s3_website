@@ -179,6 +179,7 @@ MIT
 Copyright (c) 2011 VersaPay, Philippe Creux.
 
 Contributors (in alphabetical order)
+* Alan deLevie
 * Cory Kaufman-Schofield
 * Chris Kelly
 * Chris Moos
