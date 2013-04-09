@@ -125,7 +125,7 @@ bucket that are not on your local computer.
 Enable the headless mode by adding the `--headless` or `-h` argument after
 `jekyll-s3`.
 
-## Using `jekyll-s3` as a library
+### Using `jekyll-s3` as a library
 
 By nature, `jekyll-s3` is a command-line interface tool. You can, however, use
 it programmatically by calling the same API as the executable `jekyll-s3` does:
