@@ -131,6 +131,7 @@ By nature, `jekyll-s3` is a command-line interface tool. You can, however, use
 it programmatically by calling the same API as the executable `jekyll-s3` does:
 
 ````ruby
+require 'jekyll-s3'
 is_headless = true
 Jekyll::S3::CLI.new.run('/path/to/your/jekyll-site/_site/', is_headless)
 ````
