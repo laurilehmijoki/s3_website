@@ -136,6 +136,9 @@ is_headless = true
 Jekyll::S3::CLI.new.run('/path/to/your/jekyll-site/_site/', is_headless)
 ````
 
+The code above will assume that you have the `_jekyll_s3.yml` in the directory
+`/path/to/your/jekyll-site`.
+
 ## Known issues
 
 None. Please send a pull request if you spot any.
