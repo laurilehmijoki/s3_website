@@ -12,8 +12,10 @@ module Jekyll
           s3, config, site_dir
         )
 
-        deleted_files_count = remove_superfluous_files(
-          s3, config['s3_bucket'], site_dir, in_headless_mode)
+        deleted_files_count = remove_superfluous_files(s3, { :s3_bucket => config['s3_bucket'],
+                                                             :site_dir => site_dir,
+                                                             :in_headless_mode => in_headless_mode,
+                                                             :ignore_on_server => config["ignore_on_server"] })
 
         print_done_report config
 
@@ -63,10 +65,16 @@ module Jekyll
         end
       end
 
-      def self.remove_superfluous_files(s3, s3_bucket_name, site_dir, in_headless_mode)
+      def self.remove_superfluous_files(s3, options)
+        s3_bucket_name = options.fetch(:s3_bucket)
+        site_dir = options.fetch(:site_dir)
+        in_headless_mode = options.fetch(:in_headless_mode)
+
         remote_files = s3.buckets[s3_bucket_name].objects.map { |f| f.key }
         local_files = load_all_local_files(site_dir)
-        files_to_delete = remote_files - local_files
+        files_to_delete = build_list_of_files_to_delete(remote_files, local_files, options[:ignore_on_server])
+
+
         deleted_files_count = 0
         if in_headless_mode
           files_to_delete.each { |s3_object_key|
@@ -80,6 +88,12 @@ module Jekyll
           }
         end
         deleted_files_count
+      end
+
+      def self.build_list_of_files_to_delete(remote_files, local_files, ignore_on_server = nil)
+        ignore_on_server = Regexp.new(ignore_on_server || "a_string_that_should_never_match_ever")
+        files_to_delete = remote_files - local_files
+        files_to_delete.reject { |file| ignore_on_server.match(file) }
       end
 
       def self.delete_s3_object(s3, s3_bucket_name, s3_object_key)
