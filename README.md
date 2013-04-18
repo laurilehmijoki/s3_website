@@ -209,3 +209,4 @@ Contributors (in alphabetical order)
 * Michael Bleigh
 * Shigeaki Matsumura
 * stanislas
+* Zee Spencer
