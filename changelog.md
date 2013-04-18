@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.5.0
+
+* Use regex to ignore files on server
+
 ## 2.4.3
 
 * Make `s3_endpoint` optional in `_jekyll_s3.yml` when using `jekyll-s3` as a
