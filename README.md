@@ -96,6 +96,15 @@ s3_endpoint: ap-northeast-1
 The valid `s3_endpoint` values consist of the [S3 location constraint
 values](http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region).
 
+### Ignoring files you want to keep on AWS
+
+Sometimes there are files or directories you want to keep on S3, but not on
+your local machine. You may define a regular expression to ignore files like so: 
+
+```yaml
+ignore_on_server: that_folder_of_stuff_i_dont_keep_locally
+```
+
 ### Reduced Redundancy
 
 You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy Storage:
