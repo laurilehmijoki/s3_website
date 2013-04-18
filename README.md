@@ -99,7 +99,7 @@ values](http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
 ### Ignoring files you want to keep on AWS
 
 Sometimes there are files or directories you want to keep on S3, but not on
-your local machine. You may define a regular expression to ignore files like so: 
+your local machine. You may define a regular expression to ignore files like so:
 
 ```yaml
 ignore_on_server: that_folder_of_stuff_i_dont_keep_locally
@@ -186,8 +186,8 @@ When sending pull requests, please accompany them with tests. Favor BDD style
 in test descriptions. Use VCR-backed integration tests where possible. For
 reference, you can look at the existing Jekyll-s3 tests.
 
-If you are not sure how to test your pull request, you can ask the main
-developer (currently Lauri Lehmijoki) to supplement the request with tests.
+If you are not sure how to test your pull request, you can ask the [gem owners
+](http://rubygems.org/gems/jekyll-s3) to supplement the request with tests.
 However, by including proper tests, you increase the chances of your pull
 request being incorporated into future releases.
 
