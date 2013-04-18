@@ -145,6 +145,18 @@ is_headless = true
 Jekyll::S3::CLI.new.run('/path/to/your/jekyll-site/_site/', is_headless)
 ````
 
+You can also use a basic `Hash` instead of a `_jekyll_s3.yml` file:
+
+```ruby
+config = {
+  "s3_id"     => YOUR_AWS_S3_ACCESS_KEY_ID,
+  "s3_secret" => YOUR_AWS_S3_SECRET_ACCESS_KEY,
+  "s3_bucket" => your.blog.bucket.com
+}
+in_headless = true
+Jekyll::S3::Uploader.run('/path/to/your/jekyll-site/_site/', config, in_headless)
+```
+
 The code above will assume that you have the `_jekyll_s3.yml` in the directory
 `/path/to/your/jekyll-site`.
 
