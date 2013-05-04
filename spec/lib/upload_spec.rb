@@ -106,7 +106,12 @@ describe Jekyll::S3::Upload do
       }
     }
 
-    subject{ Jekyll::S3::Upload.new("index.html", mock(), config, 'features/support/test_site_dirs/my.blog.com/_site') }
+    let(:subject) {
+      Jekyll::S3::Upload.new(
+        "index.html", mock(),
+        config, 'features/support/test_site_dirs/my.blog.com/_site'
+      )
+    }
 
     describe '#cache_control?' do
       it 'should be false if max_age is missing' do
