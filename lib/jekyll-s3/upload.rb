@@ -73,7 +73,8 @@ module Jekyll
 
       def max_age
         if config['max_age'].is_a?(Hash)
-          config['max_age'].each_pair do |glob, age|
+          max_age_entries_most_specific_first.each do |glob_and_age|
+            (glob, age) = glob_and_age
             return age if File.fnmatch(glob, path)
           end
         else
@@ -81,6 +82,18 @@ module Jekyll
         end
 
         return 0
+      end
+
+      # The most specific max-age glob == the longest glob
+      def max_age_entries_most_specific_first
+        sorted_by_glob_length = config['max_age'].
+          each_pair.
+          to_a.
+          sort_by do |glob_and_age|
+            (glob, age) = glob_and_age
+            sort_key = glob.length
+          end.
+          reverse
       end
 
       def mime_type

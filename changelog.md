@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.5.1
+
+* Respect the most specific `max_age` setting (fixes issue
+  [43](https://github.com/laurilehmijoki/jekyll-s3/issues/43))
+
 ## 2.5.0
 
 * Use regex to ignore files on server

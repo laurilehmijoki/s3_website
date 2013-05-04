@@ -108,8 +108,10 @@ describe Jekyll::S3::Upload do
 
     let(:subject) {
       Jekyll::S3::Upload.new(
-        "index.html", mock(),
-        config, 'features/support/test_site_dirs/my.blog.com/_site'
+        "index.html",
+        mock(),
+        config,
+        'features/support/test_site_dirs/my.blog.com/_site'
       )
     }
 
@@ -142,6 +144,38 @@ describe Jekyll::S3::Upload do
       it 'should be zero if no file-specific value hit' do
         config['max_age'] = {'*.js' => 500}
         subject.send(:max_age).should == 0
+      end
+
+      context 'overriding the more general setting with the more specific' do
+        let(:config){
+          {
+            's3_reduced_redundancy' => false,
+            'max_age' => {
+              '**'        => 150,
+              'assets/**' => 86400
+            }
+          }
+        }
+
+        it 'respects the most specific max-age selector' do
+          subject = Jekyll::S3::Upload.new(
+            'assets/picture.gif',
+            mock(),
+            config,
+            'features/support/test_site_dirs/index-and-assets.blog.fi/_site'
+          )
+          subject.send(:max_age).should == 86400
+        end
+
+        it 'respects the most specific max-age selector' do
+          subject = Jekyll::S3::Upload.new(
+            'index.html',
+            mock(),
+            config,
+            'features/support/test_site_dirs/index-and-assets.blog.fi/_site'
+          )
+          subject.send(:max_age).should == 150
+        end
       end
     end
   end
