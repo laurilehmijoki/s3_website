@@ -139,7 +139,7 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 You can set HTTP redirects on your Jekyll S3 website by adding the following
 configuration into the `_jekyll_s3.yml` file:
 
-´´´´yaml
+```yaml
 routing_rules:
   - condition:
       key_prefix_equals: blog/some_path
@@ -147,7 +147,7 @@ routing_rules:
       host_name: blog.example.com
       replace_key_prefix_with: some_new_path/
       http_redirect_code: 301
-´´´´
+```
 
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
