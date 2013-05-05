@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.6.0
+
+* Support configuring of redirects on the S3 website
+
+  This is possible thanks to version 1.2.0 of
+  [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website),
+  which is a dependency of the `jekyll-s3` gem.
+
 ## 2.5.1
 
 * Respect the most specific `max_age` setting (fixes issue

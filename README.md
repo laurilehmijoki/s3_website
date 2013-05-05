@@ -134,6 +134,25 @@ bucket that are not on your local computer.
 Enable the headless mode by adding the `--headless` or `-h` argument after
 `jekyll-s3`.
 
+### Configuring redirects on your Jekyll S3 website
+
+You can set HTTP redirects on your Jekyll S3 website by adding the following
+configuration into the `_jekyll_s3.yml` file:
+
+´´´´yaml
+routing_rules:
+  - condition:
+      key_prefix_equals: blog/some_path
+    redirect:
+      host_name: blog.example.com
+      replace_key_prefix_with: some_new_path/
+      http_redirect_code: 301
+´´´´
+
+For more information on configuring redirects, see the documentation of the
+[configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
+gem, which comes as a transitive dependency of the `jekyll-s3` gem.
+
 ### Using `jekyll-s3` as a library
 
 By nature, `jekyll-s3` is a command-line interface tool. You can, however, use
