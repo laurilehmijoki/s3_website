@@ -149,6 +149,10 @@ routing_rules:
       http_redirect_code: 301
 ```
 
+After adding the configuration, run the command `configure-s3-website --config
+_jekyll_s3.yml` on your command-line interface. This will apply the routing
+rules on your S3 bucket.
+
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
 gem, which comes as a transitive dependency of the `jekyll-s3` gem.
