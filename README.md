@@ -127,12 +127,23 @@ You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy S
 
 It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
-  * Go to <https://console.aws.amazon.com/cloudfront/home>
-  * Create a distribution and set the your Jekyll S3 bucket as the origin
-  * Add the `cloudfront_distribution_id: your-dist-id` setting into
-    `_jekyll_s3.yml`
-  * Run `jekyll-s3` to deploy your site to S3 and invalidate the Cloudfront
-    distribution
+#### Creating a new CloudFront distribution
+
+When you run the command `configure-s3-website`, it will ask you whether you
+want to deliver your website via CloudFront. If you answer yes,
+`configure-s3-website` will create a CloudFront distribution for you.
+
+This feature was added into the version 1.3.0 of the `configure-s3-website` gem.
+
+#### Using your existing CloudFront distribution
+
+If you already have a CloudFront distribution that serves data from your Jekyll
+S3 bucket, just add the following line into the file `_jekyll_s3.yml`:
+
+    cloudfront_distribution_id: your-dist-id
+
+Next time you run `jekyll-s3`, it will invalidate the items on CloudFront and
+thus force the CDN system to reload the changes from your Jekyll S3 bucket.
 
 ### The headless mode
 
