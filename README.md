@@ -134,6 +134,8 @@ want to deliver your website via CloudFront. If you answer yes,
 `configure-s3-website` will create a CloudFront distribution for you.
 
 This feature was added into the version 1.3.0 of the `configure-s3-website` gem.
+For more information, see the [gem's
+documentation](https://github.com/laurilehmijoki/configure-s3-website).
 
 #### Using your existing CloudFront distribution
 
