@@ -38,7 +38,7 @@ You can use ERB in your `_jekyll_s3.yml` file which incorporates environment var
 ```yaml
 s3_id: <%= ENV['S3_ID'] %>
 s3_secret: <%= ENV['S3_SECRET'] %>
-se_bucket: blog.example.com %>
+s3_bucket: blog.example.com
 ```
 
 ## Additional features
@@ -197,7 +197,7 @@ You can also use a basic `Hash` instead of a `_jekyll_s3.yml` file:
 config = {
   "s3_id"     => YOUR_AWS_S3_ACCESS_KEY_ID,
   "s3_secret" => YOUR_AWS_S3_SECRET_ACCESS_KEY,
-  "s3_bucket" => your.blog.bucket.com
+  "s3_bucket" => "your.blog.bucket.com"
 }
 in_headless = true
 Jekyll::S3::Uploader.run('/path/to/your/jekyll-site/_site/', config, in_headless)
