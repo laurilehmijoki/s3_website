@@ -150,8 +150,9 @@ thus force the CDN system to reload the changes from your Jekyll S3 bucket.
 #### Specifying custom settings for your CloudFront distribution
 
 The gem `configure-s3-website`, which is a dependency of `jekyll-s3`, lets you
-define custom settings for your CloudFront distribution. See the gem's
-documentation for more info.
+define custom settings for your CloudFront distribution. See the [gem's
+documentation](https://github.com/laurilehmijoki/configure-s3-website) for more
+info.
 
 ### The headless mode
 
