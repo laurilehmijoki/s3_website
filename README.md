@@ -147,6 +147,12 @@ S3 bucket, just add the following line into the file `_jekyll_s3.yml`:
 Next time you run `jekyll-s3`, it will invalidate the items on CloudFront and
 thus force the CDN system to reload the changes from your Jekyll S3 bucket.
 
+#### Specifying custom settings for your CloudFront distribution
+
+The gem `configure-s3-website`, which is a dependency of `jekyll-s3`, lets you
+define custom settings for your CloudFront distribution. See the gem's
+documentation for more info.
+
 ### The headless mode
 
 Jekyll-s3 has a headless mode, where human interactions are disabled.
