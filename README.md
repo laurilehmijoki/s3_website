@@ -154,7 +154,21 @@ thus force the CDN system to reload the changes from your Jekyll S3 bucket.
 #### Specifying custom settings for your CloudFront distribution
 
 The gem `configure-s3-website`, which is a dependency of `jekyll-s3`, lets you
-define custom settings for your CloudFront distribution. See the [gem's
+define custom settings for your CloudFront distribution.
+
+For example, like this you can define a your own TTL and CNAME:
+
+```yaml
+cloudfront_distribution_config:
+  default_cache_behavior:
+    min_TTL: <%= 60 * 60 * 24 %>
+  aliases:
+    quantity: 1
+    items:
+      CNAME: your.website.com
+```
+
+See the [gem's
 documentation](https://github.com/laurilehmijoki/configure-s3-website) for more
 info.
 
