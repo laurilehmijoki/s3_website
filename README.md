@@ -257,6 +257,7 @@ Contributors (in alphabetical order)
 * Cory Kaufman-Schofield
 * Chris Kelly
 * Chris Moos
+* David Michael Barr
 * László Bácsi
 * Lauri Lehmijoki
 * Mason Turner

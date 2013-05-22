@@ -4,9 +4,13 @@ module Jekyll
       def self.run(site_dir, config, in_headless_mode = false)
         puts "Deploying _site/* to #{config['s3_bucket']}"
 
-        s3 = AWS::S3.new(:access_key_id => config['s3_id'],
-                         :secret_access_key => config['s3_secret'],
-                         :s3_endpoint => Endpoint.new(config['s3_endpoint']).hostname )
+        s3_config = { :s3_endpoint => Endpoint.new(config['s3_endpoint']).hostname }
+        s3_id, s3_secret = config['s3_id'], config['s3_secret']
+        unless s3_id.nil? || s3_id == '' || s3_secret.nil? || s3_secret == ''
+          s3_config.merge! :access_key_id => s3_id, :secret_access_key => s3_secret
+        end
+
+        s3 = AWS::S3.new(s3_config)
 
         new_files_count, changed_files_count, changed_files = upload_files(
           s3, config, site_dir

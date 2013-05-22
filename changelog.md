@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.0
+
+* Allow s3_id and s3_secret to be omitted
+
+  This enables deploying jekyll-s3 on EC2 instances with IAM roles. The AWS SDK
+  will automatically fetch temporary credentials.
+
 ## 2.6.0
 
 * Support configuring of redirects on the S3 website
