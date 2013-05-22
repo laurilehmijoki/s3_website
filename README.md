@@ -31,6 +31,10 @@ s3_bucket: your.blog.bucket.com
 
 * Run `jekyll-s3` to push your Jekyll blog to S3. Congratulations! You are live.
 
+(If you are using `jekyll-s3` on an [EC2 instance with IAM
+roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
+you can omit the `s3_id` and `s3_secret` keys in the config file.)
+
 ### Using environment variables
 
 You can use ERB in your `_jekyll_s3.yml` file which incorporates environment variables:
