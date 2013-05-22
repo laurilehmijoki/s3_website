@@ -41,7 +41,7 @@ s3_bucket: your.blog.bucket.com
         end
         raise MalformedConfigurationFileError unless config
         raise MalformedConfigurationFileError if
-          ['s3_id', 's3_secret', 's3_bucket'].any? { |key|
+          ['s3_bucket'].any? { |key|
             mandatory_config_value = config[key]
             mandatory_config_value.nil? || mandatory_config_value == ''
           }
