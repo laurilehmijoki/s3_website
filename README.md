@@ -231,6 +231,11 @@ Jekyll::S3::Uploader.run('/path/to/your/jekyll-site/_site/', config, in_headless
 The code above will assume that you have the `_jekyll_s3.yml` in the directory
 `/path/to/your/jekyll-site`.
 
+## Example configurations
+
+See
+<https://github.com/laurilehmijoki/jekyll-s3/blob/master/example-configurations.md>.
+
 ## Known issues
 
 None. Please send a pull request if you spot any.
