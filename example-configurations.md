@@ -39,5 +39,5 @@ gzip: true
 
 Above, we store the AWS credentials and the id of the CloudFront distribution as
 environment variables. It's convenient, since you can keep the `_jekyll_s3.yml`
-in a publish Git repo, and thus have your deployment configurations
+in a public Git repo, and thus have your deployment configurations
 version-controlled.
