@@ -5,8 +5,8 @@ This document shows examples of complete `_jekyll_s3.yml` configurations.
 ## Minimal
 
 ````yaml
-s3_id: <%= ENV['your_domain_net_aws_key'] %>
-s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
+s3_id: abcd
+s3_secret: 2s+x92
 s3_bucket: your.domain.net
 ````
 
