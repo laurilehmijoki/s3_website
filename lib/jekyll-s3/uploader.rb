@@ -17,8 +17,11 @@ module Jekyll
         )
 
         redirects = config['redirects'] || {}
+        changed_redirects = []
         redirects.each do |path, target|
-          setup_redirect(path, target, s3, config)
+          if setup_redirect(path, target, s3, config)
+            changed_redirects << path
+          end
         end
 
         deleted_files_count = remove_superfluous_files(s3, { :s3_bucket => config['s3_bucket'],
@@ -29,7 +32,7 @@ module Jekyll
 
         print_done_report config
 
-        [new_files_count, changed_files_count, deleted_files_count, changed_files]
+        [new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects]
       end
 
       private
@@ -90,6 +93,7 @@ module Jekyll
           else
             puts "Redirect #{path} to #{target}: FAILURE!"
           end
+          true
         end
       end
 
