@@ -185,7 +185,30 @@ Enable the headless mode by adding the `--headless` or `-h` argument after
 
 ### Configuring redirects on your Jekyll S3 website
 
-You can set HTTP redirects on your Jekyll S3 website by adding the following
+You can set HTTP redirects on your Jekyll S3 website in two ways. If you only
+need simple "301 Moved Premanently" redirects for certain keys, use the
+Simple Redirects method. Otherwise, use the Routing Rules method.
+  
+#### Simple Redirects
+
+For simple redirects Jekyll S3 uses Amazon S3's
+[`x-amz-website-redirect-location`](http://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html)
+metadata. It will create zero-byte objects for each path you want
+redirected with the appropriate `x-amz-website-redirect-location` value.
+
+For setting up simple redirect rules, simply list each path and target
+as key-value pairs under the `redirects` configuration option:
+
+```yaml
+redirects:
+  index.php: /
+  about.php: about.html
+  promo.mp4: http://www.youtube.com/watch?v=dQw4w9WgXcQ
+```
+
+#### Routing Rules
+  
+You can configure more complex redirect rules by adding the following
 configuration into the `_jekyll_s3.yml` file:
 
 ```yaml
