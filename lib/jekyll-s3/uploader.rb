@@ -32,16 +32,6 @@ module Jekyll
 
       private
 
-      def self.setup_redirects(redirects, config, s3)
-        changed_redirects = []
-        redirects.each do |path, target|
-          if setup_redirect(path, target, s3, config)
-            changed_redirects << path
-          end
-        end
-        changed_redirects
-      end
-
       def self.print_done_report(config)
         bucket_name = config['s3_bucket']
         website_hostname_suffix = Endpoint.new(config['s3_endpoint']).website_hostname
@@ -83,6 +73,28 @@ module Jekyll
         end
       end
 
+      def self.setup_redirects(redirects, config, s3)
+        operations = redirects.map do |path, target|
+          setup_redirect(path, target, s3, config)
+        end
+        performed_operations = operations.reject do |op|
+          op == :no_redirect_operation_performed
+        end
+        unless performed_operations.empty?
+          puts 'Creating new redirects ...'
+        end
+        performed_operations.each do |redirect_operation|
+          puts '  ' + redirect_operation[:report]
+        end
+        succeeded_operations = performed_operations.select do |redirect_operation|
+          redirect_operation[:did_succeed]
+        end
+        succeeded_operations.map do |redirect_operation|
+          redirect_operation[:path]
+        end
+      end
+
+
       def self.setup_redirect(path, target, s3, config)
         target = '/' + target unless target =~ %r{^(/|https?://)}
         s3_object = s3.buckets[config['s3_bucket']].objects[path]
@@ -94,11 +106,20 @@ module Jekyll
 
         if current_head.nil? or current_head[:website_redirect_location] != target
           if s3_object.write('', :website_redirect_location => target)
-            puts "Redirect #{path} to #{target}: Success!"
+            {
+              :did_succeed => true,
+              :report => "Redirect #{path} to #{target}: Success!",
+              :path => path
+            }
           else
-            puts "Redirect #{path} to #{target}: FAILURE!"
+            {
+              :did_success => false,
+              :report => "Redirect #{path} to #{target}: FAILURE!",
+              :path => path
+            }
           end
-          true
+        else
+          :no_redirect_operation_performed
         end
       end
 
