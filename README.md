@@ -11,6 +11,8 @@ Deploy your jekyll site to S3.
 * Help you use AWS Cloudfront to distribute your Jekyll blog
 * Create an S3 website for you
 * Improve page speed with HTTP cache control and gzipping
+* Set HTTP redirects for your website
+* (for other features, see the documentation below)
 
 ## Install
 
