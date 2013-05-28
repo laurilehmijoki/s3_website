@@ -21,3 +21,9 @@ Feature: Using Jekyll-s3 as a library
     When my Jekyll site is in "features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi"
     Then jekyll-s3 will push my blog to S3 and invalidate the Cloudfront distribution
     And report that it invalidated 2 Cloudfront item
+
+  @create-redirect
+  Scenario: Developer wants feedback on how many redirects Jekyll-s3 created
+    When my Jekyll site is in "features/support/test_site_dirs/create-redirects"
+    Then jekyll-s3 will push my blog to S3
+    And report that it created 2 new redirects

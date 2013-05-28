@@ -31,6 +31,10 @@ Then /^report that it invalidated (\d+) Cloudfront item$/ do |expected|
   @amount_of_invalidated_items.should == expected.to_i
 end
 
+Then /^report that it created (\d+) new redirects$/ do |expected|
+  @amount_of_new_redirects.should == expected.to_i
+end
+
 Then /^report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
   @amount_of_deleted_files.should == amount_of_deleted_files.to_i
 end
@@ -43,6 +47,7 @@ def do_run
     @amount_of_changed_files = result[:changed_files_count]
     @amount_of_deleted_files = result[:deleted_files_count]
     @amount_of_invalidated_items = result[:invalidated_items_count]
+    @amount_of_new_redirects = result[:changed_redirects_count]
   }
 end
 

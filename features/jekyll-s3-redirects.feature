@@ -1,7 +1,6 @@
 Feature: configure redirects
 
   @create-redirect
-  @wip
   Scenario: The user wants to configure new redirects for HTTP resources
     When my Jekyll site is in "features/support/test_site_dirs/create-redirects"
     Then jekyll-s3 will push my blog to S3
