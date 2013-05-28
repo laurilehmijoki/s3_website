@@ -86,14 +86,10 @@ module Jekyll
         performed_operations.each do |redirect_operation|
           puts '  ' + redirect_operation[:report]
         end
-        succeeded_operations = performed_operations.select do |redirect_operation|
-          redirect_operation[:did_succeed]
-        end
-        succeeded_operations.map do |redirect_operation|
+        performed_operations.map do |redirect_operation|
           redirect_operation[:path]
         end
       end
-
 
       def self.setup_redirect(path, target, s3, config)
         target = '/' + target unless target =~ %r{^(/|https?://)}
@@ -105,19 +101,11 @@ module Jekyll
         end
 
         if current_head.nil? or current_head[:website_redirect_location] != target
-          if s3_object.write('', :website_redirect_location => target)
-            {
-              :did_succeed => true,
-              :report => "Redirect #{path} to #{target}: Success!",
-              :path => path
-            }
-          else
-            {
-              :did_success => false,
-              :report => "Redirect #{path} to #{target}: FAILURE!",
-              :path => path
-            }
-          end
+          s3_object.write('', :website_redirect_location => target)
+          {
+            :report => "Redirect #{path} to #{target}: Success!",
+            :path => path
+          }
         else
           :no_redirect_operation_performed
         end
