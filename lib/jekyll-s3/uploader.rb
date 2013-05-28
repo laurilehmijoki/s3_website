@@ -17,12 +17,7 @@ module Jekyll
         )
 
         redirects = config['redirects'] || {}
-        changed_redirects = []
-        redirects.each do |path, target|
-          if setup_redirect(path, target, s3, config)
-            changed_redirects << path
-          end
-        end
+        changed_redirects = setup_redirects redirects, config, s3
 
         deleted_files_count = remove_superfluous_files(s3, { :s3_bucket => config['s3_bucket'],
                                                              :site_dir => site_dir,
@@ -36,6 +31,16 @@ module Jekyll
       end
 
       private
+
+      def self.setup_redirects(redirects, config, s3)
+        changed_redirects = []
+        redirects.each do |path, target|
+          if setup_redirect(path, target, s3, config)
+            changed_redirects << path
+          end
+        end
+        changed_redirects
+      end
 
       def self.print_done_report(config)
         bucket_name = config['s3_bucket']
@@ -105,7 +110,6 @@ module Jekyll
         remote_files = s3.buckets[s3_bucket_name].objects.map { |f| f.key }
         local_files = load_all_local_files(site_dir) + options.fetch(:redirects).keys
         files_to_delete = build_list_of_files_to_delete(remote_files, local_files, options[:ignore_on_server])
-
 
         deleted_files_count = 0
         if in_headless_mode
