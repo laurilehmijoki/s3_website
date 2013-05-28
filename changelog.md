@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.8.0
+
+* Add support for simple redirects
+
 ## 2.7.0
 
 * Allow s3_id and s3_secret to be omitted

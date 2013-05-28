@@ -14,4 +14,5 @@ VCR.cucumber_tags do |t|
   t.tag '@s3-and-cloudfront'
   t.tag '@s3-and-cloudfront-when-updating-a-file'
   t.tag '@one-file-to-delete'
+  t.tag '@create-redirect'
 end

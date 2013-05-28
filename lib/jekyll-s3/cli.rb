@@ -10,15 +10,16 @@ module Jekyll
       def run(site_dir, in_headless_mode = false)
         CLI.check_configuration site_dir
         config = Jekyll::S3::ConfigLoader.load_configuration site_dir
-        new_files_count, changed_files_count, deleted_files_count, changed_files =
+        new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects =
           Uploader.run(site_dir, config, in_headless_mode)
         invalidated_items_count =
-          CLI.invalidate_cf_dist_if_configured(config, changed_files)
+          CLI.invalidate_cf_dist_if_configured(config, changed_files + changed_redirects)
         {
           :new_files_count => new_files_count,
           :changed_files_count => changed_files_count,
           :deleted_files_count => deleted_files_count,
-          :invalidated_items_count => invalidated_items_count
+          :invalidated_items_count => invalidated_items_count,
+          :changed_redirects_count => changed_redirects.size
         }
       rescue JekyllS3Error => e
         puts e.message

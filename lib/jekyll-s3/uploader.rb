@@ -16,14 +16,18 @@ module Jekyll
           s3, config, site_dir
         )
 
+        redirects = config['redirects'] || {}
+        changed_redirects = setup_redirects redirects, config, s3
+
         deleted_files_count = remove_superfluous_files(s3, { :s3_bucket => config['s3_bucket'],
                                                              :site_dir => site_dir,
+                                                             :redirects => redirects,
                                                              :in_headless_mode => in_headless_mode,
                                                              :ignore_on_server => config["ignore_on_server"] })
 
         print_done_report config
 
-        [new_files_count, changed_files_count, deleted_files_count, changed_files]
+        [new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects]
       end
 
       private
@@ -69,15 +73,52 @@ module Jekyll
         end
       end
 
+      def self.setup_redirects(redirects, config, s3)
+        operations = redirects.map do |path, target|
+          setup_redirect(path, target, s3, config)
+        end
+        performed_operations = operations.reject do |op|
+          op == :no_redirect_operation_performed
+        end
+        unless performed_operations.empty?
+          puts 'Creating new redirects ...'
+        end
+        performed_operations.each do |redirect_operation|
+          puts '  ' + redirect_operation[:report]
+        end
+        performed_operations.map do |redirect_operation|
+          redirect_operation[:path]
+        end
+      end
+
+      def self.setup_redirect(path, target, s3, config)
+        target = '/' + target unless target =~ %r{^(/|https?://)}
+        s3_object = s3.buckets[config['s3_bucket']].objects[path]
+
+        begin
+          current_head = s3_object.head
+        rescue AWS::S3::Errors::NoSuchKey
+        end
+
+        if current_head.nil? or current_head[:website_redirect_location] != target
+          s3_object.write('', :website_redirect_location => target)
+          {
+            :report => "Redirect #{path} to #{target}: Success!",
+            :path => path
+          }
+        else
+          :no_redirect_operation_performed
+        end
+      end
+
       def self.remove_superfluous_files(s3, options)
         s3_bucket_name = options.fetch(:s3_bucket)
         site_dir = options.fetch(:site_dir)
         in_headless_mode = options.fetch(:in_headless_mode)
 
         remote_files = s3.buckets[s3_bucket_name].objects.map { |f| f.key }
-        local_files = load_all_local_files(site_dir)
+        local_files = load_all_local_files(site_dir) + options.fetch(:redirects).keys
         files_to_delete = build_list_of_files_to_delete(remote_files, local_files, options[:ignore_on_server])
-
 
         deleted_files_count = 0
         if in_headless_mode
