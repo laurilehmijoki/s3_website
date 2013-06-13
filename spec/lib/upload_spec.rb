@@ -11,7 +11,7 @@ describe Jekyll::S3::Upload do
       s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
         s3_object.should_receive(:write).with(
           anything(),
-          :content_type => 'text/html',
+          :content_type => 'text/html; charset=utf-8',
           :reduced_redundancy => true
         )
       end
@@ -47,7 +47,7 @@ describe Jekyll::S3::Upload do
       s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
         s3_object.should_receive(:write).with(
           anything(),
-          :content_type => 'text/html',
+          :content_type => 'text/html; charset=utf-8',
           :reduced_redundancy => false
         )
       end

@@ -61,6 +61,7 @@ module Jekyll
           :reduced_redundancy => config['s3_reduced_redundancy']
         }
 
+        opts[:content_type] = "text/html; charset=utf-8" if mime_type == 'text/html'
         opts[:content_encoding] = "gzip" if gzip?
         opts[:cache_control] = "max-age=#{max_age}" if cache_control?
 

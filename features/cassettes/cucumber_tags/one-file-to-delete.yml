@@ -211,7 +211,7 @@ http_interactions:
       Accept-Ranges:
       - bytes
       Content-Type:
-      - text/html
+      - text/html; charset=utf-8
       Content-Length:
       - '117'
       Server:
@@ -256,7 +256,7 @@ http_interactions:
       Accept-Ranges:
       - bytes
       Content-Type:
-      - text/html
+      - text/html; charset=utf-8
       Content-Length:
       - '117'
       Server:
@@ -301,7 +301,7 @@ http_interactions:
       Accept-Ranges:
       - bytes
       Content-Type:
-      - text/html
+      - text/html; charset=utf-8
       Content-Length:
       - '117'
       Server:

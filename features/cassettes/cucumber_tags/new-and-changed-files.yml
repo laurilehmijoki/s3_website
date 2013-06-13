@@ -226,7 +226,7 @@ http_interactions:
         \   i am a new blog post\n  </body>\n</html>\n"
     headers:
       Content-Type:
-      - text/html
+      - text/html; charset=utf-8
       Content-Length:
       - '104'
       User-Agent:
