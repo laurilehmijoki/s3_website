@@ -313,4 +313,5 @@ Contributors (in alphabetical order)
 * Michael Bleigh
 * Shigeaki Matsumura
 * stanislas
+* Trevor Fitzgerald
 * Zee Spencer
