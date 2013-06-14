@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.0.0
+
+* Set `text/html; charset=utf-8` as the `content_type` for each `text/html`
+  object.
+
+  This change may cause unexpected behaviour for some users. As a consequence,
+  bump up major version.
+
 ## 2.8.0
 
 * Add support for simple redirects
