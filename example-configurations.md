@@ -52,7 +52,7 @@ redirects:
   about.php: about.html
 routing_rules:
   - condition:
-      key_prefix_equals: code/repositories/git
+      key_prefix_equals: code/repositories/git/
     redirect:
       host_name: git.johnny.com
       replace_key_prefix_with: ""
