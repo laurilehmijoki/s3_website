@@ -41,3 +41,20 @@ Above, we store the AWS credentials and the id of the CloudFront distribution as
 environment variables. It's convenient, since you can keep the `_jekyll_s3.yml`
 in a public Git repo, and thus have your deployment configurations
 version-controlled.
+
+## Using redirects
+
+````yaml
+s3_id: hello
+s3_secret: galaxy
+redirects:
+  index.php: /
+  about.php: about.html
+routing_rules:
+  - condition:
+      key_prefix_equals: code/repositories/git
+    redirect:
+      host_name: git.johnny.com
+      replace_key_prefix_with: ""
+      http_redirect_code: 301
+````
