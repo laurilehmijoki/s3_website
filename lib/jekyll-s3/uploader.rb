@@ -61,7 +61,7 @@ module Jekyll
 
       def self.upload_in_parallel(files_to_upload, s3, config, site_dir)
         threads = files_to_upload.map do |f|
-          Thread.new {
+          Thread.new(f) { |f|
             upload_file(f, s3, config, site_dir)
           }
         end
