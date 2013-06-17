@@ -35,12 +35,21 @@ Feature: upload Jekyll site to S3
   Scenario: Upload a new blog post and change an old post
     When my Jekyll site is in "features/support/test_site_dirs/new-and-changed-files.com"
     Then jekyll-s3 will push my blog to S3
-    And the output should equal
+    And the output should contain
       """
       Deploying _site/* to jekyll-s3-test.net
       Uploading 1 new and 1 changed file(s)
+      """
+    And the output should contain
+      """
       Upload css/styles.css: Success!
+      """
+    And the output should contain
+      """
       Upload index.html: Success!
+      """
+    And the output should contain
+      """
       Done! Go visit: http://jekyll-s3-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
