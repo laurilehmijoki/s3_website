@@ -54,11 +54,18 @@ module Jekyll
           pre_upload_report << "#{changed_files.length} changed" if changed_files.length > 0
           pre_upload_report << "file(s)"
           puts pre_upload_report.join(' ')
-          to_upload.each do |f|
-            upload_file(f, s3, config, site_dir)
-          end
+          upload_in_parallel to_upload, s3, config, site_dir
         end
         [new_files.length, changed_files.length, changed_files]
+      end
+
+      def self.upload_in_parallel(files_to_upload, s3, config, site_dir)
+        threads = files_to_upload.map do |f|
+          Thread.new {
+            upload_file(f, s3, config, site_dir)
+          }
+        end
+        threads.each { |thread| thread.join }
       end
 
       def self.upload_file(file, s3, config, site_dir)

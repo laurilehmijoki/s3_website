@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.1.0
+
+* Upload files in parallel
+
 ## 3.0.0
 
 * Set `text/html; charset=utf-8` as the `content_type` for each `text/html`
