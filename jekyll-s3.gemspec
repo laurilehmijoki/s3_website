@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "jekyll-s3"
-  s.version     = "3.1.1"
+  s.version     = "3.1.2"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Philippe Creux", "Lauri Lehmijoki"]
   s.email       = ["pcreux@gmail.com", "lauri.lehmijoki@iki.fi"]
@@ -27,7 +27,7 @@ distribution, making it easy to deliver your blog via the CDN.}
   s.add_development_dependency 'cucumber'
   s.add_development_dependency 'aruba', '~> 0.5.1'
   s.add_development_dependency 'rake'
-  s.add_development_dependency 'vcr'
+  s.add_development_dependency 'vcr', '~> 2.5.0'
   s.add_development_dependency 'webmock', '~> 1.8.0'
 
   s.files         = `git ls-files`.split("\n")
