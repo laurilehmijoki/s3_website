@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.2.0
+
+* Delete files in parallel
+
 ## 3.1.2
 
 * VCR is not threadsafe. Because of this, disable parallelism during tests.

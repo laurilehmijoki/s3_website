@@ -4,7 +4,7 @@ module Jekyll
       def self.if_user_confirms_delete(to_delete, standard_input=STDIN)
         delete_all = false
         keep_all = false
-        to_delete.each do |f|
+        confirmed_deletes = to_delete.map do |f|
           delete = false
           keep = false
           until delete || delete_all || keep || keep_all
@@ -17,9 +17,12 @@ module Jekyll
             end
           end
           if (delete_all || delete) && !(keep_all || keep)
-            yield f
+            f
           end
-        end
+        end.select { |f| f }
+        Parallelism.each_in_parallel_or_sequentially(confirmed_deletes) { |f|
+          yield f
+        }
       end
     end
   end

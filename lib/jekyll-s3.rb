@@ -12,7 +12,7 @@ module Jekyll
   end
 end
 
-%w{errors upload uploader cli config_loader retry keyboard diff_helper endpoint}.each do |file|
+%w{errors upload uploader cli config_loader retry keyboard diff_helper endpoint parallelism}.each do |file|
   require File.dirname(__FILE__) + "/jekyll-s3/#{file}"
 end
 

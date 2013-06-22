@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "jekyll-s3"
-  s.version     = "3.1.2"
+  s.version     = "3.2.0"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Philippe Creux", "Lauri Lehmijoki"]
   s.email       = ["pcreux@gmail.com", "lauri.lehmijoki@iki.fi"]

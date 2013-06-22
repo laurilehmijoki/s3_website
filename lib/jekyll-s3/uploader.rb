@@ -60,21 +60,9 @@ module Jekyll
       end
 
       def self.upload_in_parallel_or_sequentially(files_to_upload, s3, config, site_dir)
-        do_upload_file = lambda { |f|
+        Parallelism.each_in_parallel_or_sequentially(files_to_upload) { |f|
           upload_file(f, s3, config, site_dir)
         }
-        if ENV['disable_parallel_processing']
-          files_to_upload.each do |f|
-            do_upload_file.call f
-          end
-        else
-          threads = files_to_upload.map do |f|
-            Thread.new(f) { |f|
-              do_upload_file.call f
-            }
-          end
-          threads.each { |thread| thread.join }
-        end
       end
 
       def self.upload_file(file, s3, config, site_dir)

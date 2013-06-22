@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    jekyll-s3 (3.1.2)
+    jekyll-s3 (3.2.0)
       aws-sdk (~> 1.8.5)
       configure-s3-website (~> 1)
       erubis (~> 2.7.0)
