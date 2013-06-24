@@ -5,12 +5,13 @@ require 'aws-sdk'
 require 'simple-cloudfront-invalidator'
 require 'filey-diff'
 require 'mime/types'
+require 'thor'
 
 module S3Website
   DEFAULT_GZIP_EXTENSIONS = %w(.html .css .js .svg .txt)
 end
 
-%w{errors upload uploader cli config_loader retry keyboard diff_helper endpoint parallelism}.each do |file|
+%w{errors upload uploader tasks config_loader retry keyboard diff_helper endpoint parallelism}.each do |file|
   require File.dirname(__FILE__) + "/s3_website/#{file}"
 end
 

@@ -251,7 +251,7 @@ it programmatically by calling the same API as the executable `s3_website` does:
 ````ruby
 require 's3_website'
 is_headless = true
-S3Website::CLI.new.run('/path/to/your/website/_site/', is_headless)
+S3Website::Tasks.push('/path/to/your/website/_site/', is_headless)
 ````
 
 You can also use a basic `Hash` instead of a `s3_website.yml` file:

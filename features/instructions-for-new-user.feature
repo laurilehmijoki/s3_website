@@ -5,7 +5,7 @@ Feature: Instructions for a new user
   So that I can upload my S3 website to S3 without headache
 
   Scenario: Run s3_website in the wrong directory
-    When I run `s3_website`
+    When I run `s3_website push`
     Then the output should contain:
       """
       I can't find any directory called _site. Are you in the right directory?
@@ -13,7 +13,7 @@ Feature: Instructions for a new user
 
   Scenario: Run s3_website for the first time
     Given a directory named "_site"
-    When I run `s3_website`
+    When I run `s3_website push`
     Then the output should contain:
       """
       I've just generated a file called s3_website.yml. Go put your details in it!
@@ -28,7 +28,7 @@ Feature: Instructions for a new user
   Scenario: Run s3_website with an empty configuration file
     Given a directory named "_site"
     And an empty file named "s3_website.yml"
-    When I run `s3_website`
+    When I run `s3_website push`
     Then the output should contain:
       """
       I can't parse the file s3_website.yml. It should look like this:
@@ -44,7 +44,7 @@ Feature: Instructions for a new user
       s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
       this is not yaml
       """
-    When I run `s3_website`
+    When I run `s3_website push`
     Then the output should contain:
       """
       I can't parse the file s3_website.yml. It should look like this:
@@ -61,7 +61,7 @@ Feature: Instructions for a new user
       s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
       s3_bucket:
       """
-    When I run `s3_website`
+    When I run `s3_website push`
     Then the output should contain:
       """
       I can't parse the file s3_website.yml. It should look like this:

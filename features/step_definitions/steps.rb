@@ -5,11 +5,11 @@ When /^my S3 website is in "(.*?)"$/ do |blog_dir|
 end
 
 When /^s3_website will push my blog to S3$/ do
-  do_run
+  push_files
 end
 
 Then /^s3_website will push my blog to S(\d+) and invalidate the Cloudfront distribution$/ do |args|
-  do_run
+  push_files
 end
 
 Then /^the output should equal$/ do |expected_console_output|
@@ -38,10 +38,13 @@ Then /^report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
   @amount_of_deleted_files.should == amount_of_deleted_files.to_i
 end
 
-def do_run
+def push_files
   @console_output = capture_stdout {
     in_headless_mode = true
-    result = S3Website::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
+    result = S3Website::Tasks.push(
+      "#{@blog_dir}/_site", 
+      in_headless_mode
+    )
     @amount_of_new_files = result[:new_files_count]
     @amount_of_changed_files = result[:changed_files_count]
     @amount_of_deleted_files = result[:deleted_files_count]

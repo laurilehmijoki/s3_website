@@ -2,6 +2,30 @@
 
 require File.dirname(__FILE__) + '/../lib/s3_website'
 
-is_headless = ARGV.length == 1 and ARGV[0] == '--headless' or ARGV[0] == '-h'
+class CLI < Thor
+  class_option(
+    :headless,
+    :type => :boolean,
+    :desc =>
+      'When headless, s3_website will not require human interaction at any point'
+  )
 
-S3Website::CLI.run is_headless
+  class_option(
+    :site,
+    :type => :string,
+    :default => '_site',
+    :desc =>
+      'The directory where your website files are'
+  )
+
+  desc 'push', 'Push local files with the S3 website'
+  long_desc <<-LONGDESC
+    `s3_website push` will upload new and changes files to S3. It will
+    also delete from S3 the files that you no longer have locally.
+  LONGDESC
+  def push
+    S3Website::Tasks.push(options[:site], options[:headless])
+  end
+end
+
+CLI.start(ARGV)

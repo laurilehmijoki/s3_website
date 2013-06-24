@@ -1,18 +1,12 @@
 module S3Website
-  class CLI
-    SITE_DIR = '_site'
-
-    def self.run(in_headless_mode)
-      CLI.new.run SITE_DIR, in_headless_mode
-    end
-
-    def run(site_dir, in_headless_mode = false)
-      CLI.check_configuration site_dir
+  class Tasks
+    def self.push(site_dir, in_headless_mode = false)
+      check_configuration site_dir
       config = S3Website::ConfigLoader.load_configuration site_dir
       new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects =
         Uploader.run(site_dir, config, in_headless_mode)
       invalidated_items_count =
-        CLI.invalidate_cf_dist_if_configured(config, changed_files + changed_redirects)
+        invalidate_cf_dist_if_configured(config, changed_files + changed_redirects)
       {
         :new_files_count => new_files_count,
         :changed_files_count => changed_files_count,
