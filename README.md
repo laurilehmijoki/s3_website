@@ -293,11 +293,14 @@ request being incorporated into future releases.
 
 ## License
 
-MIT
+MIT. See the LICENSE file for more information.
 
-## Copyright
+## Contributors
 
-Copyright (c) 2011 VersaPay, Philippe Creux.
+This gem is created by [Lauri Lehmijoki](https://github.com/laurilehmijoki).
+Without the valuable work of [Philippe Creux](https://github.com/pcreux) on
+[jekyll-s3](https://github.com/laurilehmijoki/jekyll-s3), this project would not
+exist.
 
 Contributors (in alphabetical order)
 * Alan deLevie
@@ -306,9 +309,9 @@ Contributors (in alphabetical order)
 * Chris Moos
 * David Michael Barr
 * László Bácsi
-* Lauri Lehmijoki
 * Mason Turner
 * Michael Bleigh
+* Philippe Creux
 * Shigeaki Matsumura
 * stanislas
 * Trevor Fitzgerald
