@@ -1,7 +1,8 @@
 module S3Website
   class Tasks
     def self.push(site_dir, in_headless_mode = false)
-      check_configuration site_dir
+      ConfigLoader.check_project site_dir
+      ConfigLoader.check_s3_configuration site_dir
       config = S3Website::ConfigLoader.load_configuration site_dir
       new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects =
         Uploader.run(site_dir, config, in_headless_mode)
@@ -19,6 +20,13 @@ module S3Website
       exit 1
     end
 
+    def self.config_create(site_dir)
+      ConfigLoader.check_s3_configuration site_dir
+    rescue S3WebsiteError => e
+      puts e.message
+      exit 1
+    end
+
     private
 
     def self.invalidate_cf_dist_if_configured(config, changed_files)
@@ -29,11 +37,6 @@ module S3Website
       else
         0
       end
-    end
-
-    def self.check_configuration(site_dir)
-      S3Website::ConfigLoader.check_project site_dir
-      S3Website::ConfigLoader.check_s3_configuration site_dir
     end
   end
 end

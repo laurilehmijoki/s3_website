@@ -19,6 +19,8 @@ s3_bucket: your.blog.bucket.com
       end
     end
 
+    private
+
     # Load configuration from s3_website.yml
     # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
     def self.load_configuration(site_dir)

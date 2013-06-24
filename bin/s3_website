@@ -2,22 +2,26 @@
 
 require File.dirname(__FILE__) + '/../lib/s3_website'
 
-class CLI < Thor
+class Cfg < Thor
+  desc 'create', 'Create a config file with placeholder values'
+  def create
+    S3Website::Tasks.config_create parent_options[:site]
+  end
+end
+
+class Cli < Thor
   class_option(
+    :site,
+    :type => :string,
+    :default => '_site',
+    :desc => 'The directory where your website files are'
+  )
+  option(
     :headless,
     :type => :boolean,
     :desc =>
       'When headless, s3_website will not require human interaction at any point'
   )
-
-  class_option(
-    :site,
-    :type => :string,
-    :default => '_site',
-    :desc =>
-      'The directory where your website files are'
-  )
-
   desc 'push', 'Push local files with the S3 website'
   long_desc <<-LONGDESC
     `s3_website push` will upload new and changes files to S3. It will
@@ -26,6 +30,9 @@ class CLI < Thor
   def push
     S3Website::Tasks.push(options[:site], options[:headless])
   end
+
+  desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
+  subcommand 'cfg', Cfg
 end
 
-CLI.start(ARGV)
+Cli.start(ARGV)

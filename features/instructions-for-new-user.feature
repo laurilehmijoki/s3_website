@@ -11,7 +11,21 @@ Feature: Instructions for a new user
       I can't find any directory called _site. Are you in the right directory?
       """
 
-  Scenario: Run s3_website for the first time
+  Scenario: Create placeholder config file
+    Given a directory named "_site"
+    When I run `s3_website cfg create`
+    Then the output should contain:
+      """
+      I've just generated a file called s3_website.yml. Go put your details in it!
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
+      s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
+      s3_bucket: your.blog.bucket.com
+      """
+
+  Scenario: Run s3_website push for the first time
     Given a directory named "_site"
     When I run `s3_website push`
     Then the output should contain:
