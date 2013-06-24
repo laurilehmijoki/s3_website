@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Jekyll::S3::Uploader do
+describe S3Website::Uploader do
   context '#load_all_local_files' do
     let(:files) {
-      Jekyll::S3::Uploader.send(:load_all_local_files,
+      S3Website::Uploader.send(:load_all_local_files,
                                 'spec/sample_files/hyde_site/_site')
     }
 
@@ -19,11 +19,11 @@ describe Jekyll::S3::Uploader do
 
   context "#build_list_of_files_to_delete" do
     it "ignores files which match a regular expression" do
-      files_to_delete = Jekyll::S3::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"], "ignored")
+      files_to_delete = S3Website::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"], "ignored")
       files_to_delete.should eq ["b"]
     end
     it "does not ignore when you don't provide an ignored regex" do
-      files_to_delete = Jekyll::S3::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"])
+      files_to_delete = S3Website::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"])
       files_to_delete.should eq ["b", "ignored"]
     end
   end

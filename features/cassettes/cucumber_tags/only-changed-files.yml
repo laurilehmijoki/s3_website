@@ -2,7 +2,7 @@
 http_interactions:
 - request:
     method: get
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net?max-keys=1000
+    uri: https://s3.amazonaws.com/s3-website-test.net?max-keys=1000
     body:
       encoding: US-ASCII
       string: ''
@@ -40,12 +40,12 @@ http_interactions:
       encoding: UTF-8
       string: |-
         <?xml version="1.0" encoding="UTF-8"?>
-        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>jekyll-s3-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2013-06-22T08:30:48.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2013-06-22T08:53:53.000Z</LastModified><ETag>&quot;cf0bda670466480001905aad5eba1293&quot;</ETag><Size>127</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2013-06-22T08:30:48.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2013-06-22T08:53:53.000Z</LastModified><ETag>&quot;cf0bda670466480001905aad5eba1293&quot;</ETag><Size>127</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>
     http_version: 
   recorded_at: Sat, 22 Jun 2013 08:56:09 GMT
 - request:
     method: head
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/css/styles.css
+    uri: https://s3.amazonaws.com/s3-website-test.net/css/styles.css
     body:
       encoding: US-ASCII
       string: ''
@@ -90,7 +90,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:10 GMT
 - request:
     method: head
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
+    uri: https://s3.amazonaws.com/s3-website-test.net/index.html
     body:
       encoding: US-ASCII
       string: ''
@@ -135,7 +135,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:10 GMT
 - request:
     method: head
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
+    uri: https://s3.amazonaws.com/s3-website-test.net/index.html
     body:
       encoding: US-ASCII
       string: ''
@@ -180,7 +180,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:12 GMT
 - request:
     method: head
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/css/styles.css
+    uri: https://s3.amazonaws.com/s3-website-test.net/css/styles.css
     body:
       encoding: US-ASCII
       string: ''
@@ -225,7 +225,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:12 GMT
 - request:
     method: head
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
+    uri: https://s3.amazonaws.com/s3-website-test.net/index.html
     body:
       encoding: US-ASCII
       string: ''
@@ -270,7 +270,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:13 GMT
 - request:
     method: head
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/css/styles.css
+    uri: https://s3.amazonaws.com/s3-website-test.net/css/styles.css
     body:
       encoding: US-ASCII
       string: ''
@@ -315,7 +315,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:13 GMT
 - request:
     method: put
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net/index.html
+    uri: https://s3.amazonaws.com/s3-website-test.net/index.html
     body:
       encoding: UTF-8
       string: |
@@ -367,7 +367,7 @@ http_interactions:
   recorded_at: Sat, 22 Jun 2013 08:56:14 GMT
 - request:
     method: get
-    uri: https://s3.amazonaws.com/jekyll-s3-test.net?max-keys=1000
+    uri: https://s3.amazonaws.com/s3-website-test.net?max-keys=1000
     body:
       encoding: US-ASCII
       string: ''
@@ -405,7 +405,7 @@ http_interactions:
       encoding: UTF-8
       string: |-
         <?xml version="1.0" encoding="UTF-8"?>
-        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>jekyll-s3-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2013-06-22T08:30:48.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2013-06-22T08:56:03.000Z</LastModified><ETag>&quot;555cf1f0ffc6a431eb42e2fcfc4c4646&quot;</ETag><Size>127</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2013-06-22T08:30:48.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2013-06-22T08:56:03.000Z</LastModified><ETag>&quot;555cf1f0ffc6a431eb42e2fcfc4c4646&quot;</ETag><Size>127</Size><Owner><ID>3855ebae0f370c3dd0c8d8031863792112bd2a2cb18fa310d3f463ae0dea62f1</ID><DisplayName>fluid83</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>
     http_version: 
   recorded_at: Sat, 22 Jun 2013 08:56:17 GMT
 recorded_with: VCR 2.5.0

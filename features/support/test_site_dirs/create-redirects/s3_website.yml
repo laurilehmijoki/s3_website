@@ -1,0 +1,6 @@
+s3_id: foo
+s3_secret: foo
+s3_bucket: s3-website-test.net
+redirects:
+  welcome.php: welcome
+  pets/dogs: cats-and-dogs/wuf

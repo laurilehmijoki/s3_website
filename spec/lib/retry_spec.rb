@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Jekyll::S3::Retry do
+describe S3Website::Retry do
   describe ".run_with_retry" do
     it "retry the operation 4 times" do
       retries = 0
       begin
-        Jekyll::S3::Retry.run_with_retry(0.001) {
+        S3Website::Retry.run_with_retry(0.001) {
           retries += 1
           raise Exception
         }
@@ -16,15 +16,15 @@ describe Jekyll::S3::Retry do
 
     it "throws an error if all retries fail" do
       expect {
-        Jekyll::S3::Retry.run_with_retry(0.001) {
+        S3Website::Retry.run_with_retry(0.001) {
           raise Exception
         }
-      }.to raise_error(Jekyll::S3::RetryAttemptsExhaustedError)
+      }.to raise_error(S3Website::RetryAttemptsExhaustedError)
     end
 
     it "re-runs the block if the block throws an error" do
       retries = 0
-      Jekyll::S3::Retry.run_with_retry(0.001) {
+      S3Website::Retry.run_with_retry(0.001) {
         retries += 1
         raise Exception if retries < 2
       }

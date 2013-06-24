@@ -1,14 +1,12 @@
-# jekyll-s3
+# s3_website – Deploy your website to S3.
 
-[![Build Status](https://secure.travis-ci.org/laurilehmijoki/jekyll-s3.png)] (http://travis-ci.org/laurilehmijoki/jekyll-s3)
-[![Gem Version](https://fury-badge.herokuapp.com/rb/jekyll-s3.png)](http://badge.fury.io/rb/jekyll-s3)
+[![Build Status](https://secure.travis-ci.org/laurilehmijoki/s3_website.png)] (http://travis-ci.org/laurilehmijoki/s3_website)
+[![Gem Version](https://fury-badge.herokuapp.com/rb/s3_website.png)](http://badge.fury.io/rb/s3_website)
 
-Deploy your jekyll site to S3.
-
-## What jekyll-s3 can do for you
+## What s3_website can do for you
 
 * Upload your site to AWS S3
-* Help you use AWS Cloudfront to distribute your Jekyll blog
+* Help you use AWS Cloudfront to distribute your website
 * Create an S3 website for you
 * Improve page speed with HTTP cache control and gzipping
 * Set HTTP redirects for your website
@@ -16,31 +14,31 @@ Deploy your jekyll site to S3.
 
 ## Install
 
-    gem install jekyll-s3
+    gem install s3_website
 
 ## Usage
 
-* Go to your jekyll site directory
-* Run `jekyll-s3`. It generates a configuration file called `_jekyll_s3.yml` that looks like this:
+* Go to your website directory
+* Run `s3_website`. It generates a configuration file called `s3_website.yml` that looks like this:
 <pre>
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
 </pre>
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
-* Run `configure-s3-website --config-file _jekyll_s3.yml` This will configure
+* Run `configure-s3-website --config-file s3_website.yml` This will configure
   your bucket to function as an S3 website. If the bucket does not exist,
   `configure-s3-website` will create it for you.
 
-* Run `jekyll-s3` to push your Jekyll blog to S3. Congratulations! You are live.
+* Run `s3_website` to push your website to S3. Congratulations! You are live.
 
-(If you are using `jekyll-s3` on an [EC2 instance with IAM
+(If you are using `s3_website` on an [EC2 instance with IAM
 roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
 you can omit the `s3_id` and `s3_secret` keys in the config file.)
 
 ### Using environment variables
 
-You can use ERB in your `_jekyll_s3.yml` file which incorporates environment variables:
+You can use ERB in your `s3_website.yml` file which incorporates environment variables:
 
 ```yaml
 s3_id: <%= ENV['S3_ID'] %>
@@ -69,7 +67,7 @@ max_age:
   "*": 300
 ```
 
-Place the configuration into the file `_jekyll_s3.yml`.
+Place the configuration into the file `s3_website.yml`.
 
 ### Gzip Compression
 
@@ -77,7 +75,7 @@ If you choose, you can use compress certain file types before uploading them to
 S3. This is a recommended practice for maximizing page speed and minimizing
 bandwidth usage.
 
-To enable Gzip compression, simply add a `gzip` option to your `_jekyll_s3.yml`
+To enable Gzip compression, simply add a `gzip` option to your `s3_website.yml`
 configuration file:
 
 ```yaml
@@ -99,11 +97,11 @@ not the pre-processed extensions.
 
 ### Using non-standard AWS regions
 
-By default, `jekyll-s3` uses the US Standard Region. You can upload your Jekyll
-site to other regions by adding the setting `s3_endpoint` into the
-`_jekyll_s3.yml` file.
+By default, `s3_website` uses the US Standard Region. You can upload your
+website to other regions by adding the setting `s3_endpoint` into the
+`s3_website.yml` file.
 
-For example, the following line in `_jekyll_s3.yml` will instruct `jekyll_s3` to
+For example, the following line in `s3_website.yml` will instruct `s3_website` to
 push your site into the Tokyo region:
 
 ```yaml
@@ -126,9 +124,9 @@ ignore_on_server: that_folder_of_stuff_i_dont_keep_locally
 
 You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy Storage:
 
-  * In `_jekyll_s3.yml`, set `s3_reduced_redundancy: true`
+  * In `s3_website.yml`, set `s3_reduced_redundancy: true`
   * All objects uploaded after this change will use the Reduced Redundancy Storage.
-  * If you want to change all of the files in the bucket, you can change them through the AWS console, or update the timestamp on the files before running `jekyll-s3` again
+  * If you want to change all of the files in the bucket, you can change them through the AWS console, or update the timestamp on the files before running `s3_website` again
 
 ### How to use Cloudfront to deliver your blog
 
@@ -146,17 +144,17 @@ documentation](https://github.com/laurilehmijoki/configure-s3-website).
 
 #### Using your existing CloudFront distribution
 
-If you already have a CloudFront distribution that serves data from your Jekyll
-S3 bucket, just add the following line into the file `_jekyll_s3.yml`:
+If you already have a CloudFront distribution that serves data from your website
+S3 bucket, just add the following line into the file `s3_website.yml`:
 
     cloudfront_distribution_id: your-dist-id
 
-Next time you run `jekyll-s3`, it will invalidate the items on CloudFront and
-thus force the CDN system to reload the changes from your Jekyll S3 bucket.
+Next time you run `s3_website`, it will invalidate the items on CloudFront and
+thus force the CDN system to reload the changes from your website S3 bucket.
 
 #### Specifying custom settings for your CloudFront distribution
 
-The gem `configure-s3-website`, which is a dependency of `jekyll-s3`, lets you
+The gem `configure-s3-website`, which is a dependency of `s3_website`, lets you
 define custom settings for your CloudFront distribution.
 
 For example, like this you can define a your own TTL and CNAME:
@@ -177,23 +175,23 @@ info.
 
 ### The headless mode
 
-Jekyll-s3 has a headless mode, where human interactions are disabled.
+s3_website has a headless mode, where human interactions are disabled.
 
-In the headless mode, `jekyll-s3` will automatically delete the files on the S3
+In the headless mode, `s3_website` will automatically delete the files on the S3
 bucket that are not on your local computer.
 
 Enable the headless mode by adding the `--headless` or `-h` argument after
-`jekyll-s3`.
+`s3_website`.
 
-### Configuring redirects on your Jekyll S3 website
+### Configuring redirects on your S3 website
 
-You can set HTTP redirects on your Jekyll S3 website in two ways. If you only
-need simple "301 Moved Premanently" redirects for certain keys, use the
-Simple Redirects method. Otherwise, use the Routing Rules method.
+You can set HTTP redirects on your S3 website in two ways. If you only need
+simple "301 Moved Premanently" redirects for certain keys, use the Simple
+Redirects method. Otherwise, use the Routing Rules method.
 
 #### Simple Redirects
 
-For simple redirects Jekyll S3 uses Amazon S3's
+For simple redirects `s3_website` uses Amazon S3's
 [`x-amz-website-redirect-location`](http://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html)
 metadata. It will create zero-byte objects for each path you want
 redirected with the appropriate `x-amz-website-redirect-location` value.
@@ -211,7 +209,7 @@ redirects:
 #### Routing Rules
 
 You can configure more complex redirect rules by adding the following
-configuration into the `_jekyll_s3.yml` file:
+configuration into the `s3_website.yml` file:
 
 ```yaml
 routing_rules:
@@ -224,25 +222,25 @@ routing_rules:
 ```
 
 After adding the configuration, run the command `configure-s3-website --config
-_jekyll_s3.yml` on your command-line interface. This will apply the routing
+s3_website.yml` on your command-line interface. This will apply the routing
 rules on your S3 bucket.
 
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
-gem, which comes as a transitive dependency of the `jekyll-s3` gem.
+gem, which comes as a transitive dependency of the `s3_website` gem.
 
-### Using `jekyll-s3` as a library
+### Using `s3_website` as a library
 
-By nature, `jekyll-s3` is a command-line interface tool. You can, however, use
-it programmatically by calling the same API as the executable `jekyll-s3` does:
+By nature, `s3_website` is a command-line interface tool. You can, however, use
+it programmatically by calling the same API as the executable `s3_website` does:
 
 ````ruby
-require 'jekyll-s3'
+require 's3_website'
 is_headless = true
-Jekyll::S3::CLI.new.run('/path/to/your/jekyll-site/_site/', is_headless)
+S3Website::CLI.new.run('/path/to/your/website/_site/', is_headless)
 ````
 
-You can also use a basic `Hash` instead of a `_jekyll_s3.yml` file:
+You can also use a basic `Hash` instead of a `s3_website.yml` file:
 
 ```ruby
 config = {
@@ -251,16 +249,16 @@ config = {
   "s3_bucket" => "your.blog.bucket.com"
 }
 in_headless = true
-Jekyll::S3::Uploader.run('/path/to/your/jekyll-site/_site/', config, in_headless)
+S3Website::Uploader.run('/path/to/your/website/_site/', config, in_headless)
 ```
 
-The code above will assume that you have the `_jekyll_s3.yml` in the directory
-`/path/to/your/jekyll-site`.
+The code above will assume that you have the `s3_website.yml` in the directory
+`/path/to/your/website`.
 
 ## Example configurations
 
 See
-<https://github.com/laurilehmijoki/jekyll-s3/blob/master/example-configurations.md>.
+<https://github.com/laurilehmijoki/s3_website/blob/master/example-configurations.md>.
 
 ## Known issues
 
@@ -270,7 +268,7 @@ None. Please send a pull request if you spot any.
 
 ### Versioning
 
-Jekyll-s3 uses [Semantic Versioning](http://semver.org).
+s3_website uses [Semantic Versioning](http://semver.org).
 
 ### Tests
 
@@ -281,15 +279,15 @@ Jekyll-s3 uses [Semantic Versioning](http://semver.org).
 
 ### Contributing
 
-We (users and developers of Jekyll-s3) welcome patches, pull requests and
+We (users and developers of s3_website) welcome patches, pull requests and
 ideas for improvement.
 
 When sending pull requests, please accompany them with tests. Favor BDD style
 in test descriptions. Use VCR-backed integration tests where possible. For
-reference, you can look at the existing Jekyll-s3 tests.
+reference, you can look at the existing s3_website tests.
 
 If you are not sure how to test your pull request, you can ask the [gem owners
-](http://rubygems.org/gems/jekyll-s3) to supplement the request with tests.
+](http://rubygems.org/gems/s3_website) to supplement the request with tests.
 However, by including proper tests, you increase the chances of your pull
 request being incorporated into future releases.
 

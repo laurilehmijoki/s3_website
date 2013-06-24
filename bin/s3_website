@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../lib/s3_website'
+
+is_headless = ARGV.length == 1 and ARGV[0] == '--headless' or ARGV[0] == '-h'
+
+S3Website::CLI.run is_headless

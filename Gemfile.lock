@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    jekyll-s3 (3.2.0)
+    s3_website (0.1.0)
       aws-sdk (~> 1.8.5)
       configure-s3-website (~> 1)
       erubis (~> 2.7.0)
@@ -71,9 +71,9 @@ PLATFORMS
 DEPENDENCIES
   aruba (~> 0.5.1)
   cucumber
-  jekyll-s3!
   rake
   rspec
   rspec-expectations
+  s3_website!
   vcr (~> 2.5.0)
   webmock (~> 1.8.0)

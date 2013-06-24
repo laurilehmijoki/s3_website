@@ -1,7 +1,0 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../lib/jekyll-s3'
-
-is_headless = ARGV.length == 1 and ARGV[0] == '--headless' or ARGV[0] == '-h'
-
-Jekyll::S3::CLI.run is_headless

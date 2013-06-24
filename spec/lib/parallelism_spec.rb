@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Jekyll::S3::Parallelism do
+describe S3Website::Parallelism do
   context 'user has disabled parallelism' do
     before(:all) {
       @original_disable_state = ENV['disable_parallel_processing']
@@ -14,7 +14,7 @@ describe Jekyll::S3::Parallelism do
     it 'runs things sequentially' do
       ints = (0..100).to_a
       after_processing = []
-      Jekyll::S3::Parallelism.each_in_parallel_or_sequentially(ints) { |int|
+      S3Website::Parallelism.each_in_parallel_or_sequentially(ints) { |int|
         after_processing << int
       }
       ints.should eq(after_processing)
@@ -34,7 +34,7 @@ describe Jekyll::S3::Parallelism do
     it 'runs things in parallel' do
       ints = (0..100).to_a
       after_processing = []
-      Jekyll::S3::Parallelism.each_in_parallel_or_sequentially(ints) { |int|
+      S3Website::Parallelism.each_in_parallel_or_sequentially(ints) { |int|
         after_processing << int
       }
       ints.should_not eq(after_processing) # Parallel processing introduces non-determinism

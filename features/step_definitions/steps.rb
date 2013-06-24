@@ -1,15 +1,14 @@
 require 'rspec'
 
-When /^my Jekyll site is in "(.*?)"$/ do |blog_dir|
+When /^my S3 website is in "(.*?)"$/ do |blog_dir|
   @blog_dir = blog_dir
 end
 
-When /^jekyll-s3 will push my blog to S3$/ do
+When /^s3_website will push my blog to S3$/ do
   do_run
 end
 
-Then /^jekyll-s(\d+) will push my blog to S(\d+) and invalidate the Cloudfront distribution$/ do
-  |arg1, arg2|
+Then /^s3_website will push my blog to S(\d+) and invalidate the Cloudfront distribution$/ do |args|
   do_run
 end
 
@@ -42,7 +41,7 @@ end
 def do_run
   @console_output = capture_stdout {
     in_headless_mode = true
-    result = Jekyll::S3::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
+    result = S3Website::CLI.new.run("#{@blog_dir}/_site", in_headless_mode)
     @amount_of_new_files = result[:new_files_count]
     @amount_of_changed_files = result[:changed_files_count]
     @amount_of_deleted_files = result[:deleted_files_count]

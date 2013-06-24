@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Jekyll::S3::Upload do
+describe S3Website::Upload do
   describe 'reduced redundancy setting' do
     let(:config) {
       { 's3_reduced_redundancy' => true }
@@ -15,7 +15,7 @@ describe Jekyll::S3::Upload do
           :reduced_redundancy => true
         )
       end
-      Jekyll::S3::Upload.new(file_to_upload,
+      S3Website::Upload.new(file_to_upload,
                              s3_client,
                              config,
                              'features/support/test_site_dirs/my.blog.com/_site').perform!
@@ -36,7 +36,7 @@ describe Jekyll::S3::Upload do
           :reduced_redundancy => false
         )
       end
-      Jekyll::S3::Upload.new(file_to_upload,
+      S3Website::Upload.new(file_to_upload,
                              s3_client,
                              config,
                              'features/support/test_site_dirs/my.blog.com/_site').perform!
@@ -51,7 +51,7 @@ describe Jekyll::S3::Upload do
           :reduced_redundancy => false
         )
       end
-      Jekyll::S3::Upload.new(file_to_upload,
+      S3Website::Upload.new(file_to_upload,
                              s3_client,
                              config,
                              'features/support/test_site_dirs/my.blog.com/_site').perform!
@@ -66,7 +66,7 @@ describe Jekyll::S3::Upload do
       }
     }
 
-    subject{ Jekyll::S3::Upload.new("index.html", mock(), config, 'features/support/test_site_dirs/my.blog.com/_site') }
+    subject{ S3Website::Upload.new("index.html", mock(), config, 'features/support/test_site_dirs/my.blog.com/_site') }
 
     describe '#gzip?' do
       it 'should be false if the config does not specify gzip' do
@@ -107,7 +107,7 @@ describe Jekyll::S3::Upload do
     }
 
     let(:subject) {
-      Jekyll::S3::Upload.new(
+      S3Website::Upload.new(
         "index.html",
         mock(),
         config,
@@ -158,7 +158,7 @@ describe Jekyll::S3::Upload do
         }
 
         it 'respects the most specific max-age selector' do
-          subject = Jekyll::S3::Upload.new(
+          subject = S3Website::Upload.new(
             'assets/picture.gif',
             mock(),
             config,
@@ -168,7 +168,7 @@ describe Jekyll::S3::Upload do
         end
 
         it 'respects the most specific max-age selector' do
-          subject = Jekyll::S3::Upload.new(
+          subject = S3Website::Upload.new(
             'index.html',
             mock(),
             config,

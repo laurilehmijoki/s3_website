@@ -1,1 +1,1 @@
-require File.dirname(__FILE__) + "/../lib/jekyll-s3.rb"
+require File.dirname(__FILE__) + "/../lib/s3_website.rb"

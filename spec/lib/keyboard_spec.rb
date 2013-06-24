@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Jekyll::S3::Keyboard do
+describe S3Website::Keyboard do
   describe '.keep_or_delete' do
     let(:s3_object_keys) { ['a', 'b', 'c'] }
     let(:standard_input) { stub('std_in') }
@@ -49,7 +49,7 @@ describe Jekyll::S3::Keyboard do
 
     def call_keyboard(s3_object_keys, standard_input)
       deleted_keys = []
-      Jekyll::S3::Keyboard.if_user_confirms_delete(s3_object_keys, 
+      S3Website::Keyboard.if_user_confirms_delete(s3_object_keys, 
                                                    standard_input) { |key|
         deleted_keys << key
       }

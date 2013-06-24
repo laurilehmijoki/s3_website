@@ -1,4 +1,4 @@
-module Jekyll
+module S3Website
   module Cloudfront
     class Invalidator
       def self.invalidate(config, changed_files)
