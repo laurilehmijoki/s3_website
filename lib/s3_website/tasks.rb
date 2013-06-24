@@ -33,7 +33,7 @@ module S3Website
       cloudfront_configured = config['cloudfront_distribution_id'] &&
         (not config['cloudfront_distribution_id'].empty?)
       invalidated_items_count = if cloudfront_configured
-        S3Website::Cloudfront::Invalidator.invalidate(config, changed_files)
+        Cloudfront::Invalidator.invalidate(config, changed_files)
       else
         0
       end
