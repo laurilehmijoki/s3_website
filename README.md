@@ -46,6 +46,20 @@ s3_secret: <%= ENV['S3_SECRET'] %>
 s3_bucket: blog.example.com
 ```
 
+## Project goals
+
+* Provide a command-line interface tool for deploying and managing S3 websites
+* Let the user have all the S3 website configurations in a file
+* Minimise or remove the need to use the AWS Console
+* Allow the user to deliver the website via CloudFront
+* Automatically detect the most common static website tools, such as Jekyll or
+  Nanoc
+* Be simple to use: require only the S3 credentials and the name of the S3
+  bucket
+* Let the power users benefit from advanced S3 website features such as
+  redirects, Cache-Control headers and gzip support
+* Maintain 90% backward compatibility with the jekyll-s3 gem
+
 ## Additional features
 
 ### Cache Control
