@@ -12,11 +12,16 @@ s3_bucket: your.blog.bucket.com
     end
 
     # Raise NoConfigurationFileError if the configuration file does not exists
-    def self.check_s3_configuration(site_dir)
-      unless File.exists?(get_configuration_file(site_dir))
-        create_template_configuration_file site_dir
+    def self.check_s3_configuration(dir)
+      config_file = dir + '/' + CONFIGURATION_FILE
+      unless File.exists?(config_file)
+        create_template_configuration_file config_file
         raise NoConfigurationFileError
       end
+    end
+
+    def self.get_configuration_file(site_dir)
+      "#{site_dir}/../#{CONFIGURATION_FILE}"
     end
 
     private
@@ -28,8 +33,8 @@ s3_bucket: your.blog.bucket.com
       return config
     end
 
-    def self.create_template_configuration_file(site_dir)
-      File.open(get_configuration_file(site_dir), 'w') { |f|
+    def self.create_template_configuration_file(file)
+      File.open(file, 'w') { |f|
         f.write(CONFIGURATION_FILE_TEMPLATE)
       }
     end
@@ -47,10 +52,6 @@ s3_bucket: your.blog.bucket.com
           mandatory_config_value.nil? || mandatory_config_value == ''
         }
       config
-    end
-
-    def self.get_configuration_file(site_dir)
-      "#{site_dir}/../#{CONFIGURATION_FILE}"
     end
   end
 end

@@ -5,12 +5,12 @@ require File.dirname(__FILE__) + '/../lib/s3_website'
 class Cfg < Thor
   desc 'create', 'Create a config file with placeholder values'
   def create
-    S3Website::Tasks.config_create parent_options[:site]
+    S3Website::Tasks.config_create Dir.pwd
   end
 end
 
 class Cli < Thor
-  class_option(
+  option(
     :site,
     :type => :string,
     :default => '_site',

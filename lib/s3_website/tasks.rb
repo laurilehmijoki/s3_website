@@ -2,7 +2,7 @@ module S3Website
   class Tasks
     def self.push(site_dir, in_headless_mode = false)
       ConfigLoader.check_project site_dir
-      ConfigLoader.check_s3_configuration site_dir
+      ConfigLoader.check_s3_configuration site_dir + '/../'
       config = S3Website::ConfigLoader.load_configuration site_dir
       new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects =
         Uploader.run(site_dir, config, in_headless_mode)
@@ -20,8 +20,8 @@ module S3Website
       exit 1
     end
 
-    def self.config_create(site_dir)
-      ConfigLoader.check_s3_configuration site_dir
+    def self.config_create(dir)
+      ConfigLoader.check_s3_configuration dir
     rescue S3WebsiteError => e
       puts e.message
       exit 1
