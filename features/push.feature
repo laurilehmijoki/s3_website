@@ -5,6 +5,7 @@ Feature: upload S3 website to S3
   I want to run s3_website and say OMG it just worked!
 
   @new-files
+  @wip
   Scenario: Push a new S3 website to S3
     When my S3 website is in "features/support/test_site_dirs/my.blog.com"
     Then s3_website will push my blog to S3
@@ -12,13 +13,7 @@ Feature: upload S3 website to S3
       """
       Deploying _site/* to s3-website-test.net
       Uploading 2 new file(s)
-      """
-    And the output should contain
-      """
       Upload css/styles.css: Success!
-      """
-    And the output should contain
-      """
       Upload index.html: Success!
       """
 
