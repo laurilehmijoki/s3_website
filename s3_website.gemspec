@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "s3_website"
-  s.version     = "0.2.0"
+  s.version     = "0.2.1"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
