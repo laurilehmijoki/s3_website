@@ -187,8 +187,7 @@ s3_website has a headless mode, where human interactions are disabled.
 In the headless mode, `s3_website` will automatically delete the files on the S3
 bucket that are not on your local computer.
 
-Enable the headless mode by adding the `--headless` or `-h` argument after
-`s3_website`.
+Enable the headless mode by adding the `--headless` argument after `s3_website`.
 
 ### Configuring redirects on your S3 website
 
