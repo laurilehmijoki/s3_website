@@ -11,7 +11,21 @@ module S3Website
   DEFAULT_GZIP_EXTENSIONS = %w(.html .css .js .svg .txt)
 end
 
-%w{errors upload uploader tasks config_loader retry keyboard diff_helper endpoint parallelism}.each do |file|
+%w{
+  errors
+  upload
+  uploader
+  tasks
+  config_loader
+  retry
+  keyboard
+  diff_helper
+  endpoint
+  parallelism
+  jekyll
+  nanoc
+  paths
+}.each do |file| 
   require File.dirname(__FILE__) + "/s3_website/#{file}"
 end
 

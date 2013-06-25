@@ -1,9 +1,9 @@
 module S3Website
   class Tasks
-    def self.push(site_dir, in_headless_mode = false)
+    def self.push(config_file_dir, site_dir, in_headless_mode = false)
       ConfigLoader.check_project site_dir
-      ConfigLoader.check_s3_configuration site_dir + '/../'
-      config = S3Website::ConfigLoader.load_configuration site_dir
+      ConfigLoader.check_s3_configuration config_file_dir
+      config = S3Website::ConfigLoader.load_configuration config_file_dir
       new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects =
         Uploader.run(site_dir, config, in_headless_mode)
       invalidated_items_count =

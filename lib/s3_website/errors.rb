@@ -2,8 +2,14 @@ module S3Website
   class S3WebsiteError < StandardError
   end
 
-  class NotAJekyllProjectError < S3WebsiteError
-    def initialize(message = "I can't find any directory called _site. Are you in the right directory?")
+  class NoWebsiteDirectoryFound < S3WebsiteError
+    def initialize(message = "I can't find any website. Are you in the right directory?")
+      super(message)
+    end
+  end
+
+  class NoPredefinedWebsiteDirectoryFound < NoWebsiteDirectoryFound
+    def initialize(message = "I can't find a website in any of the following directories: #{Paths.site_paths.join(', ')}. Please specify the location of the website with the --site option.")
       super(message)
     end
   end

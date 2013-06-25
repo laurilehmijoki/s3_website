@@ -41,8 +41,13 @@ end
 def push_files
   @console_output = capture_stdout {
     in_headless_mode = true
+    site_path = S3Website::Paths.infer_site_path(
+      'infer automatically',
+      @blog_dir
+    )
     result = S3Website::Tasks.push(
-      "#{@blog_dir}/_site", 
+      @blog_dir,
+      site_path,
       in_headless_mode
     )
     @amount_of_new_files = result[:new_files_count]

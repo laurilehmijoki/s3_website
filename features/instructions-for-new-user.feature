@@ -8,7 +8,7 @@ Feature: Instructions for a new user
     When I run `s3_website push`
     Then the output should contain:
       """
-      I can't find any directory called _site. Are you in the right directory?
+      I can't find a website in any of the following directories: public/output, _site. Please specify the location of the website with the --site option.
       """
 
   Scenario: Create placeholder config file

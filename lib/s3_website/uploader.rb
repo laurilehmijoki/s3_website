@@ -1,7 +1,7 @@
 module S3Website
   class Uploader
     def self.run(site_dir, config, in_headless_mode = false)
-      puts "Deploying _site/* to #{config['s3_bucket']}"
+      puts "Deploying #{site_dir.sub(Dir.pwd + '/', '')}/* to #{config['s3_bucket']}"
 
       s3_config = { :s3_endpoint => Endpoint.new(config['s3_endpoint']).hostname }
       s3_id, s3_secret = config['s3_id'], config['s3_secret']

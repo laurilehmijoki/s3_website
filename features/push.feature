@@ -5,13 +5,12 @@ Feature: upload S3 website to S3
   I want to run s3_website and say OMG it just worked!
 
   @new-files
-  @wip
   Scenario: Push a new S3 website to S3
     When my S3 website is in "features/support/test_site_dirs/my.blog.com"
     Then s3_website will push my blog to S3
     And the output should contain
       """
-      Deploying _site/* to s3-website-test.net
+      Deploying features/support/test_site_dirs/my.blog.com/_site/* to s3-website-test.net
       Uploading 2 new file(s)
       Upload css/styles.css: Success!
       Upload index.html: Success!
@@ -32,7 +31,7 @@ Feature: upload S3 website to S3
     Then s3_website will push my blog to S3
     And the output should contain
       """
-      Deploying _site/* to s3-website-test.net
+      Deploying features/support/test_site_dirs/new-and-changed-files.com/_site/* to s3-website-test.net
       Uploading 1 new and 1 changed file(s)
       """
     And the output should contain
@@ -55,7 +54,7 @@ Feature: upload S3 website to S3
     Then s3_website will push my blog to S3
     And the output should equal
       """
-      Deploying _site/* to s3-website-test.net
+      Deploying features/support/test_site_dirs/only-changed-files.com/_site/* to s3-website-test.net
       Uploading 1 changed file(s)
       Upload index.html: Success!
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
@@ -68,7 +67,7 @@ Feature: upload S3 website to S3
     Then s3_website will push my blog to S3
     And the output should equal
       """
-      Deploying _site/* to s3-website-test.net
+      Deploying features/support/test_site_dirs/no-new-or-changed-files.com/_site/* to s3-website-test.net
       No new or changed files to upload
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
 

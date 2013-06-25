@@ -10,7 +10,7 @@ Feature: remove an S3 website page from S3
     Then s3_website will push my blog to S3
     And the output should equal
       """
-      Deploying _site/* to s3-website-test.net
+      Deploying features/support/test_site_dirs/unpublish-a-post.com/_site/* to s3-website-test.net
       No new or changed files to upload
       Delete index.html: Success!
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html

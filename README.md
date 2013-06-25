@@ -12,10 +12,15 @@
 * Set HTTP redirects for your website
 * (for other features, see the documentation below)
 
+`s3_website` automatically supports [Jekyll](http://jekyllrb.com) and
+[Nanoc](http://nanoc.ws) by recognising their output directories (*_site* for
+Jekyll and *public/output* for Nanoc). If your website resides in some other
+directory, you can point the directory to `s3_website` with a parameter. See
+`s3_website help push` for more info.
+
 ## Install
 
-<span style="color: yellow">This project is still on beta level. Expect backward
-incompatible changes.</span>
+This project is still on beta level. Expect backward incompatible changes.
 
     gem install s3_website
 
@@ -249,7 +254,7 @@ it programmatically by calling the same API as the executable `s3_website` does:
 ````ruby
 require 's3_website'
 is_headless = true
-S3Website::Tasks.push('/path/to/your/website/_site/', is_headless)
+S3Website::Tasks.push('/website/root', '/path/to/your/website/_site/', is_headless)
 ````
 
 You can also use a basic `Hash` instead of a `s3_website.yml` file:

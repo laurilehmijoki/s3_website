@@ -7,7 +7,7 @@ module S3Website
         delete = false
         keep = false
         until delete || delete_all || keep || keep_all
-          puts "#{f} is on S3 but not in your _site directory anymore. Do you want to [d]elete, [D]elete all, [k]eep, [K]eep all?"
+          puts "#{f} is on S3 but not in your website directory anymore. Do you want to [d]elete, [D]elete all, [k]eep, [K]eep all?"
           case standard_input.gets.chomp
           when 'd' then delete = true
           when 'D' then delete_all = true

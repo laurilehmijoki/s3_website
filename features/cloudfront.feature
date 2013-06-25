@@ -23,7 +23,7 @@ Feature: Invalidate the Cloudfront distribution
     Then s3_website will push my blog to S3 and invalidate the Cloudfront distribution
     And the output should equal
       """
-      Deploying _site/* to s3-website-test.net
+      Deploying features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi/_site/* to s3-website-test.net
       Uploading 1 changed file(s)
       Upload index.html: Success!
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html

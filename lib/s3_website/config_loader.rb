@@ -8,7 +8,7 @@ s3_bucket: your.blog.bucket.com
     EOF
 
     def self.check_project(site_dir)
-      raise NotAJekyllProjectError unless File.directory?(site_dir)
+      raise NoWebsiteDirectoryFound unless File.directory?(site_dir)
     end
 
     # Raise NoConfigurationFileError if the configuration file does not exists
@@ -20,16 +20,12 @@ s3_bucket: your.blog.bucket.com
       end
     end
 
-    def self.get_configuration_file(site_dir)
-      "#{site_dir}/../#{CONFIGURATION_FILE}"
-    end
-
     private
 
     # Load configuration from s3_website.yml
     # Raise MalformedConfigurationFileError if the configuration file does not contain the keys we expect
-    def self.load_configuration(site_dir)
-      config = load_yaml_file_and_validate site_dir
+    def self.load_configuration(config_file_dir)
+      config = load_yaml_file_and_validate config_file_dir
       return config
     end
 
@@ -39,9 +35,11 @@ s3_bucket: your.blog.bucket.com
       }
     end
 
-    def self.load_yaml_file_and_validate(site_dir)
+    def self.load_yaml_file_and_validate(config_file_dir)
       begin
-        config = YAML.load(Erubis::Eruby.new(File.read(get_configuration_file(site_dir))).result)
+        config = YAML.load(Erubis::Eruby.new(
+          File.read(config_file_dir + '/' + CONFIGURATION_FILE)
+        ).result)
       rescue Exception
         raise MalformedConfigurationFileError
       end

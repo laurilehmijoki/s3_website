@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## HEAD
+
+* Add Nanoc support
+
 ## 0.2.1
 
 * Remove Gemfile.lock

@@ -27,8 +27,8 @@ class Cli < Thor
   option(
     :site,
     :type => :string,
-    :default => '_site',
-    :desc => 'The directory where your website files are'
+    :default => 'infer automatically',
+    :desc => "The directory where your website files are. When not defined, s3_website will look for the site in #{S3Website::Paths.site_paths.join(' or ')}."
   )
   option(
     :headless,
@@ -42,7 +42,8 @@ class Cli < Thor
     also delete from S3 the files that you no longer have locally.
   LONGDESC
   def push
-    S3Website::Tasks.push(options[:site], options[:headless])
+    site_path = S3Website::Paths.infer_site_path options[:site]
+    S3Website::Tasks.push(Dir.pwd, site_path, options[:headless])
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
