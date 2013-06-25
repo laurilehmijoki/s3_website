@@ -7,6 +7,20 @@ class Cfg < Thor
   def create
     S3Website::Tasks.config_create Dir.pwd
   end
+
+  desc 'apply', 'Apply the configuration on the AWS services'
+  long_desc <<-LONGDESC
+    `s3_website cfg apply` will apply the configuration the S3 bucket.
+
+    In addition, if you CloudFront related settings, this command will apply them on the CloudFront distribution.
+
+    If the S3 bucket does not exist, this command will create it
+    and configure it to function as a website.
+  LONGDESC
+  def apply
+    puts 'Applying the configurations in s3_website.yml on the AWS services ...'
+    puts `configure-s3-website --config-file s3_website.yml`
+  end
 end
 
 class Cli < Thor

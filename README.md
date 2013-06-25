@@ -24,9 +24,9 @@ incompatible changes.</span>
 * Go to your website directory
 * Run `s3_website cfg create`. It generates a configuration file called `s3_website.yml`
 * Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
-* Run `configure-s3-website --config-file s3_website.yml` This will configure
+* Run `s3_website cfg apply` This will configure
   your bucket to function as an S3 website. If the bucket does not exist,
-  `configure-s3-website` will create it for you.
+  `s3_website cfg apply` will create it for you.
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
 
 ### Using environment variables
@@ -47,7 +47,7 @@ you can omit the `s3_id` and `s3_secret` keys in the config file.)
 
 * Provide a command-line interface tool for deploying and managing S3 websites
  * Create commands such as `s3_website push`, `s3_website cfg create` and
-   `s3_website create`
+   `s3_website cfg apply`
 * Let the user have all the S3 website configurations in a file
 * Minimise or remove the need to use the AWS Console
 * Allow the user to deliver the website via CloudFront
@@ -147,13 +147,9 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 #### Creating a new CloudFront distribution
 
-When you run the command `configure-s3-website`, it will ask you whether you
-want to deliver your website via CloudFront. If you answer yes,
-`configure-s3-website` will create a CloudFront distribution for you.
-
-This feature was added into the version 1.3.0 of the `configure-s3-website` gem.
-For more information, see the [gem's
-documentation](https://github.com/laurilehmijoki/configure-s3-website).
+When you run the command `s3_website cfg apply`, it will ask you whether you
+want to deliver your website via CloudFront. If you answer yes, command will
+create a CloudFront distribution for you.
 
 #### Using your existing CloudFront distribution
 
@@ -167,8 +163,7 @@ thus force the CDN system to reload the changes from your website S3 bucket.
 
 #### Specifying custom settings for your CloudFront distribution
 
-The gem `configure-s3-website`, which is a dependency of `s3_website`, lets you
-define custom settings for your CloudFront distribution.
+`s3_website` lets you define custom settings for your CloudFront distribution.
 
 For example, like this you can define a your own TTL and CNAME:
 
@@ -182,9 +177,8 @@ cloudfront_distribution_config:
       CNAME: your.website.com
 ```
 
-See the [gem's
-documentation](https://github.com/laurilehmijoki/configure-s3-website) for more
-info.
+Once you've saved the configuration into `s3_website.yml`, you can apply them by
+running `s3_website cfg apply`.
 
 ### The headless mode
 
@@ -234,13 +228,13 @@ routing_rules:
       http_redirect_code: 301
 ```
 
-After adding the configuration, run the command `configure-s3-website --config
-s3_website.yml` on your command-line interface. This will apply the routing
-rules on your S3 bucket.
+After adding the configuration, run the command `s3_website cfg apply` on your
+command-line interface. This will apply the routing rules on your S3 bucket.
 
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
-gem, which comes as a transitive dependency of the `s3_website` gem.
+gem, which comes as a transitive dependency of the `s3_website` gem. (The
+command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
 
 ### Using `s3_website` as a library
 
