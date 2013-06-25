@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## HEAD
+## 0.2.0
 
-* TBA
+* Add command `s3_website cfg apply`
+
+## 0.1.0
+
+* First version
