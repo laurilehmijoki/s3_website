@@ -16,6 +16,23 @@ Feature: upload S3 website to S3
       Upload index.html: Success!
       """
 
+  @new-files
+  @network-io
+  @starts-new-os-process
+  Scenario: The website resides in a non-standard directory
+    Given a directory named "this-is-a-non-standard-website-dir"
+    And a file named "s3_website.yml" with:
+      """
+      s3_id: id
+      s3_secret: secret
+      s3_bucket: website.net
+      """
+    And I run `s3_website push --site this-is-a-non-standard-website-dir`
+    Then the output should contain:
+      """
+      Deploying this-is-a-non-standard-website-dir/* to website.net
+      """
+
   @new-files-for-sydney
   Scenario: Push a new S3 website to an S3 bucket in Sydney
     When my S3 website is in "features/support/test_site_dirs/my.sydney.blog.au"
