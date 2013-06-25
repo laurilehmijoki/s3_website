@@ -1,4 +1,4 @@
-# s3_website – Deploy your website to S3.
+# Deploy your website to S3.
 
 [![Build Status](https://travis-ci.org/laurilehmijoki/s3_website.png?branch=master)](https://travis-ci.org/laurilehmijoki/s3_website)
 [![Gem Version](https://fury-badge.herokuapp.com/rb/s3_website.png)](http://badge.fury.io/rb/s3_website)
