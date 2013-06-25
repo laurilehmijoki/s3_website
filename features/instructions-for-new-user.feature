@@ -4,6 +4,7 @@ Feature: Instructions for a new user
   I would like to get helpful feedback when running `s3_website`
   So that I can upload my S3 website to S3 without headache
 
+  @starts-new-os-process
   Scenario: Run s3_website in the wrong directory
     When I run `s3_website push`
     Then the output should contain:
@@ -11,6 +12,7 @@ Feature: Instructions for a new user
       I can't find a website in any of the following directories: public/output, _site. Please specify the location of the website with the --site option.
       """
 
+  @starts-new-os-process
   Scenario: Create placeholder config file
     Given a directory named "_site"
     When I run `s3_website cfg create`
@@ -25,6 +27,7 @@ Feature: Instructions for a new user
       s3_bucket: your.blog.bucket.com
       """
 
+  @starts-new-os-process
   Scenario: Run s3_website push for the first time
     Given a directory named "_site"
     When I run `s3_website push`
@@ -39,6 +42,7 @@ Feature: Instructions for a new user
       s3_bucket: your.blog.bucket.com
       """
 
+  @starts-new-os-process
   Scenario: Run s3_website with an empty configuration file
     Given a directory named "_site"
     And an empty file named "s3_website.yml"
@@ -51,6 +55,7 @@ Feature: Instructions for a new user
       s3_bucket: your.blog.bucket.com
       """
 
+  @starts-new-os-process
   Scenario: Run s3_website with a malformed configuration file
     Given a directory named "_site"
     And a file named "s3_website.yml" with:
@@ -67,6 +72,7 @@ Feature: Instructions for a new user
       s3_bucket: your.blog.bucket.com
       """
 
+  @starts-new-os-process
   Scenario: Run s3_website with a configuration file that does not contain a bucket
     Given a directory named "_site"
     And a file named "s3_website.yml" with:

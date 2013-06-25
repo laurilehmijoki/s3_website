@@ -16,3 +16,9 @@ task "cucumber:wip" do
   ENV['disable_parallel_processing'] = 'true'
   sh "bundle exec cucumber --tags @wip"
 end
+
+desc 'Run fast tests'
+task "cucumber:fast" do
+  ENV['disable_parallel_processing'] = 'true'
+  sh "bundle exec cucumber --tags ~@network-io --tags ~@starts-new-os-process"
+end
