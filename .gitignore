@@ -3,3 +3,4 @@
 .bundle
 pkg/*
 tmp
+Gemfile.lock
