@@ -1,18 +1,21 @@
-# Deploy your website to S3.
+# Deploy your website to S3
 
 [![Build Status](https://travis-ci.org/laurilehmijoki/s3_website.png?branch=master)](https://travis-ci.org/laurilehmijoki/s3_website)
 [![Gem Version](https://fury-badge.herokuapp.com/rb/s3_website.png)](http://badge.fury.io/rb/s3_website)
 
-## What s3_website can do for you
+## What `s3_website` can do for you
 
-* Upload your site to AWS S3
+* Create and configure an S3 website for you
+* Upload your static website to AWS S3
 * Help you use AWS Cloudfront to distribute your website
-* Create an S3 website for you
 * Improve page speed with HTTP cache control and gzipping
 * Set HTTP redirects for your website
 * (for other features, see the documentation below)
 
 ## Install
+
+<span style="color: yellow">This project is still on beta level. Expect backward
+incompatible changes.</span>
 
     gem install s3_website
 
@@ -24,12 +27,7 @@
 * Run `configure-s3-website --config-file s3_website.yml` This will configure
   your bucket to function as an S3 website. If the bucket does not exist,
   `configure-s3-website` will create it for you.
-
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
-
-(If you are using `s3_website` on an [EC2 instance with IAM
-roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
-you can omit the `s3_id` and `s3_secret` keys in the config file.)
 
 ### Using environment variables
 
@@ -40,6 +38,10 @@ s3_id: <%= ENV['S3_ID'] %>
 s3_secret: <%= ENV['S3_SECRET'] %>
 s3_bucket: blog.example.com
 ```
+
+(If you are using `s3_website` on an [EC2 instance with IAM
+roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
+you can omit the `s3_id` and `s3_secret` keys in the config file.)
 
 ## Project goals
 
