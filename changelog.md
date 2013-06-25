@@ -2,7 +2,7 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## HEAD
+## 0.3.0
 
 * Add Nanoc support
 
