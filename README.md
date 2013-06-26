@@ -308,6 +308,12 @@ If you are not sure how to test your pull request, you can ask the [gem owners
 However, by including proper tests, you increase the chances of your pull
 request being incorporated into future releases.
 
+#### Checklist for new features
+
+* Is it tested?
+* Is it documented in README?
+* Is it mentioned in `resources/configuration_file_template.yml`?
+
 ## License
 
 MIT. See the LICENSE file for more information.

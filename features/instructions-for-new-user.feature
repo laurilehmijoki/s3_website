@@ -56,6 +56,47 @@ Feature: Instructions for a new user
       """
 
   @starts-new-os-process
+  Scenario: The user wants to know the available configurations by looking at the cfg file
+    Given a directory named "_site"
+    When I run `s3_website push`
+    Then the file "s3_website.yml" should contain:
+      """
+      # max_age:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # gzip:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # s3_endpoint:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # ignore_on_server:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # s3_reduced_redundancy:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # cloudfront_distribution_id:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # cloudfront_distribution_config:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # redirects:
+      """
+    Then the file "s3_website.yml" should contain:
+      """
+      # routing_rules:
+      """
+
+  @starts-new-os-process
   Scenario: Run s3_website with a malformed configuration file
     Given a directory named "_site"
     And a file named "s3_website.yml" with:

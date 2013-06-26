@@ -21,7 +21,7 @@ module S3Website
   end
 
   class MalformedConfigurationFileError < S3WebsiteError
-    def initialize(message = "I can't parse the file s3_website.yml. It should look like this:\n#{ConfigLoader::CONFIGURATION_FILE_TEMPLATE}")
+    def initialize(message = "I can't parse the file s3_website.yml. It should look like this:\n#{ConfigLoader.read_configuration_file_template}")
       super(message)
     end
   end

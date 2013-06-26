@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 0.4.0
+
+* Include the available configs in the sample s3_website.yml file
+
 ## 0.3.0
 
 * Add Nanoc support

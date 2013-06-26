@@ -1,11 +1,6 @@
 module S3Website
   class ConfigLoader
     CONFIGURATION_FILE = 's3_website.yml'
-    CONFIGURATION_FILE_TEMPLATE = <<-EOF
-s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
-s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
-s3_bucket: your.blog.bucket.com
-    EOF
 
     def self.check_project(site_dir)
       raise NoWebsiteDirectoryFound unless File.directory?(site_dir)
@@ -20,6 +15,11 @@ s3_bucket: your.blog.bucket.com
       end
     end
 
+    def self.read_configuration_file_template
+      path = File.dirname(__FILE__) + '/../../resources/configuration_file_template.yml'
+      cfg_template = File.open(path).read
+    end
+
     private
 
     # Load configuration from s3_website.yml
@@ -31,7 +31,7 @@ s3_bucket: your.blog.bucket.com
 
     def self.create_template_configuration_file(file)
       File.open(file, 'w') { |f|
-        f.write(CONFIGURATION_FILE_TEMPLATE)
+        f.write(read_configuration_file_template)
       }
     end
 
