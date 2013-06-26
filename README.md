@@ -26,17 +26,13 @@ directory, you can point the directory to `s3_website` with a parameter. See
 
 Here's how you can get started:
 
+* Create AWS API credentials that have sufficient permissions to S3
 * Go to your website directory
-* Run `s3_website cfg create`. It generates a configuration file called `s3_website.yml`
-* Edit it with your details (you can use [ERB](http://ruby-doc.org/stdlib-1.9.3/libdoc/erb/rdoc/ERB.html) in the file)
+* Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
+* Put your AWS credentials and the S3 bucket name into the file
 * Run `s3_website cfg apply`. This will configure your bucket to function as an
   S3 website. If the bucket does not exist, the command will create it for you.
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
-
-`s3_website` attempts to be a command-line interface tool that is easy to
-understand and use. For example, `s3_website --help` should print you all the
-things it can perform. Please create an issue if you think the tool is
-incomprehensible or inconsistent.
 
 ### Using environment variables
 
@@ -67,6 +63,11 @@ you can omit the `s3_id` and `s3_secret` keys in the config file.)
 * Let the power users benefit from advanced S3 website features such as
   redirects, Cache-Control headers and gzip support
 * Maintain 90% backward compatibility with the jekyll-s3 gem
+
+`s3_website` attempts to be a command-line interface tool that is easy to
+understand and use. For example, `s3_website --help` should print you all the
+things it can perform. Please create an issue if you think the tool is
+incomprehensible or inconsistent.
 
 ## Additional features
 
