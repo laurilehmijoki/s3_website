@@ -309,8 +309,6 @@ s3_website uses [Semantic Versioning](http://semver.org).
 
   * Install bundler and run `bundle install`
   * Run all tests by invoking `rake test`
-  * Run the integration tests by running `bundle exec cucumber`
-  * Run the unit tests by running `bundle exec rspec spec/lib/*.rb`
 
 ### Contributing
 
