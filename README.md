@@ -7,16 +7,11 @@
 
 * Create and configure an S3 website for you
 * Upload your static website to AWS S3
+ * Jekyll and Nanoc are automatically supported
 * Help you use AWS Cloudfront to distribute your website
 * Improve page speed with HTTP cache control and gzipping
 * Set HTTP redirects for your website
 * (for other features, see the documentation below)
-
-`s3_website` automatically supports [Jekyll](http://jekyllrb.com) and
-[Nanoc](http://nanoc.ws) by recognising their output directories (*_site* for
-Jekyll and *public/output* for Nanoc). If your website resides in some other
-directory, you can point the directory to `s3_website` with a parameter. See
-`s3_website help push` for more info.
 
 ## Install
 
