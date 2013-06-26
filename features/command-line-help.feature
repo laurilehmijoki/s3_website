@@ -22,15 +22,6 @@ Feature: displaying help text in the command-line interface
       """
       Usage:
         s3_website push
-
-      Options:
-        [--site=SITE]  # The directory where your website files are. When not defined, s3_website will look for the site in public/output or _site.
-                       # Default: infer automatically
-        [--headless]   # When headless, s3_website will not require human interaction at any point
-
-      Description:
-        `s3_website push` will upload new and changes files to S3. It will also delete
-        from S3 the files that you no longer have locally.
       """
 
   @starts-new-os-process
@@ -51,15 +42,6 @@ Feature: displaying help text in the command-line interface
       """
       Usage:
         s3_website apply
-
-      Description:
-        `s3_website cfg apply` will apply the configuration the S3 bucket.
-
-        In addition, if you CloudFront related settings, this command will apply them
-        on the CloudFront distribution.
-
-        If the S3 bucket does not exist, this command will create it and configure it
-        to function as a website.
       """
 
   @starts-new-os-process
@@ -70,6 +52,4 @@ Feature: displaying help text in the command-line interface
       """
       Usage:
         s3_website create
-
-      Create a config file with placeholder values
       """
