@@ -12,7 +12,13 @@ Feature: upload S3 website to S3
       """
       Deploying features/support/test_site_dirs/my.blog.com/_site/* to s3-website-test.net
       Uploading 2 new file(s)
+      """
+    And the output should contain
+      """
       Upload css/styles.css: Success!
+      """
+    And the output should contain
+      """
       Upload index.html: Success!
       """
 

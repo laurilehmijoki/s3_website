@@ -8,6 +8,12 @@ Feature: upload a Jekyll site
       """
       Deploying features/support/test_site_dirs/jekyllrb.com/_site/* to s3-website-test.net
       Uploading 2 new file(s)
+      """
+    And the output should contain
+      """
       Upload css/styles.css: Success!
+      """
+    And the output should contain
+      """
       Upload index.html: Success!
       """
