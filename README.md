@@ -26,7 +26,7 @@ directory, you can point the directory to `s3_website` with a parameter. See
 
 Here's how you can get started:
 
-* In [AWS IAM](console.aws.amazon.com/iam), create API credentials that have sufficient permissions to S3
+* In [AWS IAM](https://console.aws.amazon.com/iam), create API credentials that have sufficient permissions to S3
 * Go to your website directory
 * Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
