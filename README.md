@@ -20,8 +20,6 @@ directory, you can point the directory to `s3_website` with a parameter. See
 
 ## Install
 
-This project is still on beta level. Expect backward incompatible changes.
-
     gem install s3_website
 
 ## Usage
@@ -320,8 +318,8 @@ MIT. See the LICENSE file for more information.
 
 ## Contributors
 
-This gem is created by [Lauri Lehmijoki](https://github.com/laurilehmijoki).
-Without the valuable work of [Philippe Creux](https://github.com/pcreux) on
+This gem is created by Lauri Lehmijoki. Without the valuable work of [Philippe
+Creux](https://github.com/pcreux) on
 [jekyll-s3](https://github.com/laurilehmijoki/jekyll-s3), this project would not
 exist.
 
