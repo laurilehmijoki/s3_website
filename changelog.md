@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.0.0
+
+* Make 0.4.0 the version 1.0.0
+
 ## 0.4.0
 
 * Include the available configs in the sample s3_website.yml file
