@@ -50,7 +50,7 @@ directory.
 
 It's a good idea to store the `s3_website.yml` file in your project's root.
 Let's say the contents you wish to upload to your S3 website bucket are in
-`my_website_output`. You can upload the contents of that directory by calling
+`my_website_output`. You can upload the contents of that directory with
 `s3_website push --site my_website_output`.
 
 ### Using environment variables
