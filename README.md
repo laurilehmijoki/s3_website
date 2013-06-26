@@ -76,6 +76,7 @@ you can omit the `s3_id` and `s3_secret` keys in the config file.)
   bucket
 * Let the power users benefit from advanced S3 website features such as
   redirects, Cache-Control headers and gzip support
+* Be as fast as possible. Do in parallel all that can be done in parallel.
 * Maintain 90% backward compatibility with the jekyll-s3 gem
 
 `s3_website` attempts to be a command-line interface tool that is easy to
