@@ -152,7 +152,7 @@ module S3Website
     end
 
     def self.load_all_local_files(site_dir)
-      Dir.glob(site_dir + '/**/*', File::FNM_DOTMATCH).
+      Dir.glob(site_dir + '**{,/*/**}/*', File::FNM_DOTMATCH).
         delete_if { |f| File.directory?(f) }.
         map { |f| f.gsub(site_dir + '/', '') }
     end
