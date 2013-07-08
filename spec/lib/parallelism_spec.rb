@@ -40,4 +40,23 @@ describe S3Website::Parallelism do
       ints.should_not eq(after_processing) # Parallel processing introduces non-determinism
     end
   end
+
+  context 'limiting parallelism' do
+    before(:each) {
+      ints = (0..199).to_a
+      @after_processing = []
+      S3Website::Parallelism.each_in_parallel_or_sequentially(ints) { |int|
+        @after_processing << int
+      }
+    }
+
+    it "does at most #{S3Website::Parallelism::DEFAULT_CONCURRENCY_LEVEL} operations in parallel" do
+      @after_processing.slice(0, 99).all? do |int|
+        int <= 99
+      end.should be true
+      @after_processing.slice(100, 199).all? do |int|
+        int >= 100 and int <= 199
+      end.should be true
+    end
+  end
 end

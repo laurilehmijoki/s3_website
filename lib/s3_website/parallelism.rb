@@ -6,13 +6,19 @@ module S3Website
           operation.call item
         end
       else
-        threads = items.map do |item|
-          Thread.new(item) { |item|
-            operation.call item
-          }
-        end
-        threads.each { |thread| thread.join }
+        items.each_slice(DEFAULT_CONCURRENCY_LEVEL) { |items|
+          threads = items.map do |item|
+            Thread.new(item) { |item|
+              operation.call item
+            }
+          end
+          threads.each(&:join)
+        }
       end
     end
+
+    private
+
+    DEFAULT_CONCURRENCY_LEVEL = 100
   end
 end

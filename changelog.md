@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.0.1
+
+* Set default concurrency level to 100. Related to issue [#6](https://github.com/laurilehmijoki/s3_website/issues/6).
+
 ## 1.0.0
 
 * Make 0.4.0 the version 1.0.0
