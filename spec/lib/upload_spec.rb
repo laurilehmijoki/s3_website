@@ -1,6 +1,19 @@
 require 'spec_helper'
 
 describe S3Website::Upload do
+  describe 'uploading blacklisted files' do
+    let(:blacklisted_files) {
+      [ 's3_website.yml' ]
+    }
+    it 'should fail if the upload file is s3_website.yml' do
+      blacklisted_files.each do |blacklisted_file|
+        expect {
+          S3Website::Upload.new blacklisted_file, mock(), mock(), mock()
+        }.to raise_error "May not upload #{blacklisted_file}, because it's blacklisted"
+      end
+    end
+  end
+
   describe 'reduced redundancy setting' do
     let(:config) {
       { 's3_reduced_redundancy' => true }

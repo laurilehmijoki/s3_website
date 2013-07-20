@@ -4,8 +4,10 @@ require 'zlib'
 module S3Website
   class Upload
     attr_reader :config, :file, :path, :full_path, :s3
+    BLACKLISTED_FILES = ['s3_website.yml']
 
     def initialize(path, s3, config, site_dir)
+      raise "May not upload #{path}, because it's blacklisted" if Upload.is_blacklisted path
       @path = path
       @full_path = "#{site_dir}/#{path}"
       @file = File.open("#{site_dir}/#{path}")
@@ -21,6 +23,12 @@ module S3Website
 
     def details
       "#{path}#{" [gzipped]" if gzip?}#{" [max-age=#{max_age}]" if cache_control?}"
+    end
+
+    def self.is_blacklisted(path)
+      BLACKLISTED_FILES.any? do |blacklisted_file|
+        path.include? blacklisted_file
+      end
     end
 
     private

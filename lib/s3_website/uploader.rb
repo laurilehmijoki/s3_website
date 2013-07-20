@@ -60,7 +60,7 @@ module S3Website
 
     def self.upload_in_parallel_or_sequentially(files_to_upload, s3, config, site_dir)
       Parallelism.each_in_parallel_or_sequentially(files_to_upload) { |f|
-        upload_file(f, s3, config, site_dir)
+        upload_file(f, s3, config, site_dir) unless Upload.is_blacklisted f
       }
     end
 
