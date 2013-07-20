@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.0.3
+
+* Reject blacklisted files in a more appropriate place
+
 ## 1.0.2
 
 * Never upload the file *s3_website.yml*
