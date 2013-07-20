@@ -45,7 +45,6 @@ Feature: displaying help text in the command-line interface
       """
 
   @starts-new-os-process
-  @wip
   Scenario: User wants to know what the cfg create command does
     When I run `s3_website cfg help create`
     Then the output should contain:
