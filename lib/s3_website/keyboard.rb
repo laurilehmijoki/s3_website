@@ -1,6 +1,6 @@
 module S3Website
   class Keyboard
-    def self.if_user_confirms_delete(to_delete, standard_input=STDIN)
+    def self.if_user_confirms_delete(to_delete, config, standard_input=STDIN)
       delete_all = false
       keep_all = false
       confirmed_deletes = to_delete.map do |f|
@@ -19,7 +19,7 @@ module S3Website
           f
         end
       end.select { |f| f }
-      Parallelism.each_in_parallel_or_sequentially(confirmed_deletes) { |f|
+      Parallelism.each_in_parallel_or_sequentially(confirmed_deletes, config) { |f|
         yield f
       }
     end

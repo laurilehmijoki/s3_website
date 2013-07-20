@@ -1,7 +1,7 @@
 module S3Website
   class DiffHelper
-    def self.resolve_files_to_upload(s3_bucket, site_dir)
-      s3_data_source = Filey::DataSources::AwsSdkS3.new(s3_bucket)
+    def self.resolve_files_to_upload(s3_bucket, site_dir, config)
+      s3_data_source = Filey::DataSources::AwsSdkS3.new(s3_bucket, config)
       fs_data_source = Filey::DataSources::FileSystem.new(site_dir)
       changed_local_files =
         Filey::Comparison.list_changed(fs_data_source, s3_data_source)

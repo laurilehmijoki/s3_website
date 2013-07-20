@@ -18,11 +18,17 @@ module S3Website
       redirects = config['redirects'] || {}
       changed_redirects = setup_redirects redirects, config, s3
 
-      deleted_files_count = remove_superfluous_files(s3, { :s3_bucket => config['s3_bucket'],
-                                                           :site_dir => site_dir,
-                                                           :redirects => redirects,
-                                                           :in_headless_mode => in_headless_mode,
-                                                           :ignore_on_server => config["ignore_on_server"] })
+      deleted_files_count = remove_superfluous_files(
+        s3,
+        config,
+        {
+          :s3_bucket => config['s3_bucket'],
+          :site_dir => site_dir,
+          :redirects => redirects,
+          :in_headless_mode => in_headless_mode,
+          :ignore_on_server => config["ignore_on_server"]
+        }
+      )
 
       print_done_report config
 
@@ -41,7 +47,10 @@ module S3Website
 
     def self.upload_files(s3, config, site_dir)
       changed_files, new_files = DiffHelper.resolve_files_to_upload(
-        s3.buckets[config['s3_bucket']], site_dir)
+        s3.buckets[config['s3_bucket']],
+        site_dir,
+        config
+      )
       to_upload = (changed_files + new_files).reject { |f| Upload.is_blacklisted f }
       if to_upload.empty?
         puts "No new or changed files to upload"
@@ -59,7 +68,7 @@ module S3Website
     end
 
     def self.upload_in_parallel_or_sequentially(files_to_upload, s3, config, site_dir)
-      Parallelism.each_in_parallel_or_sequentially(files_to_upload) { |f|
+      Parallelism.each_in_parallel_or_sequentially(files_to_upload, config) { |f|
         upload_file(f, s3, config, site_dir)
       }
     end
@@ -114,7 +123,7 @@ module S3Website
       end
     end
 
-    def self.remove_superfluous_files(s3, options)
+    def self.remove_superfluous_files(s3, config, options)
       s3_bucket_name = options.fetch(:s3_bucket)
       site_dir = options.fetch(:site_dir)
       in_headless_mode = options.fetch(:in_headless_mode)
@@ -130,7 +139,7 @@ module S3Website
           deleted_files_count += 1
         }
       else
-        Keyboard.if_user_confirms_delete(files_to_delete) { |s3_object_key|
+        Keyboard.if_user_confirms_delete(files_to_delete, config) { |s3_object_key|
           delete_s3_object s3, s3_bucket_name, s3_object_key
           deleted_files_count += 1
         }

@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.1.0
+
+* Add possibility to define the concurrency level in *s3_website.yml*
+
 ## 1.0.3
 
 * Reject blacklisted files in a more appropriate place

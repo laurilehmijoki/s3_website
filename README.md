@@ -286,6 +286,25 @@ S3Website::Uploader.run('/path/to/your/website/_site/', config, in_headless)
 The code above will assume that you have the `s3_website.yml` in the directory
 `/path/to/your/website`.
 
+### Specifying custom concurrency level
+
+By default, `s3_website` does 25 operations in parallel. An operation can be an
+HTTP PUT operation against the S3 API, for example.
+
+You can increase the concurrency level by adding the following setting into the
+`s3_website.yml` file:
+
+```
+concurrency_level: <integer>
+```
+
+If your site has 100 files, it's a good idea to set the concurrency level to
+100. As a result, `s3_website` will process each of your 100 files in parallel.
+
+If you experience the "too many open files" error, either increase the amount of
+maximum open files (on Unix-like systems, see `man ulimit`) or decrease the
+`concurrency_level` setting.
+
 ## Example configurations
 
 See

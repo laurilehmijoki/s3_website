@@ -49,8 +49,11 @@ describe S3Website::Keyboard do
 
     def call_keyboard(s3_object_keys, standard_input)
       deleted_keys = []
-      S3Website::Keyboard.if_user_confirms_delete(s3_object_keys, 
-                                                   standard_input) { |key|
+      S3Website::Keyboard.if_user_confirms_delete(
+        s3_object_keys,
+        config = {},
+        standard_input
+      ) { |key|
         deleted_keys << key
       }
       deleted_keys
