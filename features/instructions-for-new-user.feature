@@ -95,6 +95,10 @@ Feature: Instructions for a new user
       """
       # routing_rules:
       """
+    Then the file "s3_website.yml" should contain:
+      """
+      # concurrency_level:
+      """
 
   @starts-new-os-process
   Scenario: Run s3_website with a malformed configuration file

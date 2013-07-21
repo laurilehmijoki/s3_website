@@ -30,6 +30,8 @@ s3_bucket: your.blog.bucket.com
 #     items:
 #       CNAME: your.website.com
 
+# concurrency_level: 100
+
 # redirects:
 #   index.php: /
 #   about.php: about.html

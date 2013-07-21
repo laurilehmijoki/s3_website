@@ -19,7 +19,9 @@ s3_bucket: your.domain.net
 If you run `s3_website` on an EC2 instance with IAM roles, it is possible to omit
 the `s3_id` and `s3_secret`.
 
-## Optimised for speed: using CloudFront, gzip and cache headers
+## Optimised for speed
+
+Use CloudFront, gzip, cache headers and greater concurrency:
 
 ````yaml
 s3_id: <%= ENV['your_domain_net_aws_key'] %>
@@ -35,6 +37,7 @@ cloudfront_distribution_config:
       CNAME: your.domain.net
 max_age: 120
 gzip: true
+concurrency_level: 100
 ````
 
 Above, we store the AWS credentials and the id of the CloudFront distribution as
