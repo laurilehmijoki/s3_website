@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
     Sync website files, set redirects, use HTTP performance optimisations, deliver via
     CloudFront.
   }
+  s.license     = 'MIT'
 
   s.default_executable = %q{s3_website}
 

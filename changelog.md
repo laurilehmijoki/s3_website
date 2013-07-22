@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.1.2
+
+* Mention the MIT license in the gemspec file
+
 ## 1.1.1
 
 * Mention the new `concurrency_level` setting in the sample config file
