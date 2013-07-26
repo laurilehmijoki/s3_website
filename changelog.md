@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.2.1
+
+* Use `print` instead of `puts` when printing to stdout in a concurrent context
+
 ## 1.2.0
 
 * Use the `--config_dir` CLI option to specify the directory from where to read

@@ -78,9 +78,9 @@ module S3Website
         upload = Upload.new(file, s3, config, site_dir)
 
         if upload.perform!
-          puts "Upload #{upload.details}: Success!"
+          print "Upload #{upload.details}: Success!\n"
         else
-          puts "Upload #{upload.details}: FAILURE!"
+          print "Upload #{upload.details}: FAILURE!\n"
         end
       end
     end
@@ -156,7 +156,7 @@ module S3Website
     def self.delete_s3_object(s3, s3_bucket_name, s3_object_key)
       Retry.run_with_retry do
         s3.buckets[s3_bucket_name].objects[s3_object_key].delete
-        puts("Delete #{s3_object_key}: Success!")
+        print "Delete #{s3_object_key}: Success!\n"
       end
     end
 
