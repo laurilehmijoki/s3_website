@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.2.0
+
+* Use the `--config_dir` CLI option to specify the directory from where to read
+  the `s3_website.yml` config file
+
 ## 1.1.2
 
 * Mention the MIT license in the gemspec file
