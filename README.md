@@ -372,5 +372,6 @@ Contributors (in alphabetical order)
 * Philippe Creux
 * Shigeaki Matsumura
 * stanislas
+* Tate Johnson
 * Trevor Fitzgerald
 * Zee Spencer
