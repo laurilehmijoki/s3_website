@@ -36,6 +36,12 @@ class Cli < Thor
     :desc =>
       'When headless, s3_website will not require human interaction at any point'
   )
+  option(
+    :config_dir,
+    :type => :string,
+    :default => Dir.pwd,
+    :desc => "The directory where your config file is. When not defined, s3_website will look in the current working directory."
+  )
   desc 'push', 'Push local files with the S3 website'
   long_desc <<-LONGDESC
     `s3_website push` will upload new and changes files to S3. It will
@@ -43,7 +49,7 @@ class Cli < Thor
   LONGDESC
   def push
     site_path = S3Website::Paths.infer_site_path options[:site]
-    S3Website::Tasks.push(Dir.pwd, site_path, options[:headless])
+    S3Website::Tasks.push(options[:config_dir], site_path, options[:headless])
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
