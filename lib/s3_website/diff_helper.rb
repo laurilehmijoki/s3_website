@@ -1,26 +1,33 @@
 module S3Website
   class DiffHelper
     def self.resolve_files_to_upload(s3_bucket, site_dir, config)
-      progress_indicator = DiffProgressIndicator.new('Calculating diff', "... done\n")
-      s3_data_source = Filey::DataSources::AwsSdkS3.new(s3_bucket, config) { |filey|
-        progress_indicator.render_next_step
+      with_progress_indicator('Calculating diff') { |progress_indicator|
+        s3_data_source = Filey::DataSources::AwsSdkS3.new(s3_bucket, config) { |filey|
+          progress_indicator.render_next_step
+        }
+        fs_data_source = Filey::DataSources::FileSystem.new(site_dir) { |filey|
+          progress_indicator.render_next_step
+        }
+        changed_local_files = Filey::Comparison.list_changed(
+          fs_data_source,
+          s3_data_source
+        )
+        new_local_files = Filey::Comparison.list_missing(
+          fs_data_source,
+          s3_data_source
+        )
+        [ normalise(changed_local_files), normalise(new_local_files) ]
       }
-      fs_data_source = Filey::DataSources::FileSystem.new(site_dir) { |filey|
-        progress_indicator.render_next_step
-      }
-      changed_local_files = Filey::Comparison.list_changed(
-        fs_data_source,
-        s3_data_source
-      )
-      new_local_files = Filey::Comparison.list_missing(
-        fs_data_source,
-        s3_data_source
-      )
-      progress_indicator.finish
-      [ normalise(changed_local_files), normalise(new_local_files) ]
     end
 
     private
+
+    def self.with_progress_indicator(diff_msg)
+      progress_indicator = DiffProgressIndicator.new(diff_msg, "... done\n")
+      result = yield progress_indicator
+      progress_indicator.finish
+      result
+    end
 
     def self.normalise(fileys)
       fileys.map { |filey|
