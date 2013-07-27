@@ -41,7 +41,7 @@ module S3Website
         @ordinal_direction = 'n' # start from north
         print init_msg
         print '  '
-        DiffProgressIndicator.render_ordinal_direction @ordinal_direction
+        render_next_step
       end
 
       def render_next_step

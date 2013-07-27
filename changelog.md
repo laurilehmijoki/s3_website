@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.3.1
+
+* Print to stdout the initial state of the diff progress indicator
+
 ## 1.3.0
 
 * Show a progress indicator when calculating diff
