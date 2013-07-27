@@ -175,7 +175,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 #### Creating a new CloudFront distribution
 
 When you run the command `s3_website cfg apply`, it will ask you whether you
-want to deliver your website via CloudFront. If you answer yes, command will
+want to deliver your website via CloudFront. If you answer yes, the command will
 create a CloudFront distribution for you.
 
 #### Using your existing CloudFront distribution
