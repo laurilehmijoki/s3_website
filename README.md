@@ -69,8 +69,6 @@ you can omit the `s3_id` and `s3_secret` keys in the config file.)
 ## Project goals
 
 * Provide a command-line interface tool for deploying and managing S3 websites
- * Create commands such as `s3_website push`, `s3_website cfg create` and
-   `s3_website cfg apply`
 * Let the user have all the S3 website configurations in a file
 * Minimise or remove the need to use the AWS Console
 * Allow the user to deliver the website via CloudFront
