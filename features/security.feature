@@ -8,6 +8,7 @@ Feature: Security
     And the output should equal
       """
       Deploying features/support/test_site_dirs/site-that-contains-s3-website-file.com/_site/* to another-s3-website-test.net
+      Calculating diff ... done
       No new or changed files to upload
       Done! Go visit: http://another-s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
 

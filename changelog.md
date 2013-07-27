@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.3.0
+
+* Show a progress indicator when calculating diff
+
 ## 1.2.1
 
 * Use `print` instead of `puts` when printing to stdout in a concurrent context

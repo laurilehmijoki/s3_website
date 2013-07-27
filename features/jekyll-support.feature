@@ -7,6 +7,7 @@ Feature: upload a Jekyll site
     And the output should contain
       """
       Deploying features/support/test_site_dirs/jekyllrb.com/_site/* to s3-website-test.net
+      Calculating diff ... done
       Uploading 2 new file(s)
       """
     And the output should contain

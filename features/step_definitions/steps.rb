@@ -58,6 +58,24 @@ def push_files
   }
 end
 
+module S3Website
+  class DiffHelper
+    class DiffProgressIndicator
+      def initialize(start_msg, end_msg)
+        puts "#{start_msg} #{end_msg}"
+      end
+
+      def render_next_step
+        # Simplify testing of stdout by doing nothing here.
+      end
+
+      def finish
+        # Simplify testing of stdout by doing nothing here.
+      end
+    end
+  end
+end
+
 module Kernel
   require 'stringio'
 

@@ -24,6 +24,7 @@ Feature: Invalidate the Cloudfront distribution
     And the output should equal
       """
       Deploying features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi/_site/* to s3-website-test.net
+      Calculating diff ... done
       Uploading 1 changed file(s)
       Upload index.html: Success!
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
