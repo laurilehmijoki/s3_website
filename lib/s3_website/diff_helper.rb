@@ -16,11 +16,18 @@ module S3Website
           fs_data_source,
           s3_data_source
         )
-        [ normalise(changed_local_files), normalise(new_local_files) ]
+        [
+          reject_blacklisted(normalise changed_local_files),
+          reject_blacklisted(normalise new_local_files)
+        ]
       }
     end
 
     private
+
+    def self.reject_blacklisted(file_paths)
+      file_paths.reject { |f| Upload.is_blacklisted f }
+    end
 
     def self.with_progress_indicator(diff_msg)
       progress_indicator = DiffProgressIndicator.new(diff_msg, "... done\n")

@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.3.2
+
+* Move blacklist filtering into a better place
+
 ## 1.3.1
 
 * Print to stdout the initial state of the diff progress indicator

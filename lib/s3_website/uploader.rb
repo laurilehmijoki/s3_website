@@ -51,7 +51,7 @@ module S3Website
         site_dir,
         config
       )
-      to_upload = (changed_files + new_files).reject { |f| Upload.is_blacklisted f }
+      to_upload = changed_files + new_files
       if to_upload.empty?
         puts "No new or changed files to upload"
       else
