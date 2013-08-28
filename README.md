@@ -210,6 +210,25 @@ cloudfront_distribution_config:
 Once you've saved the configuration into `s3_website.yml`, you can apply them by
 running `s3_website cfg apply`.
 
+#### Invalidating root resources instead of index.htmls
+
+By default, `s3_website push` calls the CloudFront invalidation API with the
+file-name-as-it-is. This means that if your file is *article/index.html*, the
+push command will call the invalidation API on the resource
+*article/index.html*.
+
+You can instruct the push command to invalidate the root resource instead of the
+*index.html* resource by adding the following setting into the configuration
+file:
+
+    cloudfront_invalidate_root: true
+
+To recap, this setting instructs s3_website to invalidate the root resource
+(e.g., *article/*) instead of the filename'd resource (e.g.,
+*article/index.html).
+
+No more index.htmls in your URLs!
+
 ### The headless mode
 
 s3_website has a headless mode, where human interactions are disabled.
