@@ -225,7 +225,7 @@ file:
 
 To recap, this setting instructs s3_website to invalidate the root resource
 (e.g., *article/*) instead of the filename'd resource (e.g.,
-*article/index.html).
+*article/index.html*).
 
 No more index.htmls in your URLs!
 
