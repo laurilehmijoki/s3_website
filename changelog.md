@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.4.0
+
+* Add setting `cloudfront_invalidate_root`
+
 ## 1.3.2
 
 * Move blacklist filtering into a better place
