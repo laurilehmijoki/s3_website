@@ -8,8 +8,8 @@ module S3Website
         s3_object_keys = changed_files
         s3_object_keys << ""
         report = SimpleCloudfrontInvalidator::CloudfrontClient.new(
-          aws_key, aws_secret, cloudfront_distribution_id).invalidate(
-            s3_object_keys)
+          aws_key, aws_secret, cloudfront_distribution_id
+        ).invalidate(s3_object_keys)
         puts report[:text_report]
         report[:invalidated_items_count]
       end
