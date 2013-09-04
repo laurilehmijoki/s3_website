@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.4.1
+
+* Fix diff for Windows users
+
+  See
+  <https://github.com/laurilehmijoki/s3_website/issues/8#issuecomment-23683568>
+  for discussion.
+
 ## 1.4.0
 
 * Add setting `cloudfront_invalidate_root`
