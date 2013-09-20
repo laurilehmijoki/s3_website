@@ -19,7 +19,7 @@ class Cfg < Thor
   LONGDESC
   def apply
     puts 'Applying the configurations in s3_website.yml on the AWS services ...'
-    puts `configure-s3-website --config-file s3_website.yml`
+    system('configure-s3-website --config-file s3_website.yml')
   end
 end
 
