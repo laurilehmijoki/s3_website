@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.4.2
+
+* Fix `s3_website cfg apply` for CloudFront setup (#33)
+
 ## 1.4.1
 
 * Fix diff for Windows users
