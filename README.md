@@ -322,8 +322,7 @@ You can increase the concurrency level by adding the following setting into the
 concurrency_level: <integer>
 ```
 
-You can speed up the `s3_website push` operation by increasing the concurrency
-level. However, because S3 throttles connections, there's an upper limit to the
+However, because S3 throttles connections, there's an upper limit to the
 level of parallelism. If you start to see end-of-file errors, decrease the
 concurrency level. Conversely, if you don't experience any errors, you can
 increase the concurrency level and thus benefit from faster uploads.
