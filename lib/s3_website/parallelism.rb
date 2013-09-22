@@ -20,6 +20,6 @@ module S3Website
 
     private
 
-    DEFAULT_CONCURRENCY_LEVEL = 25
+    DEFAULT_CONCURRENCY_LEVEL = 3
   end
 end
