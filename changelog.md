@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.4.4
+
+* Add support for eu-west-1 as a location constraint
+
 ## 1.4.3
 
 * Decrease the default concurrency level to 3
