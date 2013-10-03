@@ -20,6 +20,7 @@ describe S3Website::Endpoint do
   it 'takes eu-west-1 as an alias for EU' do
     endpoint = S3Website::Endpoint.new('eu-west-1')
     endpoint.location_constraint.should eq('eu-west-1')
+    S3Website::Endpoint.new.location_constraints['EU'].should eq(S3Website::Endpoint.new.location_constraints['eu-west-1'])
   end
 
   it 'fails if the location constraint is invalid' do
@@ -28,5 +29,3 @@ describe S3Website::Endpoint do
     }.to raise_error
   end
 end
-
-
