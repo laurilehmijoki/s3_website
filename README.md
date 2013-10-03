@@ -334,7 +334,7 @@ See
 
 ## Known issues
 
-None. Please send a pull request if you spot any.
+Please create an issue and send a pull request if you spot any.
 
 ## Development
 
