@@ -34,15 +34,11 @@ Here's how you can get started:
 
 ### For Jekyll users
 
-Run the `s3_website cfg create` in the root directory of your Jekyll project.
-`s3_website` will automatically look for the site output in the *_site*
-directory.
+S3_website will automatically discover your website in the *_site* directory.
 
 ### For Nanoc users
 
-Run the `s3_website cfg create` in the root directory of your Nanoc project.
-`s3_website` will automatically look for the site output in the *public/output*
-directory.
+S3_website will automatically discover your website in the *public/output* directory.
 
 ### For others
 
