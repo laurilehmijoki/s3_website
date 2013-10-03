@@ -15,11 +15,18 @@ module S3Website
 
     # http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
     def location_constraints
+      eu_west_1_region = {
+        :region           => 'EU (Ireland)',
+        :website_hostname => 's3-website-eu-west-1.amazonaws.com',
+        :endpoint         => 's3-eu-west-1.amazonaws.com'
+      }
+
       {
         'us-east-1'      => { :region => 'US Standard',                   :website_hostname => 's3-website-us-east-1.amazonaws.com',      :endpoint => 's3.amazonaws.com' },
         'us-west-2'      => { :region => 'US West (Oregon)',              :website_hostname => 's3-website-us-west-2.amazonaws.com',      :endpoint => 's3-us-west-2.amazonaws.com' },
         'us-west-1'      => { :region => 'US West (Northern California)', :website_hostname => 's3-website-us-west-1.amazonaws.com',      :endpoint => 's3-us-west-1.amazonaws.com' },
-        'EU'             => { :region => 'EU (Ireland)',                  :website_hostname => 's3-website-eu-west-1.amazonaws.com',      :endpoint => 's3-eu-west-1.amazonaws.com' },
+        'EU'             => eu_west_1_region,
+        'eu-west-1'      => eu_west_1_region,
         'ap-southeast-1' => { :region => 'Asia Pacific (Singapore)',      :website_hostname => 's3-website-ap-southeast-1.amazonaws.com', :endpoint => 's3-ap-southeast-1.amazonaws.com' },
         'ap-southeast-2' => { :region => 'Asia Pacific (Sydney)',         :website_hostname => 's3-website-ap-southeast-2.amazonaws.com', :endpoint => 's3-ap-southeast-2.amazonaws.com' },
         'ap-northeast-1' => { :region => 'Asia Pacific (Tokyo)',          :website_hostname => 's3-website-ap-northeast-1.amazonaws.com', :endpoint => 's3-ap-northeast-1.amazonaws.com' },
