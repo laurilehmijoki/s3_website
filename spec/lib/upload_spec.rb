@@ -144,6 +144,16 @@ describe S3Website::Upload do
       end
     end
 
+    context 'the user specifies max-age as zero' do
+      let(:config) {{
+        'max_age' => 0
+      }}
+
+      it 'includes the no-cache declaration in the cache-control metadata' do
+        subject.send(:upload_options)[:cache_control].should == 'no-cache, max-age=0'
+      end
+    end
+
     describe '#max_age' do
       it 'should be the universal value if one is set' do
         subject.send(:max_age).should == 300

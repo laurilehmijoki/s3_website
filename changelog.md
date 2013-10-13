@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.4.5
+
+* If max-age=0, set `Cache-Control: no-cache, max-age=0`
+
 ## 1.4.4
 
 * Add support for eu-west-1 as a location constraint

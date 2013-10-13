@@ -70,9 +70,17 @@ module S3Website
 
       opts[:content_type] = "text/html; charset=utf-8" if mime_type == 'text/html'
       opts[:content_encoding] = "gzip" if gzip?
-      opts[:cache_control] = "max-age=#{max_age}" if cache_control?
+      opts[:cache_control] = cache_control_value if cache_control?
 
       opts
+    end
+
+    def cache_control_value
+      if max_age == 0
+        "no-cache, max-age=0"
+      else
+        "max-age=#{max_age}"
+      end
     end
 
     def cache_control?
