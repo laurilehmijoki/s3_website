@@ -12,6 +12,7 @@ module S3Website
 end
 
 %w{
+  after_upload_tasks
   errors
   upload
   uploader
