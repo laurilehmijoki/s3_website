@@ -69,6 +69,29 @@ describe S3Website::Upload do
                              config,
                              'features/support/test_site_dirs/my.blog.com/_site').perform!
     end
+
+    context 'the user specifies a mime-type for extensionless files' do
+      let(:config) {{
+        'extensionless_mime_type' => "text/html",
+        's3_reduced_redundancy' => false
+      }}
+    
+      it 'adds the content type of the uploaded extensionless file into the S3 object' do
+        file_to_upload = 'index'
+        s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+          s3_object.should_receive(:write).with(
+            anything(),
+            :content_type => 'text/html; charset=utf-8',
+            :reduced_redundancy => false
+          )
+        end
+        S3Website::Upload.new(file_to_upload,
+                             s3_client,
+                             config,
+                             'features/support/test_site_dirs/my.blog-with-clean-urls.com/_site').perform!
+      end
+    end
+
   end
 
   describe 'gzip compression' do
