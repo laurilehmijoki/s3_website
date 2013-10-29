@@ -404,5 +404,6 @@ Contributors (in alphabetical order)
 * Shigeaki Matsumura
 * stanislas
 * Tate Johnson
+* Toby Marsden
 * Trevor Fitzgerald
 * Zee Spencer
