@@ -75,7 +75,7 @@ describe S3Website::Upload do
         'extensionless_mime_type' => "text/html",
         's3_reduced_redundancy' => false
       }}
-    
+
       it 'adds the content type of the uploaded extensionless file into the S3 object' do
         file_to_upload = 'index'
         s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
