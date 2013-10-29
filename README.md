@@ -134,6 +134,18 @@ gzip:
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
 
+### Specifying a MIME type for files without extensions
+
+`s3_website` will look up the MIME type of each file it uploads, and infer the Content-Type from it automatically. By default, files without an extension will have a blank Content-Type.
+
+You can specify a default MIME type for files without an extension using a line like this in `s3_website.yml`:
+
+```yaml
+extensionless_mime_type: text/html
+```
+
+This is useful when you are uploading HTML files for which you want 'clean' URLs, e.g. `www.domain.com/info`.
+
 ### Using non-standard AWS regions
 
 By default, `s3_website` uses the US Standard Region. You can upload your
@@ -392,5 +404,6 @@ Contributors (in alphabetical order)
 * Shigeaki Matsumura
 * stanislas
 * Tate Johnson
+* Toby Marsden
 * Trevor Fitzgerald
 * Zee Spencer

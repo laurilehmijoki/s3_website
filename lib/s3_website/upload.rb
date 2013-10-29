@@ -113,7 +113,11 @@ module S3Website
     end
 
     def mime_type
-      MIME::Types.type_for(path).first
+      if !!config['extensionless_mime_type'] && File.extname(path) == ""
+        config['extensionless_mime_type']
+      else
+        MIME::Types.type_for(path).first
+      end
     end
   end
 end
