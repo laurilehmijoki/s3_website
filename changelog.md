@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.5.0
+
+* Add support for specifying the MIME type for extensionless files
+
 ## 1.4.5
 
 * If max-age=0, set `Cache-Control: no-cache, max-age=0`
