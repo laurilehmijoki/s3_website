@@ -99,6 +99,10 @@ Feature: Instructions for a new user
       """
       # concurrency_level:
       """
+    Then the file "s3_website.yml" should contain:
+      """
+      # extensionless_mime_type: text/html
+      """
 
   @starts-new-os-process
   Scenario: Run s3_website with a malformed configuration file
