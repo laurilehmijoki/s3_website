@@ -7,7 +7,7 @@ module S3Website
     BLACKLISTED_FILES = ['s3_website.yml']
 
     def initialize(path, s3, config, site_dir)
-      raise "May not upload #{path}, because it's blacklisted" if Upload.is_blacklisted path
+      raise "May not upload #{path}, because it's blacklisted" if Upload.is_blacklisted(path, config)
       @path = path
       @full_path = "#{site_dir}/#{path}"
       @file = File.open("#{site_dir}/#{path}")
@@ -25,8 +25,11 @@ module S3Website
       "#{path}#{" [gzipped]" if gzip?}#{" [max-age=#{max_age}]" if cache_control?}"
     end
 
-    def self.is_blacklisted(path)
-      BLACKLISTED_FILES.any? do |blacklisted_file|
+    def self.is_blacklisted(path, config)
+      [
+        config['ignore_on_local'],
+        BLACKLISTED_FILES
+      ].flatten.compact.any? do |blacklisted_file|
         path.include? blacklisted_file
       end
     end

@@ -8,9 +8,29 @@ describe S3Website::Upload do
     it 'should fail if the upload file is s3_website.yml' do
       blacklisted_files.each do |blacklisted_file|
         expect {
-          S3Website::Upload.new blacklisted_file, mock(), mock(), mock()
+          S3Website::Upload.new blacklisted_file, mock(), {}, mock()
         }.to raise_error "May not upload #{blacklisted_file}, because it's blacklisted"
       end
+    end
+
+    it 'should fail to upload configured blacklisted files' do
+      config = { 'ignore_on_local' => 'vendor' }
+
+      expect {
+        S3Website::Upload.new "vendor/jquery/development.js", mock(), config, mock()
+      }.to raise_error "May not upload vendor/jquery/development.js, because it's blacklisted"
+    end
+
+    it 'should fail to upload any configured blacklisted files' do
+      config = { 'ignore_on_local' => ['vendor', 'tests'] }
+
+      expect {
+        S3Website::Upload.new "vendor/jquery/development.js", mock(), config, mock()
+      }.to raise_error "May not upload vendor/jquery/development.js, because it's blacklisted"
+
+      expect {
+        S3Website::Upload.new "tests/spec_helper.js", mock(), config, mock()
+      }.to raise_error "May not upload tests/spec_helper.js, because it's blacklisted"
     end
   end
 
