@@ -15,6 +15,9 @@ module S3Website
         :invalidated_items_count => invalidated_items_count,
         :changed_redirects_count => changed_redirects.size
       }
+	  if config.has_key?("sitemap")
+		S3Website::AfterUploadTasks.ping_sitemaps(config_file_dir)
+	  end	  
     rescue S3WebsiteError => e
       puts e.message
       exit 1

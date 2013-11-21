@@ -292,6 +292,13 @@ For more information on configuring redirects, see the documentation of the
 gem, which comes as a transitive dependency of the `s3_website` gem. (The
 command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
 
+###Submitting Sitemaps automatically
+
+If you want to submit your [generated Sitemap](https://github.com/kinnetica/jekyll-plugins) to Google + Bing automatically, you should add the following to your s3_website.yml file. 
+
+url: http://<your_website_address>/ #Your HTTP website address
+sitemap: sitemap.xml #Your sitemap filename. It is really recommended to keep it as sitemap.xml
+
 ### Using `s3_website` as a library
 
 By nature, `s3_website` is a command-line interface tool. You can, however, use
