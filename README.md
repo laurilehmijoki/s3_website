@@ -171,6 +171,22 @@ your local machine. You may define a regular expression to ignore files like so:
 ignore_on_server: that_folder_of_stuff_i_dont_keep_locally
 ```
 
+### Excluding files from upload
+
+You can instruct `s3_website` not to push certain files:
+
+```yaml
+ignore_on_server: test
+```
+
+The value can be a regex, and you can specify many of them:
+
+```yaml
+ignore_on_server:
+  - test
+  - (draft|secret)
+```
+
 ### Reduced Redundancy
 
 You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy Storage:
