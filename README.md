@@ -413,6 +413,7 @@ Contributors (in alphabetical order)
 * Chris Moos
 * David Michael Barr
 * Greg Karékinian
+* John Allison
 * László Bácsi
 * Mason Turner
 * Michael Bleigh
