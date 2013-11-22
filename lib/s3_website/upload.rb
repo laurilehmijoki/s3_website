@@ -30,7 +30,7 @@ module S3Website
         config['ignore_on_local'],
         BLACKLISTED_FILES
       ].flatten.compact.any? do |blacklisted_file|
-        path.include? blacklisted_file
+        Regexp.new(blacklisted_file).match path
       end
     end
 

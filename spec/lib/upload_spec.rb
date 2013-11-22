@@ -21,16 +21,26 @@ describe S3Website::Upload do
       }.to raise_error "May not upload vendor/jquery/development.js, because it's blacklisted"
     end
 
-    it 'should fail to upload any configured blacklisted files' do
-      config = { 'ignore_on_local' => ['vendor', 'tests'] }
+    context 'the uploaded file matches a value in the ignore_on_local setting' do
+      it 'should fail to upload any configured blacklisted files' do
+        config = { 'ignore_on_local' => ['vendor', 'tests'] }
 
-      expect {
-        S3Website::Upload.new "vendor/jquery/development.js", mock(), config, mock()
-      }.to raise_error "May not upload vendor/jquery/development.js, because it's blacklisted"
+        expect {
+          S3Website::Upload.new "vendor/jquery/development.js", mock(), config, mock()
+        }.to raise_error "May not upload vendor/jquery/development.js, because it's blacklisted"
 
-      expect {
-        S3Website::Upload.new "tests/spec_helper.js", mock(), config, mock()
-      }.to raise_error "May not upload tests/spec_helper.js, because it's blacklisted"
+        expect {
+          S3Website::Upload.new "tests/spec_helper.js", mock(), config, mock()
+        }.to raise_error "May not upload tests/spec_helper.js, because it's blacklisted"
+      end
+
+      it 'supports regexes in the ignore_on_local setting' do
+        config = { 'ignore_on_local' => 'test.*' }
+
+        expect {
+          S3Website::Upload.new "tests/spec_helper.js", mock(), config, mock()
+        }.to raise_error "May not upload tests/spec_helper.js, because it's blacklisted"
+      end
     end
   end
 
