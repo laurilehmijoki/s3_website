@@ -17,16 +17,16 @@ module S3Website
           s3_data_source
         )
         [
-          reject_blacklisted(normalise changed_local_files),
-          reject_blacklisted(normalise new_local_files)
+          reject_blacklisted(changed_local_files, config),
+          reject_blacklisted(new_local_files, config)
         ]
       }
     end
 
     private
 
-    def self.reject_blacklisted(file_paths)
-      file_paths.reject { |f| Upload.is_blacklisted f }
+    def self.reject_blacklisted(file_paths, config)
+      (normalise file_paths).reject { |f| Upload.is_blacklisted(f, config) }
     end
 
     def self.with_progress_indicator(diff_msg)

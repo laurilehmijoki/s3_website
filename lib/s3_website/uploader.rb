@@ -148,9 +148,17 @@ module S3Website
     end
 
     def self.build_list_of_files_to_delete(remote_files, local_files, ignore_on_server = nil)
-      ignore_on_server = Regexp.new(ignore_on_server || "a_string_that_should_never_match_ever")
       files_to_delete = remote_files - local_files
-      files_to_delete.reject { |file| ignore_on_server.match(file) }
+      files_to_delete.reject { |file|
+        ignore_regexps(ignore_on_server).any? do |ignore_regexp|
+          Regexp.new(ignore_regexp).match file
+        end
+      }
+    end
+
+    def self.ignore_regexps(ignore_on_server)
+      ignore_regexps = ignore_on_server || "a_string_that_should_never_match_ever"
+      ignore_regexps.class == Array ? ignore_regexps : [ignore_regexps]
     end
 
     def self.delete_s3_object(s3, s3_bucket_name, s3_object_key)

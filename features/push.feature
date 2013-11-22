@@ -99,3 +99,17 @@ Feature: upload S3 website to S3
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
+
+  @new-and-changed-files
+  Scenario: The blogger user does not want to upload certain files
+    When my S3 website is in "features/support/test_site_dirs/ignored-files.com"
+    Then s3_website will push my blog to S3
+    And the output should equal
+      """
+      Deploying features/support/test_site_dirs/ignored-files.com/_site/* to s3-website-test.net
+      Calculating diff ... done
+      Uploading 1 changed file(s)
+      Upload css/styles.css: Success!
+      Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
+
+      """
