@@ -171,6 +171,14 @@ your local machine. You may define a regular expression to ignore files like so:
 ignore_on_server: that_folder_of_stuff_i_dont_keep_locally
 ```
 
+You may also specify the values as a list:
+
+```yaml
+ignore_on_server:
+  - that_folder_of_stuff_i_dont_keep_locally
+  - file_managed_by_somebody_else
+```
+
 ### Excluding files from upload
 
 You can instruct `s3_website` not to push certain files:

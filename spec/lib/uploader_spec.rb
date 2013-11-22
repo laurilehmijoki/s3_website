@@ -17,11 +17,18 @@ describe S3Website::Uploader do
     end
   end
 
-  context "#build_list_of_files_to_delete" do
+  context "honoring the ignore_on_server setting" do
     it "ignores files which match a regular expression" do
       files_to_delete = S3Website::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"], "ignored")
       files_to_delete.should eq ["b"]
     end
+
+    it "let's the user specify the regexes in a list" do
+      files_to_delete = S3Website::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"], ["ignored"])
+      files_to_delete.should eq ["b"]
+    end
+
+
     it "does not ignore when you don't provide an ignored regex" do
       files_to_delete = S3Website::Uploader.build_list_of_files_to_delete(["a", "b", "ignored"], ["a"])
       files_to_delete.should eq ["b", "ignored"]
