@@ -176,13 +176,13 @@ ignore_on_server: that_folder_of_stuff_i_dont_keep_locally
 You can instruct `s3_website` not to push certain files:
 
 ```yaml
-ignore_on_server: test
+exclude_from_upload: test
 ```
 
 The value can be a regex, and you can specify many of them:
 
 ```yaml
-ignore_on_server:
+exclude_from_upload:
   - test
   - (draft|secret)
 ```

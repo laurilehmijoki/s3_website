@@ -27,7 +27,7 @@ module S3Website
 
     def self.is_blacklisted(path, config)
       [
-        config['ignore_on_local'],
+        config['exclude_from_upload'],
         BLACKLISTED_FILES
       ].flatten.compact.any? do |blacklisted_file|
         Regexp.new(blacklisted_file).match path
