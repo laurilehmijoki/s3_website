@@ -430,6 +430,7 @@ Contributors (in alphabetical order)
 * László Bácsi
 * Mason Turner
 * Michael Bleigh
+* Philip I. Thomas
 * Philippe Creux
 * Shigeaki Matsumura
 * stanislas
