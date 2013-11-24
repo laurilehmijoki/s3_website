@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "s3_website"
-  s.version     = "1.6.0"
+  s.version     = "1.6.1"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'erubis', '~> 2.7.0'
   s.add_dependency 'mime-types', '= 1.19'
   s.add_dependency 'thor', '= 0.18.1'
-  s.add_dependency 'configure-s3-website', '~> 1'
+  s.add_dependency 'configure-s3-website', '= 1.5.1'
 
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'rspec-expectations'

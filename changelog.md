@@ -2,9 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.1
+
+* Fix issue <https://github.com/laurilehmijoki/s3_website/issues/30>
+
 ## 1.6.0
 
-* Add support for excluding files from upload 
+* Add support for excluding files from upload
  * s3_website.yml now supports `exclude_from_upload`
 * Support multiple values on the `ignore_on_server` setting
 
