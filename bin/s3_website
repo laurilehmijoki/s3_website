@@ -19,7 +19,11 @@ class Cfg < Thor
   LONGDESC
   def apply
     puts 'Applying the configurations in s3_website.yml on the AWS services ...'
-    system('configure-s3-website --config-file s3_website.yml')
+    require 'configure-s3-website'
+    config_source = ConfigureS3Website::FileConfigSource.new 's3_website.yml'
+    ConfigureS3Website::Runner.run({
+      :config_source => config_source
+    })
   end
 end
 
