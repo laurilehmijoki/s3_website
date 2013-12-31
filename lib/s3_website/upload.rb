@@ -49,6 +49,7 @@ module S3Website
 
     def gzipped_file
       tempfile = Tempfile.new(File.basename(path))
+      tempfile.binmode
 
       gz = Zlib::GzipWriter.new(tempfile, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
 
