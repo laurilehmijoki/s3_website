@@ -427,6 +427,7 @@ Contributors (in alphabetical order)
 * David Michael Barr
 * Greg Karékinian
 * John Allison
+* Jordan White
 * László Bácsi
 * Mason Turner
 * Michael Bleigh
