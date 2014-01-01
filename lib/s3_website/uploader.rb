@@ -18,7 +18,7 @@ module S3Website
       redirects = config['redirects'] || {}
       changed_redirects = setup_redirects redirects, config, s3
 
-      deleted_files_count = remove_superfluous_files(
+      deleted_files = remove_superfluous_files(
         s3,
         config,
         {
@@ -32,7 +32,7 @@ module S3Website
 
       print_done_report config
 
-      [new_files_count, changed_files_count, deleted_files_count, changed_files, changed_redirects]
+      [new_files_count, changed_files_count, deleted_files, changed_files, changed_redirects, deleted_files]
     end
 
     private
@@ -132,19 +132,19 @@ module S3Website
       local_files = load_all_local_files(site_dir) + options.fetch(:redirects).keys
       files_to_delete = build_list_of_files_to_delete(remote_files, local_files, options[:ignore_on_server])
 
-      deleted_files_count = 0
+      deleted_files = []
       if in_headless_mode
         files_to_delete.each { |s3_object_key|
           delete_s3_object s3, s3_bucket_name, s3_object_key
-          deleted_files_count += 1
+          deleted_files << s3_object_key
         }
       else
         Keyboard.if_user_confirms_delete(files_to_delete, config) { |s3_object_key|
           delete_s3_object s3, s3_bucket_name, s3_object_key
-          deleted_files_count += 1
+          deleted_files << s3_object_key
         }
       end
-      deleted_files_count
+      deleted_files
     end
 
     def self.build_list_of_files_to_delete(remote_files, local_files, ignore_on_server = nil)
