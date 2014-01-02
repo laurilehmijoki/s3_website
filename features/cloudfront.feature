@@ -34,3 +34,21 @@ Feature: Invalidate the Cloudfront distribution
       succeeded
 
       """
+
+  @s3-and-cloudfront-after-deleting-a-file
+  Scenario: Delete a blog post and then push the website
+    When my S3 website is in "features/support/test_site_dirs/cdn-powered.when-deleted-a-file.blog.fi"
+    Then s3_website will push my blog to S3 and invalidate the Cloudfront distribution
+    And the output should equal
+      """
+      Deploying features/support/test_site_dirs/cdn-powered.when-deleted-a-file.blog.fi/_site/* to s3-website-test.net
+      Calculating diff ... done
+      No new or changed files to upload
+      Delete css/styles.css: Success!
+      Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
+      Invalidating Cloudfront items...
+        /css/styles.css
+        /
+      succeeded
+
+      """

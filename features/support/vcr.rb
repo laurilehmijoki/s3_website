@@ -13,6 +13,7 @@ VCR.cucumber_tags do |t|
   t.tag '@no-new-or-changed-files'
   t.tag '@s3-and-cloudfront'
   t.tag '@s3-and-cloudfront-when-updating-a-file'
+  t.tag '@s3-and-cloudfront-after-deleting-a-file'
   t.tag '@one-file-to-delete'
   t.tag '@create-redirect'
   t.tag '@empty-bucket'
