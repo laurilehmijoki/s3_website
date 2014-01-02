@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.3
+
+* Invalidate a deleted file on CloudFront
+
 ## 1.6.2
 
 * Fix issue <https://github.com/laurilehmijoki/s3_website/pull/54>
