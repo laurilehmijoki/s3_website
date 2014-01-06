@@ -263,7 +263,7 @@ No more index.htmls in your URLs!
 
 *Note*: If the root resource on your folder displays an error instead of the
 index file, your source bucket in Cloudfront likely is pointing to the S3 Origin,
-*example.com.s3.amazonaws.com*. Update the source to the S3 Website Endpoint, 
+*example.com.s3.amazonaws.com*. Update the source to the S3 Website Endpoint,
 *e.g. example.com.s3-website-us-east-1.amazonaws.com*, to fix this.
 
 ### The headless mode
