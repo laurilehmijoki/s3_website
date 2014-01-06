@@ -6,6 +6,8 @@ class Cfg < Thor
   desc 'create', 'Create a config file with placeholder values'
   def create
     S3Website::Tasks.config_create Dir.pwd
+  rescue Exception => e
+    puts S3Website.error_report e
   end
 
   desc 'apply', 'Apply the configuration on the AWS services'
@@ -24,6 +26,8 @@ class Cfg < Thor
     ConfigureS3Website::Runner.run({
       :config_source => config_source
     })
+  rescue Exception => e
+    puts S3Website.error_report e
   end
 end
 
@@ -54,6 +58,8 @@ class Cli < Thor
   def push
     site_path = S3Website::Paths.infer_site_path options[:site]
     S3Website::Tasks.push(options[:config_dir], site_path, options[:headless])
+  rescue Exception => e
+    puts S3Website.error_report e
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'

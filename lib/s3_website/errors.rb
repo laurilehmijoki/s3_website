@@ -31,4 +31,12 @@ module S3Website
       super(message)
     end
   end
+
+  def self.error_report(error)
+    if error.is_a? S3WebsiteError
+      "#{error.message}"
+    else
+      "#{error.message} (#{error.class})"
+    end
+  end
 end
