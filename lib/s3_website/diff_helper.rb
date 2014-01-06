@@ -47,17 +47,17 @@ module S3Website
         @end_msg = end_msg
         @ordinal_direction = 'n' # start from north
         print init_msg
-        print '  '
+        print '   '
         render_next_step
       end
 
       def render_next_step
         @ordinal_direction = DiffProgressIndicator.next_ordinal_direction @ordinal_direction
-        print("\b" + DiffProgressIndicator.render_ordinal_direction(@ordinal_direction))
+        print("\b\b" + DiffProgressIndicator.render_ordinal_direction(@ordinal_direction) + ' ')
       end
 
       def finish
-        print "\b"
+        print "\b\b"
         print @end_msg
       end
 
