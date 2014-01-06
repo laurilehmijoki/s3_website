@@ -10,9 +10,6 @@ module S3Website
       else
         candidate_path_if_exists candidate_path
       end
-    rescue NoWebsiteDirectoryFound => e
-      puts e.message
-      exit 1
     end
 
     private

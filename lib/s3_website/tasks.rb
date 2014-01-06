@@ -15,16 +15,10 @@ module S3Website
         :invalidated_items_count => invalidated_items_count,
         :changed_redirects_count => changed_redirects.size
       }
-    rescue S3WebsiteError => e
-      puts e.message
-      exit 1
     end
 
     def self.config_create(dir)
       ConfigLoader.check_s3_configuration dir
-    rescue S3WebsiteError => e
-      puts e.message
-      exit 1
     end
 
     private
