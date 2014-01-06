@@ -3,8 +3,8 @@ Feature: configure redirects
   @create-redirect
   Scenario: The user wants to configure new redirects for HTTP resources
     When my S3 website is in "features/support/test_site_dirs/create-redirects"
-    Then s3_website will push my blog to S3
-    And the output should contain
+    And I call the push command
+    Then the output should contain
       """
       Creating new redirects ...
         Redirect welcome.php to /welcome: Success!

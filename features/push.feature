@@ -7,8 +7,8 @@ Feature: upload S3 website to S3
   @new-files
   Scenario: Push a new S3 website to S3
     When my S3 website is in "features/support/test_site_dirs/my.blog.com"
-    Then s3_website will push my blog to S3
-    And the output should contain
+    And I call the push command
+    Then the output should contain
       """
       Deploying features/support/test_site_dirs/my.blog.com/_site/* to s3-website-test.net
       Calculating diff ... done
@@ -43,8 +43,8 @@ Feature: upload S3 website to S3
   @new-files-for-sydney
   Scenario: Push a new S3 website to an S3 bucket in Sydney
     When my S3 website is in "features/support/test_site_dirs/my.sydney.blog.au"
-    Then s3_website will push my blog to S3
-    And the output should contain
+    And I call the push command
+    Then the output should contain
       """
       Done! Go visit: http://s3-website-test.net.s3-website-ap-southeast-2.amazonaws.com/index.html
       """
@@ -52,8 +52,8 @@ Feature: upload S3 website to S3
   @new-and-changed-files
   Scenario: Upload a new blog post and change an old post
     When my S3 website is in "features/support/test_site_dirs/new-and-changed-files.com"
-    Then s3_website will push my blog to S3
-    And the output should contain
+    And I call the push command
+    Then the output should contain
       """
       Deploying features/support/test_site_dirs/new-and-changed-files.com/_site/* to s3-website-test.net
       Calculating diff ... done
@@ -76,8 +76,8 @@ Feature: upload S3 website to S3
   @only-changed-files
   Scenario: Update an existing blog post
     When my S3 website is in "features/support/test_site_dirs/only-changed-files.com"
-    Then s3_website will push my blog to S3
-    And the output should equal
+    And I call the push command
+    Then the output should equal
       """
       Deploying features/support/test_site_dirs/only-changed-files.com/_site/* to s3-website-test.net
       Calculating diff ... done
@@ -90,8 +90,8 @@ Feature: upload S3 website to S3
   @no-new-or-changed-files
   Scenario: The user runs s3_website even though he doesn't have new or changed posts
     When my S3 website is in "features/support/test_site_dirs/no-new-or-changed-files.com"
-    Then s3_website will push my blog to S3
-    And the output should equal
+    And I call the push command
+    Then the output should equal
       """
       Deploying features/support/test_site_dirs/no-new-or-changed-files.com/_site/* to s3-website-test.net
       Calculating diff ... done
@@ -103,8 +103,8 @@ Feature: upload S3 website to S3
   @new-and-changed-files
   Scenario: The blogger user does not want to upload certain files
     When my S3 website is in "features/support/test_site_dirs/ignored-files.com"
-    Then s3_website will push my blog to S3
-    And the output should equal
+    And I call the push command
+    Then the output should equal
       """
       Deploying features/support/test_site_dirs/ignored-files.com/_site/* to s3-website-test.net
       Calculating diff ... done

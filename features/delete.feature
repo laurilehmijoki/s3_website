@@ -7,8 +7,8 @@ Feature: remove an S3 website page from S3
   @one-file-to-delete
   Scenario: The user deletes a blog post
     When my S3 website is in "features/support/test_site_dirs/unpublish-a-post.com"
-    Then s3_website will push my blog to S3
-    And the output should equal
+    And I call the push command
+    Then the output should equal
       """
       Deploying features/support/test_site_dirs/unpublish-a-post.com/_site/* to s3-website-test.net
       Calculating diff ... done

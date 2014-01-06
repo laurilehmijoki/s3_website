@@ -142,8 +142,8 @@ Feature: Instructions for a new user
   @new-files
   Scenario: Print the URL of the to the user
     When my S3 website is in "features/support/test_site_dirs/my.blog.com"
-    Then s3_website will push my blog to S3
-    And the output should contain
+    And I call the push command
+    Then the output should contain
       """
       Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
       """

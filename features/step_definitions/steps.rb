@@ -4,11 +4,7 @@ When /^my S3 website is in "(.*?)"$/ do |blog_dir|
   @blog_dir = blog_dir
 end
 
-When /^s3_website will push my blog to S3$/ do
-  push_files
-end
-
-Then /^s3_website will push my blog to S(\d+) and invalidate the Cloudfront distribution$/ do |args|
+When /^I call the push command$/ do
   push_files
 end
 
@@ -20,21 +16,21 @@ Then /^the output should contain$/ do |expected_console_output|
   @console_output.should include(expected_console_output)
 end
 
-Then /^report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
+Then /^s3_website should report that it uploaded (\d+) new and (\d+) changed files into S3$/ do
   |new_count, changed_count|
   @amount_of_new_files.should == new_count.to_i
   @amount_of_changed_files.should == changed_count.to_i
 end
 
-Then /^report that it invalidated (\d+) Cloudfront item$/ do |expected|
+Then /^s3_website should report that it invalidated (\d+) Cloudfront item$/ do |expected|
   @amount_of_invalidated_items.should == expected.to_i
 end
 
-Then /^report that it created (\d+) new redirects$/ do |expected|
+Then /^s3_website should report that it created (\d+) new redirects$/ do |expected|
   @amount_of_new_redirects.should == expected.to_i
 end
 
-Then /^report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
+Then /^s3_website should report that it deleted (\d+) file from S3$/ do |amount_of_deleted_files|
   @amount_of_deleted_files.should == amount_of_deleted_files.to_i
 end
 

@@ -9,8 +9,8 @@ Feature: Invalidate the Cloudfront distribution
   @s3-and-cloudfront
   Scenario: Upload to S3 and then invalidate the Cloudfront distribution
     When my S3 website is in "features/support/test_site_dirs/cdn-powered.blog.fi"
-    Then s3_website will push my blog to S3 and invalidate the Cloudfront distribution
-    And the output should contain
+    And I call the push command
+    Then the output should contain
       """
       Invalidating Cloudfront items...
         /
@@ -20,8 +20,8 @@ Feature: Invalidate the Cloudfront distribution
   @s3-and-cloudfront-when-updating-a-file
   Scenario: Update a blog entry and then upload
     When my S3 website is in "features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi"
-    Then s3_website will push my blog to S3 and invalidate the Cloudfront distribution
-    And the output should equal
+    And I call the push command
+    Then the output should equal
       """
       Deploying features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi/_site/* to s3-website-test.net
       Calculating diff ... done
@@ -38,8 +38,8 @@ Feature: Invalidate the Cloudfront distribution
   @s3-and-cloudfront-after-deleting-a-file
   Scenario: Delete a blog post and then push the website
     When my S3 website is in "features/support/test_site_dirs/cdn-powered.when-deleted-a-file.blog.fi"
-    Then s3_website will push my blog to S3 and invalidate the Cloudfront distribution
-    And the output should equal
+    And I call the push command
+    Then the output should equal
       """
       Deploying features/support/test_site_dirs/cdn-powered.when-deleted-a-file.blog.fi/_site/* to s3-website-test.net
       Calculating diff ... done
