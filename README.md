@@ -383,6 +383,10 @@ Please create an issue and send a pull request if you spot any.
 
 s3_website uses [Semantic Versioning](http://semver.org).
 
+In the spirit of semantic versioning, here is the definition of public API for
+s3_website: Within a major version, s3_website will not break
+backwards-compatibility of anything that is mentioned in this README file.
+
 ### Tests
 
   * Install bundler and run `bundle install`
