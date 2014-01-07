@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.9
+
+* Fix Digest::Digest deprecation warn on Ruby 2.1.0
+
 ## 1.6.8
 
 * Fix content-type problem
