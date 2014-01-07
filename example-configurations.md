@@ -37,7 +37,6 @@ cloudfront_distribution_config:
       CNAME: your.domain.net
 max_age: 120
 gzip: true
-concurrency_level: 100
 ````
 
 Above, we store the AWS credentials and the id of the CloudFront distribution as
