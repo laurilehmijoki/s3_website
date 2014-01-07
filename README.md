@@ -24,7 +24,8 @@
 
 Here's how you can get started:
 
-* In [AWS IAM](https://console.aws.amazon.com/iam), create API credentials that have sufficient permissions to S3
+* Create API credentials that have sufficient permissions to S3. More info
+  [here](https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/setting-up-aws-credentials.md).
 * Go to your website directory
 * Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
