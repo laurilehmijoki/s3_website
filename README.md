@@ -371,7 +371,7 @@ maximum open files (on Unix-like systems, see `man ulimit`) or decrease the
 ## Example configurations
 
 See
-<https://github.com/laurilehmijoki/s3_website/blob/master/example-configurations.md>.
+<https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/example-configurations.md>.
 
 ## Known issues
 
