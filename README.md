@@ -11,6 +11,9 @@
 * Help you use AWS Cloudfront to distribute your website
 * Improve page speed with HTTP cache control and gzipping
 * Set HTTP redirects for your website
+* Configure other S3 buckets to redirect to your main blog/bucket
+ * e.g. www.example.com can point to blog.example.com
+* Auto configure your DNS settings if you're using Route53
 * (for other features, see the documentation below)
 
 ## Install
@@ -92,6 +95,50 @@ things it can perform. Please create an issue if you think the tool is
 incomprehensible or inconsistent.
 
 ## Additional features
+
+### Redirect Domains
+
+You can use the `redirect_domains` configuration option to enable the creation
+of more S3 buckets that will be configured to redirect to the bucket specified
+by `s3_bucket`.  This allows for redirects of the form www.example.com ->
+blog.example.com if `s3_bucket` is set to `blog.example.com` and `www.example.com`
+is listed under the `redirect_domains` option.  This also works if you want to do
+cross domain redirects (e.g.: blog.example2.com -> blog.example.com)
+
+```yaml
+redirect_domains:
+  - www.your_domain.com
+  - your_domain.com
+  - blog.another_domain_you_own.com
+```
+
+NOTE: This does not have to do with DNS, it is an S3 bucket option.
+
+### Route53 Auto-Configuration
+
+When `route53` is set to true, route53 routes will be created for `s3_bucket` and
+the `redirect_domains` if any are set.
+
+IMPORTANT: `s3_bucket` needs to be set the the main domain for your site/blog
+(e.g. blog.example.com).
+
+If a hosted zone for a domain does not exist, one can be created if you agree.
+This will incur a charge ($0.50 USD at the time of writing) per hosted zone/domain.
+If one is not created, you will be prompted to create one in the management console.
+
+If a route already exists, you must confirm that you want it to be overwritten before
+it is re-created.
+
+This option also works with the non-standard AWS Regions option below, so if you're using
+a different `s3_endpoint`, the DNS settings will be adjusted appropriately.
+
+If you select to use Cloudfront (Amazon's CDN), a route will be created to CloudFront for
+`s3_bucket`, and to S3 for each of the `redirect_domains`, S3 will then reroute to your
+`s3_bucket` (the main blog/site), which will be routed to Cloudfront.
+
+```yaml
+route53: true
+```
 
 ### Cache Control
 
