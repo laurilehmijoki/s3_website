@@ -13,6 +13,11 @@ Feature: Instructions for a new user
       """
 
   @starts-new-os-process
+  Scenario: Configuration is incomplete
+    When I run `s3_website push`
+    Then the exit status should be 1
+
+  @starts-new-os-process
   Scenario: Create placeholder config file
     Given a directory named "_site"
     When I run `s3_website cfg create`

@@ -5,7 +5,7 @@ Feature: reporting errors to the user
 
   @starts-new-os-process
   @network-io
-  Scenario: The S3 credentials are invalid
+  Scenario: The user calls "push" when the S3 credentials are invalid
     When I run `s3_website push --site ../../features/support/test_site_dirs/my.blog.com --config_dir ../../features/support/test_site_dirs/my.blog.com`
     Then the output should contain:
       """
@@ -15,3 +15,10 @@ Feature: reporting errors to the user
       """
       throw
       """
+    And the exit status should be 1
+
+  @starts-new-os-process
+  @network-io
+  Scenario: The user calls "cfg apply" when the S3 credentials are invalid
+    When I run `s3_website cfg apply`
+    And the exit status should be 1

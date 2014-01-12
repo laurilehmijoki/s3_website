@@ -8,6 +8,7 @@ class Cfg < Thor
     S3Website::Tasks.config_create Dir.pwd
   rescue Exception => e
     puts S3Website.error_report e
+    exit 1
   end
 
   desc 'apply', 'Apply the configuration on the AWS services'
@@ -28,6 +29,7 @@ class Cfg < Thor
     })
   rescue Exception => e
     puts S3Website.error_report e
+    exit 1
   end
 end
 
@@ -60,6 +62,7 @@ class Cli < Thor
     S3Website::Tasks.push(options[:config_dir], site_path, options[:headless])
   rescue Exception => e
     puts S3Website.error_report e
+    exit 1
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'

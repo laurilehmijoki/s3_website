@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.5
+
+* In case of error, exit with status 1
+
 ## 1.6.4
 
 * Add systematic error handling
