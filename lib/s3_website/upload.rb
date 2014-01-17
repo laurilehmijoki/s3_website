@@ -72,7 +72,7 @@ module S3Website
         :reduced_redundancy => config['s3_reduced_redundancy']
       }
 
-      opts[:content_type] = "text/html; charset=utf-8" if mime_type == 'text/html'
+      opts[:content_type] = "#{mime_type}; charset=utf-8" if ['text/html', 'application/json'].include? mime_type
       opts[:content_encoding] = "gzip" if gzip?
       opts[:cache_control] = cache_control_value if cache_control?
 
