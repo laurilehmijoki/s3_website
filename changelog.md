@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.6
+
+* Mark all text documents as UTF-8 encoded
+
 ## 1.6.5
 
 * In case of error, exit with status 1
