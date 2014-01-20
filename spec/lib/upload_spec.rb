@@ -75,8 +75,7 @@ describe S3Website::Upload do
       s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
         s3_object.should_receive(:write).with(
           anything(),
-          :content_type => 'text/css',
-          :reduced_redundancy => false
+          include(:content_type => 'text/css; charset=utf-8')
         )
       end
       S3Website::Upload.new(file_to_upload,
@@ -98,6 +97,26 @@ describe S3Website::Upload do
                              s3_client,
                              config,
                              'features/support/test_site_dirs/my.blog.com/_site').perform!
+    end
+
+    describe 'encoding of text documents' do
+      context 'the user uploads a .txt document' do
+        let(:config) {{ }}
+
+        it 'sets the content type to text/plain' do
+          file_to_upload = 'file.txt'
+          s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+            s3_object.should_receive(:write).with(
+              anything(),
+              include(:content_type => 'text/plain; charset=utf-8')
+            )
+          end
+          S3Website::Upload.new(file_to_upload,
+                                s3_client,
+                                config,
+                                'features/support/test_site_dirs/site-with-text-doc.com/_site').perform!
+        end
+      end
     end
 
     context 'the user specifies a mime-type for extensionless files' do
