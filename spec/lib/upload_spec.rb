@@ -50,78 +50,70 @@ describe S3Website::Upload do
     }
 
     it 'allows storing a file under the Reduced Redundancy Storage' do
-      file_to_upload = 'index.html'
-      s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+      should_upload(
+        file = 'index.html',
+        site = 'features/support/test_site_dirs/my.blog.com/_site', config) { |s3_object|
         s3_object.should_receive(:write).with(
           anything(),
-          :content_type => 'text/html; charset=utf-8',
-          :reduced_redundancy => true
+          include(:reduced_redundancy => true)
         )
-      end
-      S3Website::Upload.new(file_to_upload,
-                             s3_client,
-                             config,
-                             'features/support/test_site_dirs/my.blog.com/_site').perform!
+      }
     end
   end
 
   describe 'content type resolving' do
-    let(:config) {
-      { 's3_reduced_redundancy' => false }
-    }
-
     it 'adds the content type of the uploaded CSS file into the S3 object' do
-      file_to_upload = 'css/styles.css'
-      s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+      should_upload(
+        file = 'css/styles.css',
+        site = 'features/support/test_site_dirs/my.blog.com/_site') { |s3_object|
         s3_object.should_receive(:write).with(
           anything(),
-          :content_type => 'text/css',
-          :reduced_redundancy => false
+          include(:content_type => 'text/css; charset=utf-8')
         )
-      end
-      S3Website::Upload.new(file_to_upload,
-                             s3_client,
-                             config,
-                             'features/support/test_site_dirs/my.blog.com/_site').perform!
+      }
     end
 
     it 'adds the content type of the uploaded HTML file into the S3 object' do
-      file_to_upload = 'index.html'
-      s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+      should_upload(
+        file = 'index.html',
+        site = 'features/support/test_site_dirs/my.blog.com/_site') { |s3_object|
         s3_object.should_receive(:write).with(
           anything(),
-          :content_type => 'text/html; charset=utf-8',
-          :reduced_redundancy => false
+          include(:content_type => 'text/html; charset=utf-8')
         )
+      }
+    end
+
+    describe 'encoding of text documents' do
+      it 'should mark all text documents as utf-8' do
+        should_upload(
+          file = 'file.txt',
+          site = 'features/support/test_site_dirs/site-with-text-doc.com/_site') { |s3_object|
+          s3_object.should_receive(:write).with(
+            anything(),
+            include(:content_type => 'text/plain; charset=utf-8')
+          )
+        }
       end
-      S3Website::Upload.new(file_to_upload,
-                             s3_client,
-                             config,
-                             'features/support/test_site_dirs/my.blog.com/_site').perform!
     end
 
     context 'the user specifies a mime-type for extensionless files' do
       let(:config) {{
-        'extensionless_mime_type' => "text/html",
-        's3_reduced_redundancy' => false
+        'extensionless_mime_type' => "text/html"
       }}
 
       it 'adds the content type of the uploaded extensionless file into the S3 object' do
-        file_to_upload = 'index'
-        s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+        should_upload(
+          file = 'index',
+          site = 'features/support/test_site_dirs/my.blog-with-clean-urls.com/_site',
+          config) { |s3_object|
           s3_object.should_receive(:write).with(
             anything(),
-            :content_type => 'text/html; charset=utf-8',
-            :reduced_redundancy => false
+            include(:content_type => 'text/html; charset=utf-8')
           )
-        end
-        S3Website::Upload.new(file_to_upload,
-                             s3_client,
-                             config,
-                             'features/support/test_site_dirs/my.blog-with-clean-urls.com/_site').perform!
+        }
       end
     end
-
   end
 
   describe 'gzip compression' do
@@ -256,26 +248,36 @@ describe S3Website::Upload do
     end
   end
 
-  def create_verifying_s3_client(file_to_upload, &block)
-    def create_objects(file_to_upload, &block)
-      def create_html_s3_object(file_to_upload, &block)
-        s3_object = stub('s3_object')
-        yield s3_object
-        s3_object
+  def should_upload(file_to_upload, site_dir, config = {})
+    def create_verifying_s3_client(file_to_upload, &block)
+      def create_objects(file_to_upload, &block)
+        def create_html_s3_object(file_to_upload, &block)
+          s3_object = stub('s3_object')
+          yield s3_object
+          s3_object
+        end
+        objects = {}
+        objects[file_to_upload] = create_html_s3_object(file_to_upload, &block)
+        objects
       end
-      objects = {}
-      objects[file_to_upload] = create_html_s3_object(file_to_upload, &block)
-      objects
+      def create_bucket(file_to_upload, &block)
+        bucket = stub('bucket')
+        bucket.stub(:objects => create_objects(file_to_upload, &block))
+        bucket
+      end
+      buckets = stub('buckets')
+      buckets.stub(:[] => create_bucket(file_to_upload, &block))
+      s3 = stub('s3')
+      s3.stub(:buckets => buckets)
+      s3
     end
-    def create_bucket(file_to_upload, &block)
-      bucket = stub('bucket')
-      bucket.stub(:objects => create_objects(file_to_upload, &block))
-      bucket
+
+    s3_client = create_verifying_s3_client(file_to_upload) do |s3_object|
+      yield s3_object
     end
-    buckets = stub('buckets')
-    buckets.stub(:[] => create_bucket(file_to_upload, &block))
-    s3 = stub('s3')
-    s3.stub(:buckets => buckets)
-    s3
+    S3Website::Upload.new(file_to_upload,
+                          s3_client,
+                          config,
+                          site_dir).perform!
   end
 end

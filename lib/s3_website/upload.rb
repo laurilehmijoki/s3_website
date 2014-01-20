@@ -67,16 +67,21 @@ module S3Website
     end
 
     def upload_options
-      opts = {
-        :content_type => mime_type,
-        :reduced_redundancy => config['s3_reduced_redundancy']
-      }
-
-      opts[:content_type] = "text/html; charset=utf-8" if mime_type == 'text/html'
+      opts = {}
+      opts[:reduced_redundancy] = config['s3_reduced_redundancy']
+      opts[:content_type] = resolve_content_type
       opts[:content_encoding] = "gzip" if gzip?
       opts[:cache_control] = cache_control_value if cache_control?
-
       opts
+    end
+
+    def resolve_content_type
+      is_text = mime_type.start_with? 'text/' || mime_type == 'application/json'
+      if is_text
+        "#{mime_type}; charset=utf-8" # Let's consider UTF-8 as the de-facto encoding standard for text
+      else
+        mime_type
+      end
     end
 
     def cache_control_value
@@ -120,7 +125,7 @@ module S3Website
       if !!config['extensionless_mime_type'] && File.extname(path) == ""
         config['extensionless_mime_type']
       else
-        MIME::Types.type_for(path).first
+        MIME::Types.type_for(path).first.to_s
       end
     end
   end
