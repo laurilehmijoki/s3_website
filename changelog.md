@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.7
+
+* Support the eu-west-1 location constraint for the commands `cfg apply` and
+  `cfg create`
+
 ## 1.6.6
 
 * Mark all text documents as UTF-8 encoded
