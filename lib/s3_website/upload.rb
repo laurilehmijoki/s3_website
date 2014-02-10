@@ -76,7 +76,7 @@ module S3Website
     end
 
     def resolve_content_type
-      is_text = mime_type.start_with? 'text/' || mime_type == 'application/json'
+      is_text = mime_type.start_with?('text/') || mime_type == 'application/json'
       if is_text
         "#{mime_type}; charset=utf-8" # Let's consider UTF-8 as the de-facto encoding standard for text
       else
