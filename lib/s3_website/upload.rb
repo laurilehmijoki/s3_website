@@ -15,8 +15,16 @@ module S3Website
       @config = config
     end
 
+    def s3_path
+      if RUBY_PLATFORM =~ /darwin/
+        path.force_encoding("UTF8-MAC").encode("UTF-8")
+      else
+        path
+      end
+    end
+
     def perform!
-      success = s3.buckets[config['s3_bucket']].objects[path].write(upload_file, upload_options)
+      success = s3.buckets[config['s3_bucket']].objects[s3_path].write(upload_file, upload_options)
       upload_file.close
       success
     end

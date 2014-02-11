@@ -130,6 +130,7 @@ module S3Website
 
       remote_files = s3.buckets[s3_bucket_name].objects.map { |f| f.key }
       local_files = load_all_local_files(site_dir) + options.fetch(:redirects).keys
+      local_files = local_files.map{|x| x.dup.force_encoding('UTF8-MAC').encode('UTF-8')} if RUBY_PLATFORM =~ /darwin/
       files_to_delete = build_list_of_files_to_delete(remote_files, local_files, options[:ignore_on_server])
 
       deleted_files = []
