@@ -33,6 +33,11 @@ Here's how you can get started:
   S3 website. If the bucket does not exist, the command will create it for you.
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
 
+**Important security note:** if the source code of your website is publicly
+available, ensure that the `s3_website.yml` file is in the list of ignored files.
+For git users this means that the file `.gitignore` should mention the
+`s3_website.yml` file.
+
 ### For Jekyll users
 
 S3_website will automatically discover your website in the *_site* directory.
