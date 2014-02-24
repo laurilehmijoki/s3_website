@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'filey-diff', '~> 1.4.3'
   s.add_dependency 'simple-cloudfront-invalidator', '~> 1'
   s.add_dependency 'erubis', '~> 2.7.0'
-  s.add_dependency 'mime-types', '= 1.19'
+  s.add_dependency 'mime-types', '~> 1'
   s.add_dependency 'thor', '= 0.18.1'
   s.add_dependency 'configure-s3-website', '= 1.5.2'
 
