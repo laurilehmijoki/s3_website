@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.11
+
+* Loosen the dependency spec of mime-types (#70)
+
 ## 1.6.10
 
 * Fix bug <https://github.com/laurilehmijoki/s3_website/issues/38>

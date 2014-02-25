@@ -434,6 +434,7 @@ Contributors (in alphabetical order)
 * Cory Kaufman-Schofield
 * Chris Kelly
 * Chris Moos
+* Christopher Petersen
 * David Michael Barr
 * Greg Karékinian
 * John Allison
