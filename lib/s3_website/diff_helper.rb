@@ -6,6 +6,10 @@ module S3Website
           progress_indicator.render_next_step
         }
         fs_data_source = Filey::DataSources::FileSystem.new(site_dir) { |filey|
+          if RUBY_PLATFORM =~ /darwin/
+            filey.instance_variable_set(:@name, filey.name.force_encoding('UTF8-MAC').encode('UTF-8'))
+            filey.instance_variable_set(:@path, filey.path.force_encoding('UTF8-MAC').encode('UTF-8'))
+          end
           progress_indicator.render_next_step
         }
         changed_local_files = Filey::Comparison.list_changed(
