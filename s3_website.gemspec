@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.default_executable = %q{s3_website}
 
-  s.add_dependency 'aws-sdk', '1.33.0'
+  s.add_dependency 'aws-sdk', '~> 1.36.1'
   s.add_dependency 'filey-diff', '~> 1.4.3'
   s.add_dependency 'simple-cloudfront-invalidator', '~> 1'
   s.add_dependency 'erubis', '~> 2.7.0'
