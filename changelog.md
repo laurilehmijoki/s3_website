@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.6.13
+
+* Depend on any 1-series version of the aws-sdk gem
+
 ## 1.6.12
 
 * Fix bug <https://github.com/laurilehmijoki/s3_website/issues/63>

@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "s3_website"
-  s.version     = "1.6.12"
+  s.version     = "1.6.13"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
 
   s.default_executable = %q{s3_website}
 
-  s.add_dependency 'aws-sdk', '1.33.0'
+  s.add_dependency 'aws-sdk', '~> 1'
   s.add_dependency 'filey-diff', '~> 1.4.3'
   s.add_dependency 'simple-cloudfront-invalidator', '~> 1'
   s.add_dependency 'erubis', '~> 2.7.0'
