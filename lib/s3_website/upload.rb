@@ -1,5 +1,6 @@
 require 'tempfile'
 require 'zlib'
+require 'zopfli'
 
 module S3Website
   class Upload
@@ -51,16 +52,20 @@ module S3Website
       tempfile = Tempfile.new(File.basename(path))
       tempfile.binmode
 
-      gz = Zlib::GzipWriter.new(tempfile, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
+      if config['gzip_zopfli']
+        gz_data = Zopfli.deflate file.read, format: :gzip
+        tempfile.write(gz_data)
+        tempfile.flush
+      else
+        gz = Zlib::GzipWriter.new(tempfile, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
+        gz.mtime = File.mtime(full_path)
+        gz.orig_name = File.basename(path)
+        gz.write(file.read)
 
-      gz.mtime = File.mtime(full_path)
-      gz.orig_name = File.basename(path)
-      gz.write(file.read)
-
-      gz.flush
-      tempfile.flush
-
-      gz.close
+        gz.flush
+        tempfile.flush
+        gz.close
+      end
       tempfile.open
 
       tempfile

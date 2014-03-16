@@ -140,6 +140,13 @@ gzip:
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
 
+#### Gzip zopfli
+
+By adding the line `gzip_zopfli: true` into the config file, you can benefit
+from the zopfli algorithm, which is 100% compatible with the traditional gzip
+algorithm. A zopfli compression takes longer but results in about 5% smaller
+files.
+
 ### Specifying a MIME type for files without extensions
 
 `s3_website` will look up the MIME type of each file it uploads, and infer the Content-Type from it automatically. By default, files without an extension will have a blank Content-Type.
@@ -436,6 +443,7 @@ Contributors (in alphabetical order)
 * Chris Moos
 * Christopher Petersen
 * David Michael Barr
+* David Raffensperger
 * Greg Karékinian
 * John Allison
 * Jordan White
