@@ -51,18 +51,17 @@ module S3Website
     def gzipped_file
       tempfile = Tempfile.new(File.basename(path))
       tempfile.binmode
-  
+
       if config['gzip_zopfli']
         gz_data = Zopfli.deflate file.read, format: :gzip
         tempfile.write(gz_data)
-        #tempfile.mtime = File.mtime(full_path)
         tempfile.flush
       else
         gz = Zlib::GzipWriter.new(tempfile, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
         gz.mtime = File.mtime(full_path)
         gz.orig_name = File.basename(path)
         gz.write(file.read)
-  
+
         gz.flush
         tempfile.flush
         gz.close
