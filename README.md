@@ -443,6 +443,7 @@ Contributors (in alphabetical order)
 * Chris Moos
 * Christopher Petersen
 * David Michael Barr
+* David Raffensperger
 * Greg Karékinian
 * John Allison
 * Jordan White
