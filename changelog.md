@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.7.0
+
+* Add zopfli compression support
+
 ## 1.6.13
 
 * Depend on any 1-series version of the aws-sdk gem
