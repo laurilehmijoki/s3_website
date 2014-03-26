@@ -1,8 +1,22 @@
+require 'ostruct'
+
 module S3Website
   class DiffHelper
     def self.resolve_files_to_upload(s3_bucket, site_dir, config)
+      # ignore objects in the bucket that match ignore_on_server regex
+      # otherwise those objects are requested (sometimes just HEAD sometimes a full GET)
+      # only to be ignored later
+      regexps_to_ignore = S3Website::Uploader.ignore_regexps(config['ignore_on_server'])
+      filtered_bucket = OpenStruct.new({
+        :objects => s3_bucket.objects.reject { |s3_object|
+          regexps_to_ignore.any? do |ignore_regexp|
+            Regexp.new(ignore_regexp).match s3_object.key
+          end
+        }
+      })
+
       with_progress_indicator('Calculating diff') { |progress_indicator|
-        s3_data_source = Filey::DataSources::AwsSdkS3.new(s3_bucket, config) { |filey|
+        s3_data_source = Filey::DataSources::AwsSdkS3.new(filtered_bucket, config) { |filey|
           progress_indicator.render_next_step
         }
         fs_data_source = Filey::DataSources::FileSystem.new(site_dir) { |filey|
