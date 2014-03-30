@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.7.1
+
+* Do not override ERB when adding CloudFront dist
+
 ## 1.7.0
 
 * Add zopfli compression support
