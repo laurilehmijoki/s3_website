@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.7.2
+
+* Fix Digest::Digest deprecation warn on Ruby 2.1.0
+
+  This warning did appear then one used the `cfg create` or `cfg apply`
+  commands.
+
 ## 1.7.1
 
 * Do not override ERB when adding CloudFront dist
