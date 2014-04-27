@@ -2,12 +2,17 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## 1.7.2
+## 1.7.3
 
 * Fix Digest::Digest deprecation warn on Ruby 2.1.0
 
   This warning did appear then one used the `cfg create` or `cfg apply`
   commands.
+
+## 1.7.2
+
+* This release contains no code changes (the indended change is in the 1.7.3
+  release)
 
 ## 1.7.1
 
