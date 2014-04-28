@@ -11,28 +11,35 @@ module S3Website
 
       s3 = AWS::S3.new(s3_config)
 
-      new_files_count, changed_files_count, changed_files = upload_files(
-        s3, config, site_dir
-      )
+      Dir.mktmpdir do |tmpdir|
+        FileUtils.cp_r(site_dir, tmpdir)
+        site_dir = File.join(tmpdir, site_dir)
 
-      redirects = config['redirects'] || {}
-      changed_redirects = setup_redirects redirects, config, s3
+        gzip_local_files(config, site_dir) if !!config['gzip']
 
-      deleted_files = remove_superfluous_files(
-        s3,
-        config,
-        {
-          :s3_bucket => config['s3_bucket'],
-          :site_dir => site_dir,
-          :redirects => redirects,
-          :in_headless_mode => in_headless_mode,
-          :ignore_on_server => config["ignore_on_server"]
-        }
-      )
+        new_files_count, changed_files_count, changed_files = upload_files(
+          s3, config, site_dir
+        )
 
-      print_done_report config
+        redirects = config['redirects'] || {}
+        changed_redirects = setup_redirects redirects, config, s3
 
-      [new_files_count, changed_files_count, deleted_files, changed_files, changed_redirects, deleted_files]
+        deleted_files = remove_superfluous_files(
+          s3,
+          config,
+          {
+            :s3_bucket => config['s3_bucket'],
+            :site_dir => site_dir,
+            :redirects => redirects,
+            :in_headless_mode => in_headless_mode,
+            :ignore_on_server => config["ignore_on_server"]
+          }
+        )
+
+        print_done_report config
+
+        [new_files_count, changed_files_count, deleted_files, changed_files, changed_redirects, deleted_files]
+      end
     end
 
     private
@@ -43,6 +50,10 @@ module S3Website
       website_hostname_with_bucket =
         "%s.%s" % [bucket_name, website_hostname_suffix]
       puts "Done! Go visit: http://#{website_hostname_with_bucket}/index.html"
+    end
+
+    def self.gzip_local_files(config, site_dir)
+      GzipHelper.new(config, site_dir).gzip_files
     end
 
     def self.upload_files(s3, config, site_dir)
