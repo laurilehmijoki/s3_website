@@ -3,12 +3,29 @@ require 'ostruct'
 module S3Website
   class DiffHelper
     def self.resolve_files_to_upload(s3_bucket, site_dir, config)
+      objects = []
+      list = nil
+      with_progress_indicator('Downloading list of the objects in a bucket') { |progress_indicator|
+        while list.nil? || list[:truncated]
+          list = s3_bucket.client.list_objects(:bucket_name => s3_bucket.name, :marker => objects.last ? objects.last.key : '')
+          objects.concat(list[:contents].map { |o|
+            OpenStruct.new({
+              :key => o[:key],
+              :etag => o[:etag],
+              :last_modified => o[:last_modified],
+              :size => o[:size]
+            })
+          })
+          progress_indicator.render_next_step
+        end
+      }
+
       # ignore objects in the bucket that match ignore_on_server regex
       # otherwise those objects are requested (sometimes just HEAD sometimes a full GET)
       # only to be ignored later
       regexps_to_ignore = S3Website::Uploader.ignore_regexps(config['ignore_on_server'])
       filtered_bucket = OpenStruct.new({
-        :objects => s3_bucket.objects.reject { |s3_object|
+        :objects => objects.reject { |s3_object|
           regexps_to_ignore.any? do |ignore_regexp|
             Regexp.new(ignore_regexp).match s3_object.key
           end
@@ -22,6 +39,7 @@ module S3Website
         fs_data_source = Filey::DataSources::FileSystem.new(site_dir) { |filey|
           progress_indicator.render_next_step
         }
+
         changed_local_files = Filey::Comparison.list_changed(
           fs_data_source,
           s3_data_source
