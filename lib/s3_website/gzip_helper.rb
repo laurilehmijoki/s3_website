@@ -22,23 +22,18 @@ module S3Website
     end
 
     def gzip_file!(filename)
-      File.open(filename, 'r+') do |f|
-        cont = f.read
-        f.rewind
-        if @config['gzip_zopfli']
-          gz_data = Zopfli.deflate cont, format: :gzip
-          f.write(gz_data)
-          f.flush
-        else
-          gz = Zlib::GzipWriter.new(f, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY)
+      cont = IO.binread(filename)
+      if @config['gzip_zopfli']
+        gz_data = Zopfli.deflate cont, format: :gzip
+        IO.binwrite(filename, gz_data)
+      else
+        cont = IO.binread(filename)
+        Zlib::GzipWriter.open(filename, Zlib::BEST_COMPRESSION, Zlib::DEFAULT_STRATEGY) do |gz|
           # Set mtime to a fake value to ensure that it's always the same. Note that non-gzipped
           # files are compared using only MD5 based on content, mtime isn't taken into account.
           gz.mtime = 1
           gz.orig_name = File.basename(filename)
-          gz.write(cont)
-          gz.flush
-          f.flush
-          gz.close
+          gz.write cont
         end
       end
     end
