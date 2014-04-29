@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.7.4
+
+* Fix issue https://github.com/laurilehmijoki/s3_website/issues/83
+
 ## 1.7.3
 
 * Fix Digest::Digest deprecation warn on Ruby 2.1.0
