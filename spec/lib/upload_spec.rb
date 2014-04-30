@@ -114,7 +114,7 @@ describe S3Website::Upload do
         }
       end
     end
-  end  
+  end
 
   describe 'gzip compression' do
     let(:config){
@@ -145,33 +145,6 @@ describe S3Website::Upload do
         config['gzip'] = %w(.bork)
         subject.stub(:path).and_return('index.bork')
         subject.should be_gzip
-      end
-    end       
-
-    describe '#gzipped_file' do
-      it 'should return a gzipped version of the file' do
-        gz = Zlib::GzipReader.new(subject.send(:gzipped_file))
-        gz.read.should == File.read('features/support/test_site_dirs/my.blog.com/_site/index.html')
-      end
-    end
-  end
-  
-  describe 'gzip zopfli' do
-    let(:config){
-      {
-        's3_reduced_redundancy' => false,
-        'gzip' => true,
-        'gzip_zopfli' => true
-      }
-    }
-
-    subject{ S3Website::Upload.new("index.html", mock(), config, 'features/support/test_site_dirs/my.blog.com/_site') }
-
-    # Zopfli should be compatible with the gzip format
-    describe '#gzipped_file' do
-      it 'should return a gzipped version of the file' do
-        gz = Zlib::GzipReader.new(subject.send(:gzipped_file))
-        gz.read.should == File.read('features/support/test_site_dirs/my.blog.com/_site/index.html')
       end
     end
   end
