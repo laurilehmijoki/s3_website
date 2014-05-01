@@ -13,7 +13,7 @@ module S3Website
 
       Dir.mktmpdir do |tmpdir|
         FileUtils.cp_r(site_dir, tmpdir)
-        site_dir = File.join(tmpdir, site_dir)
+        site_dir = File.join(tmpdir, File.basename(site_dir))
 
         gzip_local_files(config, site_dir) if !!config['gzip']
 
