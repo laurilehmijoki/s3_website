@@ -58,6 +58,7 @@ class Cli < Thor
     also delete from S3 the files that you no longer have locally.
   LONGDESC
   def push
+    call_dir = Dir.pwd
     Dir.chdir(File.dirname(__FILE__)+ '/..') {
       # Compile Scala if needed
       jar_file = File.dirname(__FILE__) + '/../target/scala-2.11/s3_website.jar'
@@ -71,7 +72,7 @@ class Cli < Thor
       end
 
       # Then run it
-      site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site])
+      site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
       config_dir = File.expand_path options[:config_dir]
       args = "--site=#{site_path} --config-dir=#{config_dir} #{'headless' if options[:headless]}"
       exit system("java -cp #{jar_file} s3.website.Push #{args}")

@@ -4,7 +4,7 @@ module S3Website
       [Nanoc::SITE_PATH, Jekyll::SITE_PATH]
     end
 
-    def self.infer_site_path(candidate_path, pwd = Dir.pwd)
+    def self.infer_site_path(candidate_path, pwd)
       if candidate_path == 'infer automatically'
         infer_automatically pwd
       else
