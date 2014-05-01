@@ -64,7 +64,7 @@ class Cli < Thor
       jar_file = File.dirname(__FILE__) + '/../target/scala-2.11/s3_website.jar'
       unless File.exists? jar_file
         puts "Compiling the s3_website.jar. This happens only once. Please wait up to a few minutes..."
-        assembly_succeeded = system "sbt assembly"
+        assembly_succeeded = system "./sbt assembly"
         unless assembly_succeeded
           puts "Failed to create the s3_website.jar. Please file a bug report."
           exit 1
