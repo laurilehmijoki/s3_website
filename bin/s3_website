@@ -58,11 +58,10 @@ class Cli < Thor
     also delete from S3 the files that you no longer have locally.
   LONGDESC
   def push
-    site_path = S3Website::Paths.infer_site_path options[:site]
-    S3Website::Tasks.push(options[:config_dir], site_path, options[:headless])
-  rescue Exception => e
-    puts S3Website.error_report e
-    exit 1
+    site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site])
+    config_dir = File.expand_path options[:config_dir]
+    args = "--site=#{site_path} --config-dir=#{config_dir} #{'headless' if options[:headless]}"
+    exit system("sbt 'run-main s3.website.Push #{args}'")
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
