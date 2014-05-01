@@ -11,6 +11,7 @@ Feature: upload S3 website to S3
     Then the output should contain
       """
       Deploying features/support/test_site_dirs/my.blog.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       Uploading 2 new file(s)
       """
@@ -46,7 +47,7 @@ Feature: upload S3 website to S3
     And I call the push command
     Then the output should contain
       """
-      Done! Go visit: http://s3-website-test.net.s3-website-ap-southeast-2.amazonaws.com/index.html
+      Done! Go visit: http://s3-website-test-sydney.net.s3-website-ap-southeast-2.amazonaws.com/index.html
       """
 
   @new-and-changed-files
@@ -56,6 +57,7 @@ Feature: upload S3 website to S3
     Then the output should contain
       """
       Deploying features/support/test_site_dirs/new-and-changed-files.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       Uploading 1 new and 1 changed file(s)
       """
@@ -80,6 +82,7 @@ Feature: upload S3 website to S3
     Then the output should equal
       """
       Deploying features/support/test_site_dirs/only-changed-files.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       Uploading 1 changed file(s)
       Upload index.html: Success!
@@ -94,6 +97,7 @@ Feature: upload S3 website to S3
     Then the output should equal
       """
       Deploying features/support/test_site_dirs/no-new-or-changed-files.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       No new or changed files to upload
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
@@ -107,6 +111,7 @@ Feature: upload S3 website to S3
     Then the output should equal
       """
       Deploying features/support/test_site_dirs/ignored-files.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       Uploading 1 changed file(s)
       Upload css/styles.css: Success!
