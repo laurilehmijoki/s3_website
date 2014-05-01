@@ -57,10 +57,7 @@ object Site {
           )
         }
 
-        config.right.map {
-          config =>
-            Site(siteRootDirectory, config)
-        }
+        config.right.map(Site(siteRootDirectory, _))
       case Failure(error) =>
         Left(IOError(error))
     }
