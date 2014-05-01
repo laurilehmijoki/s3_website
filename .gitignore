@@ -4,3 +4,7 @@
 pkg/*
 tmp
 Gemfile.lock
+
+.idea
+target
+.idea_modules
