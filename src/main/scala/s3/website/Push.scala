@@ -9,6 +9,7 @@ import scala.concurrent.forkjoin.ForkJoinPool
 import scala.concurrent.duration._
 import scala.util.matching.Regex
 import com.lexicalscope.jewel.cli.CliFactory
+import scala.language.postfixOps
 
 object Push {
 
