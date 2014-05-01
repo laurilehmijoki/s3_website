@@ -1,6 +1,6 @@
 package s3.website
 
-import s3.website.model.LocalFile
+import s3.website.model.{Site, Error, LocalFile}
 import s3.website.model.Site._
 import java.util.concurrent.Executors
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
@@ -10,12 +10,17 @@ import scala.concurrent.duration._
 import scala.util.matching.Regex
 import com.lexicalscope.jewel.cli.CliFactory
 import scala.language.postfixOps
+import scala.util.Either.RightProjection
 
 object Push {
 
   def pushSite(yamlConfigPath: String, siteRootDirectory: String) = {
+    val errorOrSite = loadSite(yamlConfigPath, siteRootDirectory)
+    errorOrSite.right.foreach( site =>
+      println(s"Deploying $siteRootDirectory/* to ${site.config.s3_bucket}")
+    )
     val errorOrThreadPool = for {
-      loadedSite <- loadSite(yamlConfigPath, siteRootDirectory).right
+      loadedSite <- errorOrSite.right
       s3Files    <- S3.resolveS3Files(loadedSite).right
       localFiles <- LocalFile.resolveLocalFiles(loadedSite).right
     } yield {
