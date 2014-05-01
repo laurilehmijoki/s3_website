@@ -62,7 +62,6 @@ class Cli < Thor
     config_dir = File.expand_path options[:config_dir]
     args = "--site=#{site_path} --config-dir=#{config_dir} #{'headless' if options[:headless]}"
     scala_exit_status = Dir.chdir(File.dirname(__FILE__)+ '/..') {
-      puts Dir.pwd
       system("sbt 'run-main s3.website.Push #{args}'")
     }
     exit scala_exit_status
