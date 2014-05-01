@@ -1,4 +1,4 @@
 s3_id: key
 s3_secret: pass
-s3_bucket: s3-website-test.net
+s3_bucket: s3-website-test-sydney.net
 s3_endpoint: ap-southeast-2
