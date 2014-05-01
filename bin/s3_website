@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/s3_website'
+require File.expand_path(File.dirname(__FILE__)+ '/../lib/s3_website')
 
 class Cfg < Thor
   desc 'create', 'Create a config file with placeholder values'
