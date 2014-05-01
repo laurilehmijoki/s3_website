@@ -1,4 +1,6 @@
-name := "s3_website_monadic"
+import AssemblyKeys._
+
+name := "s3_website"
 
 version := "0.0.1"
 
@@ -21,3 +23,5 @@ libraryDependencies += "org.apache.tika" % "tika-core" % "1.4"
 libraryDependencies += "com.lexicalscope.jewelcli" % "jewelcli" % "0.8.9"
 
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+jarName in assembly := "s3_website.jar"
