@@ -61,7 +61,11 @@ class Cli < Thor
     site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site])
     config_dir = File.expand_path options[:config_dir]
     args = "--site=#{site_path} --config-dir=#{config_dir} #{'headless' if options[:headless]}"
-    exit system("sbt 'run-main s3.website.Push #{args}'")
+    scala_exit_status = Dir.chdir(File.dirname(__FILE__)+ '/..') {
+      puts Dir.pwd
+      system("sbt 'run-main s3.website.Push #{args}'")
+    }
+    exit scala_exit_status
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
