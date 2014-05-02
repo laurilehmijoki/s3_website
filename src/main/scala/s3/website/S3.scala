@@ -22,10 +22,10 @@ object S3 {
   case class SuccessfulUpload(uploadSource: UploadSource with UploadType) extends UploadReport {
     def reportMessage = {
       val uploadDetail = uploadSource.uploadType.fold(
-        _ => "created",
-        _ => "updated"
+        _ => "Created",
+        _ => "Updated"
       )
-      s"Successfully $uploadDetail ${uploadSource.s3Key}"
+      s"$uploadDetail ${uploadSource.s3Key}"
     }
   }
   case class FailedUpload(s3Key: String, error: Throwable) extends UploadReport {
