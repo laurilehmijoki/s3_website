@@ -12,9 +12,10 @@ import s3.website.S3.{FailedUpload, SuccessfulUpload, resolveS3Files, upload}
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
 import s3.website.model.LocalFile.resolveLocalFiles
-import scala.collection.parallel.immutable.ParSeq
+import scala.collection.parallel.ParSeq
 import java.util.concurrent.ExecutorService
-import s3.website.model.Site
+import s3.website.model.{Update, NewFile, Site}
+import s3.website.model
 
 object Push {
 
@@ -44,11 +45,42 @@ object Push {
       )
     })}
 
-    uploadReports foreach (_.right.foreach {
-      rep => Await.ready(rep, 1 day)
+    implicit val finishedUploads = uploadReports map (_.right.map {
+      rep => Await.result(rep, 1 day)
     })
+    println(pushCountsToString(resolvePushCounts))
   }
 
+  def resolvePushCounts(implicit finishedUploads: FinishedUploads) = finishedUploads.foldLeft(PushCounts()) {
+    (counts: PushCounts, uploadReport) => uploadReport.fold(
+      (error: model.Error) => counts.copy(failures = counts.failures + 1),
+      failureOrSuccess => failureOrSuccess.fold(
+        (failedUpload: FailedUpload) => counts.copy(failures = counts.failures + 1),
+        (success: SuccessfulUpload)  => success.uploadSource.uploadType.fold(
+          (newFile: NewFile) => counts.copy(newFiles = counts.newFiles + 1),
+          (update: Update)   => counts.copy(updates = counts.updates + 1)
+        )
+      )
+    )
+  }
+
+  def pushCountsToString(pushCounts: PushCounts): String = {
+    pushCounts match {
+      case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles == 0 && failures == 0 =>
+        "No new or changed files to upload"
+      case PushCounts(updates, newFiles, failures) if updates > 0 && newFiles == 0 && failures == 0 =>
+        s"Updated $updates files"
+      case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles == 0 && failures == 0 =>
+        s"Created $updates files"
+      case PushCounts(updates, newFiles, failures) if updates > 0 && newFiles > 0 && failures == 0 =>
+        s"Created $newFiles and updated $updates files"
+      case PushCounts(updates, newFiles, failures) =>
+        s"Created $newFiles and updated $updates files. $failures uploads failed!"
+    }
+  }
+
+  case class PushCounts(updates: Int = 0, newFiles: Int = 0, failures: Int = 0/*, deletes: Int = -1 TODO implement delete*/)
+  type FinishedUploads = ParSeq[Either[model.Error, Either[FailedUpload, SuccessfulUpload]]]
   type UploadReports = ParSeq[Either[model.Error, Future[Either[FailedUpload, SuccessfulUpload]]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: UploadReports)
 
