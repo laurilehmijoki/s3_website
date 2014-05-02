@@ -13,6 +13,7 @@ VCR.cucumber_tags do |t|
   t.tag '@no-new-or-changed-files'
   t.tag '@no-new-or-changed-files-gzipped-content'
   t.tag '@changed-files-large-site'
+  t.tag '@changed-files-after-gzip-config-update'
   t.tag '@s3-and-cloudfront'
   t.tag '@s3-and-cloudfront-when-updating-a-file'
   t.tag '@s3-and-cloudfront-after-deleting-a-file'

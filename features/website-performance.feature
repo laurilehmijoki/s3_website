@@ -69,3 +69,23 @@ Feature: improve response times of your S3 website website
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
+
+  @changed-files-after-gzip-config-update
+  Scenario: Upload a blog with unchanged content but gzipping disabled (while S3 objects are gzipped)
+    When my S3 website is in "features/support/test_site_dirs/my.blog.com"
+    And I call the push command
+    Then the output should contain
+      """
+      Deploying features/support/test_site_dirs/my.blog.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
+      Calculating diff ... done
+      Uploading 2 changed file(s)
+      """
+    And the output should contain
+      """
+      Upload css/styles.css: Success!
+      """
+    And the output should contain
+      """
+      Upload index.html: Success!
+      """

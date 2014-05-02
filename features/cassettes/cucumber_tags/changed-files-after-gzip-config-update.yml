@@ -1,0 +1,183 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://s3.amazonaws.com/s3-website-test.net?marker=
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-Type:
+      - ''
+      Accept-Encoding:
+      - ''
+      User-Agent:
+      - aws-sdk-ruby/1.39.0 ruby/2.0.0 x86_64-darwin13.1.0
+      Date:
+      - Fri, 02 May 2014 13:48:47 GMT
+      Authorization:
+      - AWS foo:bar
+      Accept:
+      - '*/*'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - JAgJPKdWMHrh3Dp9jnfZOXpGb+IQOmfiYkxox2zCgNP4OMETOxxcFeXKuLDpZVwg
+      X-Amz-Request-Id:
+      - 973765BC344E545B
+      Date:
+      - Fri, 02 May 2014 13:48:49 GMT
+      Content-Type:
+      - application/xml
+      Transfer-Encoding:
+      - chunked
+      Server:
+      - AmazonS3
+    body:
+      encoding: UTF-8
+      string: |-
+        <?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2014-05-02T13:48:20.000Z</LastModified><ETag>&quot;642a80ec404b08ecc3c61f4336ed7557&quot;</ETag><Size>41</Size><Owner><ID>299a240b0ebf73182d268a7b071f05431fe4c4446057ca4a79b74f10baee7e49</ID><DisplayName>webmaster</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2014-05-02T13:48:19.000Z</LastModified><ETag>&quot;1eabdf15afbdf088faa4966f05cd2123&quot;</ETag><Size>73</Size><Owner><ID>299a240b0ebf73182d268a7b071f05431fe4c4446057ca4a79b74f10baee7e49</ID><DisplayName>webmaster</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>
+    http_version:
+  recorded_at: Fri, 02 May 2014 13:48:48 GMT
+- request:
+    method: put
+    uri: https://s3.amazonaws.com/s3-website-test.net/css/styles.css
+    body:
+      encoding: UTF-8
+      string: |
+        body {
+
+        }
+    headers:
+      Content-Type:
+      - text/css; charset=utf-8
+      Accept-Encoding:
+      - ''
+      Content-Length:
+      - '10'
+      User-Agent:
+      - aws-sdk-ruby/1.39.0 ruby/2.0.0 x86_64-darwin13.1.0
+      Date:
+      - Fri, 02 May 2014 13:48:48 GMT
+      Authorization:
+      - AWS foo:bar
+      Accept:
+      - '*/*'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - OX2nwOA3+zGtotZA1+/jTQLlGwwDxdDRfPJwz7a46+OOmBuL7MWs9SsgJ8Lmf6CC
+      X-Amz-Request-Id:
+      - DB10C2A821EBF261
+      Date:
+      - Fri, 02 May 2014 13:48:49 GMT
+      Etag:
+      - '"8fcf43a38cbf0c502f029a50645f2374"'
+      Content-Length:
+      - '0'
+      Server:
+      - AmazonS3
+    body:
+      encoding: UTF-8
+      string: ''
+    http_version:
+  recorded_at: Fri, 02 May 2014 13:48:49 GMT
+- request:
+    method: put
+    uri: https://s3.amazonaws.com/s3-website-test.net/index.html
+    body:
+      encoding: UTF-8
+      string: |
+        <html>
+          <head>
+            <title>hello!</title>
+          </head>
+        </html>
+    headers:
+      Content-Type:
+      - text/html; charset=utf-8
+      Accept-Encoding:
+      - ''
+      Content-Length:
+      - '60'
+      User-Agent:
+      - aws-sdk-ruby/1.39.0 ruby/2.0.0 x86_64-darwin13.1.0
+      Date:
+      - Fri, 02 May 2014 13:48:48 GMT
+      Authorization:
+      - AWS foo:bar
+      Accept:
+      - '*/*'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - OFa5zloP7+BH/W/rG1I92kD0zAIwoWy0fjIqpUD9s5L9an3ONyZMu1qFXgfBQkfW
+      X-Amz-Request-Id:
+      - 5569BDA7A4E53E2C
+      Date:
+      - Fri, 02 May 2014 13:48:49 GMT
+      Etag:
+      - '"8a8892a2b0fad281f26c0dedbff7011a"'
+      Content-Length:
+      - '0'
+      Server:
+      - AmazonS3
+    body:
+      encoding: UTF-8
+      string: ''
+    http_version:
+  recorded_at: Fri, 02 May 2014 13:48:49 GMT
+- request:
+    method: get
+    uri: https://s3.amazonaws.com/s3-website-test.net?max-keys=1000
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Content-Type:
+      - ''
+      Accept-Encoding:
+      - ''
+      User-Agent:
+      - aws-sdk-ruby/1.39.0 ruby/2.0.0 x86_64-darwin13.1.0
+      Date:
+      - Fri, 02 May 2014 13:48:49 GMT
+      Authorization:
+      - AWS foo:bar
+      Accept:
+      - '*/*'
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      X-Amz-Id-2:
+      - j1UJ92vcVkB05xirIELQUyUsbEDjNSD3GtWVTKe/p5OR50OWUAo1eJmj12YgYAIb
+      X-Amz-Request-Id:
+      - 0BAB9E01C968AD2A
+      Date:
+      - Fri, 02 May 2014 13:48:50 GMT
+      Content-Type:
+      - application/xml
+      Transfer-Encoding:
+      - chunked
+      Server:
+      - AmazonS3
+    body:
+      encoding: UTF-8
+      string: |-
+        <?xml version="1.0" encoding="UTF-8"?>
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>css/styles.css</Key><LastModified>2014-05-02T13:48:49.000Z</LastModified><ETag>&quot;8fcf43a38cbf0c502f029a50645f2374&quot;</ETag><Size>10</Size><Owner><ID>299a240b0ebf73182d268a7b071f05431fe4c4446057ca4a79b74f10baee7e49</ID><DisplayName>webmaster</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>index.html</Key><LastModified>2014-05-02T13:48:49.000Z</LastModified><ETag>&quot;8a8892a2b0fad281f26c0dedbff7011a&quot;</ETag><Size>60</Size><Owner><ID>299a240b0ebf73182d268a7b071f05431fe4c4446057ca4a79b74f10baee7e49</ID><DisplayName>webmaster</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>
+    http_version:
+  recorded_at: Fri, 02 May 2014 13:48:49 GMT
+recorded_with: VCR 2.8.0
