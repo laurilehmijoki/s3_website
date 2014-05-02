@@ -118,3 +118,41 @@ Feature: upload S3 website to S3
       Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
 
       """
+
+  @changed-files-large-site
+  Scenario: The maintainer of a large website wants to update, add and remove only a few files
+    When my S3 website is in "features/support/test_site_dirs/large-site-changed.com"
+    And I call the push command
+    Then the output should contain
+      """
+      Deploying features/support/test_site_dirs/large-site-changed.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
+      Calculating diff ... done
+      Uploading 1 new and 3 changed file(s)
+      """
+    And the output should contain
+      """
+      Upload page0.html: Success!
+      """
+    And the output should contain
+      """
+      Upload style0.css: Success!
+      """
+    And the output should contain
+      """
+      Upload data0.txt: Success!
+      """
+    And the output should contain
+      """
+      Upload new_page999.html: Success!
+      """
+    And the output should contain
+      """
+      Delete page999.html: Success!
+      """
+    And the output should contain
+      """
+      Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
+
+      """
+
