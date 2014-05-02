@@ -55,3 +55,17 @@ Feature: improve response times of your S3 website website
       """
       Upload index.html [gzipped] [max-age=300]: Success!
       """
+
+  @no-new-or-changed-files-gzipped-content
+  Scenario: Try to upload unchanged files with gzip enabled and make sure that the diff is calculated correctly
+    When my S3 website is in "features/support/test_site_dirs/site.with.gzipped-and-max-aged-content.com"
+    And I call the push command
+    Then the output should equal
+      """
+      Deploying features/support/test_site_dirs/site.with.gzipped-and-max-aged-content.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
+      Calculating diff ... done
+      No new or changed files to upload
+      Done! Go visit: http://s3-website-test.net.s3-website-us-east-1.amazonaws.com/index.html
+
+      """
