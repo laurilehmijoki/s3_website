@@ -19,14 +19,20 @@ object S3 {
     def reportMessage: String
   }
 
-  case class SuccessfulUpload(s3Key: String) extends UploadReport {
-    def reportMessage = s"Successfully uploaded $s3Key"
+  case class SuccessfulUpload(uploadSource: UploadSource with UploadType) extends UploadReport {
+    def reportMessage = {
+      val uploadDetail = uploadSource.uploadType.fold(
+        _ => "created",
+        _ => "updated"
+      )
+      s"Successfully $uploadDetail ${uploadSource.s3Key}"
+    }
   }
   case class FailedUpload(s3Key: String, error: Throwable) extends UploadReport {
     def reportMessage = s"Failed to upload $s3Key (${error.getMessage})"
   }
 
-  def upload(uploadSource: UploadSource)(implicit site: Site, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
+  def upload(uploadSource: UploadSource with UploadType)(implicit site: Site, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val objectMetadata = {
         val metaData = new ObjectMetadata()
@@ -38,7 +44,7 @@ object S3 {
       s3Client.putObject(
         site.config.s3_bucket, uploadSource.s3Key, uploadSource.openInputStream(), objectMetadata
       )
-      Right(SuccessfulUpload(uploadSource.s3Key))
+      Right(SuccessfulUpload(uploadSource))
     } recover {
       case error => Left(FailedUpload(uploadSource.s3Key, error))
     }
