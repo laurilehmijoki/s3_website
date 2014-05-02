@@ -29,26 +29,33 @@ object Push {
       uploadReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
       uploadReports
     }
-    errorsOrUploadReports.right foreach { uploadReports => onUploadReports(uploadReports)}
+    errorsOrUploadReports.right foreach { uploadReports => reportEachUpload(uploadReports)}
+    val errorsOrFinishedUploads = errorsOrUploadReports.right map { 
+      uploadReports => awaitForUploads(uploadReports)
+    }
+    errorsOrFinishedUploads.right.foreach { finishedUploads =>
+      println(pushCountsToString(resolvePushCounts(finishedUploads)))
+    }
     errorsOrUploadReports.left foreach (err => println(s"Failed to push the site: ${err.message}"))
+    errorsOrUploadReports.right foreach (err => println(s"Done! Go visit: http://${site.config.s3_bucket}.${site.config.s3_endpoint.s3WebsiteHostname}"))
     errorsOrUploadReports.fold(
       _ => 1,
       uploadReports => if (uploadReports exists (_.isLeft)) 1 else 0
     )
   }
 
-  def onUploadReports(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor) {
+  def reportEachUpload(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor) {
     uploadReports foreach {_.right.foreach(_ foreach { report =>
       println(
         report fold(_.reportMessage, _.reportMessage)
       )
     })}
-
-    implicit val finishedUploads = uploadReports map (_.right.map {
+  }
+  
+  def awaitForUploads(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor): FinishedUploads =
+    uploadReports map (_.right.map {
       rep => Await.result(rep, 1 day)
     })
-    println(pushCountsToString(resolvePushCounts))
-  }
 
   def resolvePushCounts(implicit finishedUploads: FinishedUploads) = finishedUploads.foldLeft(PushCounts()) {
     (counts: PushCounts, uploadReport) => uploadReport.fold(
