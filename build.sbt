@@ -8,6 +8,8 @@ scalaVersion := "2.11.0"
 
 scalacOptions += "-feature"
 
+scalacOptions += "-language:implicitConversions"
+
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.13"
 
 libraryDependencies += "org.jruby" % "jruby" % "1.7.11"
