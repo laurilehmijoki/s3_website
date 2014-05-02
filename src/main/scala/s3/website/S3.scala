@@ -15,8 +15,16 @@ import s3.website.model.{UserError, IOError}
 
 object S3 {
 
-  case class SuccessfulUpload(s3Key: String)
-  case class FailedUpload(s3Key: String, error: Throwable)
+  trait UploadReport {
+    def reportMessage: String
+  }
+
+  case class SuccessfulUpload(s3Key: String) extends UploadReport {
+    def reportMessage = s"Successfully uploaded $s3Key"
+  }
+  case class FailedUpload(s3Key: String, error: Throwable) extends UploadReport {
+    def reportMessage = s"Failed to upload $s3Key (${error.getMessage})"
+  }
 
   def upload(uploadSource: UploadSource)(implicit site: Site, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {

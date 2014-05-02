@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 import com.lexicalscope.jewel.cli.CliFactory
 import scala.language.postfixOps
 import s3.website.Diff.resolveDiff
-import s3.website.S3.{resolveS3Files, upload}
+import s3.website.S3.{FailedUpload, SuccessfulUpload, resolveS3Files, upload}
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
 import s3.website.model.LocalFile.resolveLocalFiles
@@ -25,32 +25,31 @@ object Push {
       s3Files    <- resolveS3Files.right
       localFiles <- resolveLocalFiles.right
     } yield {
-      val uploadFutures = resolveDiff(localFiles, s3Files).map(_.right.map(upload)).par
-      uploadFutures.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
-
-      val uploadReports = uploadFutures.map(_.right.map { uploadFuture =>
-        uploadFuture.map {
-          case successOrFailure => successOrFailure match {
-            case Right(success) => s"Successfully uploaded ${success.s3Key}"
-            case Left(failure)  => s"Failed to upload ${failure.s3Key} (${failure.error.getMessage})"
-          }
-        }
-      })
+      val uploadReports = resolveDiff(localFiles, s3Files).map(_.right.map(upload)).par
+      uploadReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
       uploadReports
     }
     errorsOrUploadReports.right foreach { uploadReports => onUploadReports(uploadReports)}
     errorsOrUploadReports.left foreach (err => println(s"Failed to push the site: ${err.message}"))
-    errorsOrUploadReports.fold(_ => 1, _ => 0)
+    errorsOrUploadReports.fold(
+      _ => 1,
+      uploadReports => if (uploadReports exists (_.isLeft)) 1 else 0
+    )
   }
 
   def onUploadReports(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor) {
     uploadReports foreach (_.right.foreach {
       rep => Await.ready(rep, 1 day)
     })
-    uploadReports foreach (_.right.foreach(_.foreach(println)))
+
+    uploadReports foreach {_.right.foreach(_ foreach { report =>
+      println(
+        report fold(_.reportMessage, _.reportMessage)
+      )
+    })}
   }
 
-  type UploadReports = ParSeq[Either[model.Error, Future[String]]]
+  type UploadReports = ParSeq[Either[model.Error, Future[Either[FailedUpload, SuccessfulUpload]]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: UploadReports)
 
   trait CliArgs {
