@@ -34,10 +34,10 @@ object Push {
       uploadReports => awaitForUploads(uploadReports)
     }
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
-      println(pushCountsToString(resolvePushCounts(finishedUploads)))
+      val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
+      println(s"Done! $pushCounts Go visit: http://${site.config.s3_bucket}.${site.config.s3_endpoint.s3WebsiteHostname}")
     }
     errorsOrUploadReports.left foreach (err => println(s"Failed to push the site: ${err.message}"))
-    errorsOrUploadReports.right foreach (err => println(s"Done! Go visit: http://${site.config.s3_bucket}.${site.config.s3_endpoint.s3WebsiteHostname}"))
     errorsOrUploadReports.fold(
       _ => 1,
       uploadReports => if (uploadReports exists (_.isLeft)) 1 else 0
@@ -73,13 +73,13 @@ object Push {
   def pushCountsToString(pushCounts: PushCounts): String =
     pushCounts match {
       case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles == 0 && failures == 0 =>
-        "No new or changed files to upload"
+        "There was nothing to push."
       case PushCounts(updates, newFiles, failures) if updates > 0 && newFiles == 0 && failures == 0 =>
-        s"Updated $updates files"
+        s"Updated $updates files."
       case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles >= 0 && failures == 0 =>
-        s"Created $newFiles files"
+        s"Created $newFiles files."
       case PushCounts(updates, newFiles, failures) if updates > 0 && newFiles > 0 && failures == 0 =>
-        s"Created $newFiles and updated $updates files"
+        s"Created $newFiles and updated $updates files."
       case PushCounts(updates, newFiles, failures) =>
         s"Created $newFiles and updated $updates files. $failures uploads failed!"
     }
