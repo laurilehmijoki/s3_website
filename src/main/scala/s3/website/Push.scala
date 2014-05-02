@@ -15,7 +15,6 @@ import s3.website.model.LocalFile.resolveLocalFiles
 import scala.collection.parallel.ParSeq
 import java.util.concurrent.ExecutorService
 import s3.website.model.{Update, NewFile, Site}
-import s3.website.model
 
 object Push {
 
