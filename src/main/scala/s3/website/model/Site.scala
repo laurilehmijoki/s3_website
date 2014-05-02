@@ -38,6 +38,7 @@ object Site {
           concurrency_level <- loadOptionalInt("concurrency_level").right
           redirects <- loadRedirects.right
         } yield {
+          gzip_zopfli.foreach(_ => println("zopfli is not currently supported"))
           Config(
             s3_id,
             s3_secret,
