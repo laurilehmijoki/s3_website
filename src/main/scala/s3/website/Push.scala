@@ -70,20 +70,19 @@ object Push {
     )
   }
 
-  def pushCountsToString(pushCounts: PushCounts): String = {
+  def pushCountsToString(pushCounts: PushCounts): String =
     pushCounts match {
       case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles == 0 && failures == 0 =>
         "No new or changed files to upload"
       case PushCounts(updates, newFiles, failures) if updates > 0 && newFiles == 0 && failures == 0 =>
         s"Updated $updates files"
-      case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles == 0 && failures == 0 =>
-        s"Created $updates files"
+      case PushCounts(updates, newFiles, failures) if updates == 0 && newFiles >= 0 && failures == 0 =>
+        s"Created $newFiles files"
       case PushCounts(updates, newFiles, failures) if updates > 0 && newFiles > 0 && failures == 0 =>
         s"Created $newFiles and updated $updates files"
       case PushCounts(updates, newFiles, failures) =>
         s"Created $newFiles and updated $updates files. $failures uploads failed!"
     }
-  }
 
   case class PushCounts(updates: Int = 0, newFiles: Int = 0, failures: Int = 0/*, deletes: Int = -1 TODO implement delete*/)
   type FinishedUploads = ParSeq[Either[model.Error, Either[FailedUpload, SuccessfulUpload]]]
