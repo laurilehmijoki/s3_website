@@ -51,7 +51,6 @@ object LocalFile {
     val sourceFile: File = localFile
       .encodingOnS3
       .fold(localFile.sourceFile)(algorithm => {
-      if (algorithm.isRight) println("zopfli is not currently supported")
       val tempFile = File.createTempFile(localFile.sourceFile.getName, "gzip")
       tempFile.deleteOnExit()
       using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
