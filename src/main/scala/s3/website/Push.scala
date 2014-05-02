@@ -8,13 +8,14 @@ import scala.concurrent.duration._
 import com.lexicalscope.jewel.cli.CliFactory
 import scala.language.postfixOps
 import s3.website.Diff.resolveDiff
-import s3.website.S3.{FailedUpload, SuccessfulUpload, resolveS3Files, upload}
+import s3.website.S3.{FailedUpload, SuccessfulUpload, resolveS3Files}
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
 import s3.website.model.LocalFile.resolveLocalFiles
 import scala.collection.parallel.ParSeq
 import java.util.concurrent.ExecutorService
 import s3.website.model.{Update, NewFile, Site}
+import s3.website.Implicits._
 
 object Push {
 
@@ -25,7 +26,7 @@ object Push {
       s3Files    <- resolveS3Files.right
       localFiles <- resolveLocalFiles.right
     } yield {
-      val uploadReports = resolveDiff(localFiles, s3Files).map(_.right.map(upload)).par
+      val uploadReports = resolveDiff(localFiles, s3Files).map(_.right.map(new S3(S3.s3Client) upload)).par
       uploadReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
       uploadReports
     }
@@ -62,7 +63,7 @@ object Push {
       (error: model.Error) => counts.copy(failures = counts.failures + 1),
       failureOrSuccess => failureOrSuccess.fold(
         (failedUpload: FailedUpload) => counts.copy(failures = counts.failures + 1),
-        (success: SuccessfulUpload)  => success.uploadSource.uploadType.fold(
+        (success: SuccessfulUpload)  => success.upload.uploadType.fold(
           (newFile: NewFile) => counts.copy(newFiles = counts.newFiles + 1),
           (update: Update)   => counts.copy(updates = counts.updates + 1)
         )

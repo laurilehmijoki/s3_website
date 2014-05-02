@@ -1,8 +1,8 @@
 package s3.website.model
 
 import scala.util.{Failure, Try}
-import org.jruby.Ruby
 import scala.collection.JavaConversions._
+import s3.website.Ruby.rubyRuntime
 
 case class Config(
   s3_id:                      String,
@@ -140,7 +140,6 @@ object Config {
     }
 
   def erbEval(erbString: String): Try[String] = Try {
-    val rubyRuntime = Ruby.newInstance()
     val erbStringWithoutComments = erbString.replaceAll("#.*", "")
     rubyRuntime.evalScriptlet(
       s"""

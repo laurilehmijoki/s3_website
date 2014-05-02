@@ -1,7 +1,7 @@
 package s3.website
 
 import s3.website.model._
-import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.s3.model.{ObjectMetadata, ListObjectsRequest, ObjectListing}
 import scala.collection.JavaConversions._
@@ -12,44 +12,33 @@ import scala.util.Failure
 import scala.Some
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.model.{UserError, IOError}
+import s3.website.S3.{SuccessfulUpload, FailedUpload}
 
-object S3 {
+class S3(s3Client: (Config) => AmazonS3 = S3.s3Client) {
 
-  trait UploadReport {
-    def reportMessage: String
-  }
-
-  case class SuccessfulUpload(uploadSource: UploadSource with UploadType) extends UploadReport {
-    def reportMessage = {
-      val uploadDetail = uploadSource.uploadType.fold(
-        _ => "Created",
-        _ => "Updated"
-      )
-      s"$uploadDetail ${uploadSource.s3Key}"
-    }
-  }
-  case class FailedUpload(s3Key: String, error: Throwable) extends UploadReport {
-    def reportMessage = s"Failed to upload $s3Key (${error.getMessage})"
-  }
-
-  def upload(uploadSource: UploadSource with UploadType)(implicit site: Site, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
+  def upload(upload: Upload with UploadType)(implicit config: Config, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val objectMetadata = {
         val metaData = new ObjectMetadata()
-        uploadSource.contentEncoding.foreach(metaData.setContentEncoding)
-        metaData.setContentLength(uploadSource.contentLength)
-        metaData.setContentType(uploadSource.contentType)
+        upload.contentEncoding.foreach(metaData.setContentEncoding)
+        metaData.setContentLength(upload.contentLength)
+        metaData.setContentType(upload.contentType)
+        upload.maxAge.foreach(seconds => metaData.setCacheControl(s"max-age=$seconds"))
         metaData
       }
-      s3Client.putObject(
-        site.config.s3_bucket, uploadSource.s3Key, uploadSource.openInputStream(), objectMetadata
+      s3Client(config).putObject(
+        config.s3_bucket, upload.s3Key, upload.openInputStream(), objectMetadata
       )
-      Right(SuccessfulUpload(uploadSource))
+      Right(SuccessfulUpload(upload))
     } recover {
-      case error => Left(FailedUpload(uploadSource.s3Key, error))
+      case error => Left(FailedUpload(upload.s3Key, error))
     }
+}
 
-  def resolveS3Files(implicit site: Site): Either[Error, Seq[S3File]] = Try {
+object S3 {
+  def s3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
+
+  def resolveS3Files(implicit config: Config): Either[Error, Seq[S3File]] = Try {
     objectSummaries()
   } match {
     case Success(remoteFiles) =>
@@ -60,10 +49,10 @@ object S3 {
       Left(IOError(error))
   }
 
-  def objectSummaries(nextMarker: Option[String] = None)(implicit site: Site): Seq[S3File] = {
-    val objects: ObjectListing = s3Client.listObjects({
+  def objectSummaries(nextMarker: Option[String] = None)(implicit config: Config): Seq[S3File] = {
+    val objects: ObjectListing = s3Client(config).listObjects({
       val req = new ListObjectsRequest()
-      req.setBucketName(site.config.s3_bucket)
+      req.setBucketName(config.s3_bucket)
       nextMarker.foreach(req.setMarker)
       req
     })
@@ -74,7 +63,20 @@ object S3 {
       summaries
   }
 
-  def s3Client(implicit site: Site): AmazonS3Client =
-    new AmazonS3Client(new BasicAWSCredentials(site.config.s3_id, site.config.s3_secret))
+  trait UploadReport {
+    def reportMessage: String
+  }
 
+  case class SuccessfulUpload(upload: Upload with UploadType) extends UploadReport {
+    def reportMessage = {
+      val uploadDetail = upload.uploadType.fold(
+        _ => "Created",
+        _ => "Updated"
+      )
+      s"$uploadDetail ${upload.s3Key}"
+    }
+  }
+  case class FailedUpload(s3Key: String, error: Throwable) extends UploadReport {
+    def reportMessage = s"Failed to upload $s3Key (${error.getMessage})"
+  }
 }

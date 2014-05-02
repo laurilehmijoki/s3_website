@@ -6,13 +6,14 @@ import scala.util.Try
 import s3.website.model.Encoding._
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.zip.GZIPOutputStream
+import org.apache.commons.io.IOUtils
+import org.apache.tika.Tika
+import s3.website.Ruby._
 import s3.website.model.Encoding.Gzip
 import scala.util.Failure
 import scala.Some
 import scala.util.Success
 import s3.website.model.Encoding.Zopfli
-import org.apache.commons.io.IOUtils
-import org.apache.tika.Tika
 
 object Encoding {
 
@@ -46,13 +47,13 @@ case class NewFile()
 case class Update()
 
 case class LocalFile(
-  path: String,
+  s3Key: String,
   sourceFile: File,
   encodingOnS3: Option[Either[Gzip, Zopfli]]
 )
 
 object LocalFile {
-  def toUploadSource(localFile: LocalFile): Either[Error, UploadSource] = Try {
+  def toUpload(localFile: LocalFile)(implicit config: Config): Either[Error, Upload] = Try {
     def fis(file: File): InputStream = new FileInputStream(file)
     def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
     val sourceFile: File = localFile
@@ -68,16 +69,28 @@ object LocalFile {
     val md5 = using(fis(sourceFile)) { inputStream =>
       DigestUtils.md5Hex(inputStream)
     }
-    UploadSource(
-      s3Key = localFile.path,
+    val maxAge = config.max_age.flatMap { maxAgeIntOrGlob =>
+      maxAgeIntOrGlob.fold(
+        (seconds: Int) => Some(seconds),
+        (globs2Ints: Map[String, Int]) =>
+          globs2Ints.find { globAndInt =>
+            (rubyRuntime evalScriptlet s"File.fnmatch('${globAndInt._1}', '${localFile.s3Key}')")
+              .toJava(classOf[Boolean])
+              .asInstanceOf[Boolean]
+          } map (_._2)
+      )
+    }
+    Upload(
+      s3Key = localFile.s3Key,
       md5 = md5,
       contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
       contentLength = sourceFile.length(),
+      maxAge = maxAge,
       contentType = tika.detect(localFile.sourceFile),
       openInputStream = () => new FileInputStream(sourceFile)
     )
   } match {
-    case Success(uploadSource) => Right(uploadSource)
+    case Success(upload) => Right(upload)
     case Failure(error) => Left(IOError(error))
   }
 
@@ -105,16 +118,17 @@ object LocalFile {
 case class OverrideExisting()
 case class CreateNew()
 
-case class UploadSource(
+case class Upload(
   s3Key: String,
   md5: MD5,
   contentLength: Long,
   contentEncoding: Option[String],
+  maxAge: Option[Int],
   contentType: String,
   openInputStream: () => InputStream // It's in the caller's responsibility to close this stream
 ) {
   def withUploadType(ut: Either[NewFile, Update]) = {
-    new UploadSource(s3Key, md5, contentLength, contentEncoding, contentType, openInputStream) with UploadType {
+    new Upload(s3Key, md5, contentLength, contentEncoding, maxAge, contentType, openInputStream) with UploadType {
       def uploadType = ut
     }
   }
