@@ -38,15 +38,15 @@ object Push {
   }
 
   def onUploadReports(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor) {
-    uploadReports foreach (_.right.foreach {
-      rep => Await.ready(rep, 1 day)
-    })
-
     uploadReports foreach {_.right.foreach(_ foreach { report =>
       println(
         report fold(_.reportMessage, _.reportMessage)
       )
     })}
+
+    uploadReports foreach (_.right.foreach {
+      rep => Await.ready(rep, 1 day)
+    })
   }
 
   type UploadReports = ParSeq[Either[model.Error, Future[Either[FailedUpload, SuccessfulUpload]]]]
