@@ -22,6 +22,8 @@ libraryDependencies += "org.apache.tika" % "tika-core" % "1.4"
 
 libraryDependencies += "com.lexicalscope.jewelcli" % "jewelcli" % "0.8.9"
 
+libraryDependencies += "org.specs2" %% "specs2" % "2.3.11" % "test"
+
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 jarName in assembly := "s3_website.jar"
