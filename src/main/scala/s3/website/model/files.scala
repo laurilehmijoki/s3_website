@@ -38,6 +38,13 @@ object Encoding {
   type MD5 = String
 }
 
+trait UploadType {
+  def uploadType: Either[NewFile, Update]
+}
+
+case class NewFile()
+case class Update()
+
 case class LocalFile(
   path: String,
   sourceFile: File,
@@ -95,6 +102,9 @@ object LocalFile {
   }
 }
 
+case class OverrideExisting()
+case class CreateNew()
+
 case class UploadSource(
   s3Key: String,
   md5: MD5,
@@ -102,7 +112,13 @@ case class UploadSource(
   contentEncoding: Option[String],
   contentType: String,
   openInputStream: () => InputStream // It's in the caller's responsibility to close this stream
-)
+) {
+  def withUploadType(ut: Either[NewFile, Update]) = {
+    new UploadSource(s3Key, md5, contentLength, contentEncoding, contentType, openInputStream) with UploadType {
+      def uploadType = ut
+    }
+  }
+}
 
 case class S3File(s3Key: String, md5: MD5)
 
