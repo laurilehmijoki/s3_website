@@ -24,6 +24,7 @@ Feature: Invalidate the Cloudfront distribution
     Then the output should equal
       """
       Deploying features/support/test_site_dirs/cdn-powered.with-one-change.blog.fi/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       Uploading 1 changed file(s)
       Upload index.html: Success!
@@ -42,6 +43,7 @@ Feature: Invalidate the Cloudfront distribution
     Then the output should equal
       """
       Deploying features/support/test_site_dirs/cdn-powered.when-deleted-a-file.blog.fi/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       No new or changed files to upload
       Delete css/styles.css: Success!

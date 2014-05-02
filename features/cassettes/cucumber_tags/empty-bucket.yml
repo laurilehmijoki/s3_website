@@ -2,21 +2,21 @@
 http_interactions:
 - request:
     method: get
-    uri: https://s3.amazonaws.com/another-s3-website-test.net?max-keys=1000
+    uri: https://s3.amazonaws.com/s3-website-test.net?marker=
     body:
       encoding: US-ASCII
       string: ''
     headers:
       Content-Type:
       - ''
-      User-Agent:
-      - aws-sdk-ruby/1.8.5 ruby/2.0.0 x86_64-darwin11.4.2
-      Date:
-      - Sat, 20 Jul 2013 15:03:03 GMT
-      Authorization:
-      - AWS
       Accept-Encoding:
-      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      - ''
+      User-Agent:
+      - aws-sdk-ruby/1.38.0 ruby/2.0.0 x86_64-darwin13.1.0
+      Date:
+      - Fri, 02 May 2014 09:05:51 GMT
+      Authorization:
+      - AWS foo:bar
       Accept:
       - '*/*'
   response:
@@ -25,11 +25,11 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - V9qlQNTysnd4Os0AwfWKWGMZ5Ho8DlbYiQFmZcuTMjVpPGHgZfQYuhTtNv2PERoG
+      - Z17n775xViwjH1XE6Tg/dWwcSLzydlRlhw4lPYAe1DipJvn/eHAZkm02J5NeYLz4
       X-Amz-Request-Id:
-      - A2A5B618C76BDC46
+      - C1D3FE211DBE4AB1
       Date:
-      - Sat, 20 Jul 2013 15:03:06 GMT
+      - Fri, 02 May 2014 09:05:53 GMT
       Content-Type:
       - application/xml
       Transfer-Encoding:
@@ -40,26 +40,26 @@ http_interactions:
       encoding: UTF-8
       string: |-
         <?xml version="1.0" encoding="UTF-8"?>
-        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>another-s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated></ListBucketResult>
-    http_version: 
-  recorded_at: Sat, 20 Jul 2013 15:03:04 GMT
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated></ListBucketResult>
+    http_version:
+  recorded_at: Fri, 02 May 2014 09:05:52 GMT
 - request:
     method: get
-    uri: https://s3.amazonaws.com/another-s3-website-test.net?max-keys=1000
+    uri: https://s3.amazonaws.com/s3-website-test.net?max-keys=1000
     body:
       encoding: US-ASCII
       string: ''
     headers:
       Content-Type:
       - ''
-      User-Agent:
-      - aws-sdk-ruby/1.8.5 ruby/2.0.0 x86_64-darwin11.4.2
-      Date:
-      - Sat, 20 Jul 2013 15:03:04 GMT
-      Authorization:
-      - AWS
       Accept-Encoding:
-      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      - ''
+      User-Agent:
+      - aws-sdk-ruby/1.38.0 ruby/2.0.0 x86_64-darwin13.1.0
+      Date:
+      - Fri, 02 May 2014 09:05:52 GMT
+      Authorization:
+      - AWS foo:bar
       Accept:
       - '*/*'
   response:
@@ -68,11 +68,11 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - OhoqsN3CE+5FljCn0hTlhThb+nWYkBMKefzL9nU7Tbh/+zry/1gCEX7GWW8oGfIr
+      - tlQoxk2BNnsIttOVLQ916Z6yAAb02PaALSWHraqsa+5xfBQw1oKqAesr8jAtwbnH
       X-Amz-Request-Id:
-      - 30864A566FBD97FE
+      - E59275963A441FD0
       Date:
-      - Sat, 20 Jul 2013 15:03:06 GMT
+      - Fri, 02 May 2014 09:05:54 GMT
       Content-Type:
       - application/xml
       Transfer-Encoding:
@@ -83,7 +83,7 @@ http_interactions:
       encoding: UTF-8
       string: |-
         <?xml version="1.0" encoding="UTF-8"?>
-        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>another-s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated></ListBucketResult>
-    http_version: 
-  recorded_at: Sat, 20 Jul 2013 15:03:05 GMT
-recorded_with: VCR 2.5.0
+        <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Name>s3-website-test.net</Name><Prefix></Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated></ListBucketResult>
+    http_version:
+  recorded_at: Fri, 02 May 2014 09:05:53 GMT
+recorded_with: VCR 2.8.0

@@ -1,5 +1,5 @@
-s3_id: key
-s3_secret: pass
+s3_id: foo
+s3_secret: bar
 s3_bucket: s3-website-test.net
 max_age:
   "css/*": 100

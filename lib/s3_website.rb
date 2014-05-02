@@ -20,12 +20,13 @@ end
   retry
   keyboard
   diff_helper
+  gzip_helper
   endpoint
   parallelism
   jekyll
   nanoc
   paths
-}.each do |file| 
+}.each do |file|
   require File.dirname(__FILE__) + "/s3_website/#{file}"
 end
 
