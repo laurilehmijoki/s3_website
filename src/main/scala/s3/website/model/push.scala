@@ -39,12 +39,14 @@ object Encoding {
   type MD5 = String
 }
 
-trait UploadType {
-  def uploadType: Either[NewFile, Update]
+trait UploadTypeResolved {
+  def uploadType: UploadType
 }
 
-case class NewFile()
-case class Update()
+sealed trait UploadType // Sealed, so that we can avoid inexhaustive pattern matches more easily
+
+case object NewFile extends UploadType
+case object Update extends UploadType
 
 case class LocalFile(
   s3Key: String,
@@ -80,14 +82,19 @@ object LocalFile {
           } map (_._2)
       )
     }
+
     Upload(
       s3Key = localFile.s3Key,
-      md5 = md5,
-      contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
-      contentLength = sourceFile.length(),
-      maxAge = maxAge,
-      contentType = tika.detect(localFile.sourceFile),
-      openInputStream = () => new FileInputStream(sourceFile)
+      essence = Right(
+        UploadBody(
+          md5 = md5,
+          contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
+          contentLength = sourceFile.length(),
+          maxAge = maxAge,
+          contentType = tika.detect(localFile.sourceFile),
+          openInputStream = () => new FileInputStream(sourceFile)
+        )
+      )
     )
   } match {
     case Success(upload) => Right(upload)
@@ -118,21 +125,51 @@ object LocalFile {
 case class OverrideExisting()
 case class CreateNew()
 
+case class Redirect(key: String, redirectTarget: String)
+
+object Redirect extends UploadType {
+  def resolveRedirects(implicit config: Config): Seq[Upload with UploadTypeResolved] = {
+    val redirects = config.redirects.fold(Nil: Seq[Redirect]) {
+      sourcesToTargets =>
+        sourcesToTargets.foldLeft(Seq(): Seq[Redirect]) {
+          (redirects, sourceToTarget) =>
+            redirects :+ Redirect(sourceToTarget._1, sourceToTarget._2)
+        }
+    }
+    redirects.map { redirect =>
+      Upload.apply(redirect)
+    }
+  }
+}
+
 case class Upload(
   s3Key: String,
+  essence: Either[Redirect, UploadBody]
+) {
+
+  def withUploadType(ut: UploadType) =
+    new Upload(s3Key, essence) with UploadTypeResolved {
+      def uploadType = ut
+    }
+}
+
+object Upload {
+  def apply(redirect: Redirect): Upload with UploadTypeResolved = new Upload(redirect.key, Left(redirect)) with UploadTypeResolved {
+    def uploadType = Redirect
+  }
+}
+
+/**
+ * Represents a bunch of data that should be stored into an S3 objects body.
+ */
+case class UploadBody(
   md5: MD5,
   contentLength: Long,
   contentEncoding: Option[String],
   maxAge: Option[Int],
   contentType: String,
   openInputStream: () => InputStream // It's in the caller's responsibility to close this stream
-) {
-  def withUploadType(ut: Either[NewFile, Update]) = {
-    new Upload(s3Key, md5, contentLength, contentEncoding, maxAge, contentType, openInputStream) with UploadType {
-      def uploadType = ut
-    }
-  }
-}
+)
 
 case class S3File(s3Key: String, md5: MD5)
 
