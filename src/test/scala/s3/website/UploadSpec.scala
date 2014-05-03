@@ -18,6 +18,7 @@ import s3.website.S3.S3ClientProvider
 import scala.collection.JavaConversions._
 import s3.website.model.NewFile
 import scala.Some
+import com.amazonaws.AmazonServiceException
 
 class UploadSpec extends Specification {
 
@@ -60,6 +61,19 @@ class UploadSpec extends Specification {
       implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo("index.html")
+    }
+  }
+
+  "push exit status" should {
+    "be 0 all uploads succeed" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      Push.pushSite must equalTo(0)
+    }
+
+    "be 1 if any of the uploads fails" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
+      Push.pushSite must equalTo(1)
     }
   }
 
