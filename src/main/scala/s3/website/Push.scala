@@ -44,10 +44,16 @@ object Push {
       println(s"$pushCounts")
       println(s"Go visit: http://${site.config.s3_bucket}.${site.config.s3_endpoint.s3WebsiteHostname}")
     }
-    errorsOrUploadReports.left foreach (err => println(s"Failed to push the site: ${err.message}"))
-    errorsOrUploadReports.fold(
+    errorsOrFinishedUploads.left foreach (err => println(s"Failed to push the site: ${err.message}"))
+    errorsOrFinishedUploads.fold(
       _ => 1,
-      uploadReports => if (uploadReports exists (_.isLeft)) 1 else 0
+      finishedUploads => finishedUploads.foldLeft(0) { (memo, finishedUpload) =>
+        memo + finishedUpload.fold(
+          (error: Error) => 1,
+          (failedOrSucceededUpload: Either[FailedUpload, SuccessfulUpload]) =>
+            if (failedOrSucceededUpload.isLeft) 1 else 0
+        )
+      } min 1
     )
   }
 
