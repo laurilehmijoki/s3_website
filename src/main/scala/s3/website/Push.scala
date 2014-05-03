@@ -35,7 +35,6 @@ object Push {
       uploadReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
       uploadReports
     }
-    errorsOrUploadReports.right foreach { uploadReports => reportEachUpload(uploadReports)}
     val errorsOrFinishedUploads: Either[Error, FinishedUploads] = errorsOrUploadReports.right map {
       uploadReports => awaitForUploads(uploadReports)
     }
@@ -61,14 +60,6 @@ object Push {
     )
   }
 
-  def reportEachUpload(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor) {
-    uploadReports foreach {_.right.foreach(_ foreach { report =>
-      println(
-        report fold(_.reportMessage, _.reportMessage)
-      )
-    })}
-  }
-  
   def awaitForUploads(uploadReports: UploadReports)(implicit executor: ExecutionContextExecutor): FinishedUploads =
     uploadReports map (_.right.map {
       rep => Await.result(rep, 1 day)

@@ -19,9 +19,14 @@ class S3(implicit s3Client: S3ClientProvider) {
   def upload(upload: Upload with UploadTypeResolved)(implicit config: Config, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       s3Client(config) putObject toPutObjectRequest(upload)
-      Right(SuccessfulUpload(upload))
+      val report = SuccessfulUpload(upload)
+      println(report.reportMessage)
+      Right(report)
     } recover {
-      case error => Left(FailedUpload(upload.s3Key, error))
+      case error =>
+        val report = FailedUpload(upload.s3Key, error)
+        println(report.reportMessage)
+        Left(report)
     }
 
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
