@@ -98,10 +98,12 @@ object Push {
         s"Created $newFiles file(s)."
       case PushCounts(updates, newFiles, failures, redirects) if updates > 0 && newFiles > 0 && failures == 0 && redirects == 0 =>
         s"Created $newFiles and updated $updates file(s)."
-      case PushCounts(updates, newFiles, failures, redirects) if failures == 0 =>
-        s"Created $newFiles and updated $updates file(s). Applied $redirects redirect(s)."
       case PushCounts(updates, newFiles, failures, redirects) =>
-        s"Created $newFiles and updated $updates file(s). $failures upload(s) failed!"
+        val report = s"Created $newFiles and updated $updates file(s). Applied $redirects redirect(s)."
+        if (failures == 0)
+          report
+        else
+          report + s" $failures upload(s) failed!"
     }
 
   case class PushCounts(updates: Int = 0, newFiles: Int = 0, failures: Int = 0, redirects: Int = 0/*, deletes: Int = -1 TODO implement delete*/)
