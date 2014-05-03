@@ -36,9 +36,13 @@ object Push {
       uploadReports
     }
     errorsOrUploadReports.right foreach { uploadReports => reportEachUpload(uploadReports)}
-    val errorsOrFinishedUploads = errorsOrUploadReports.right map { 
+    val errorsOrFinishedUploads: Either[Error, FinishedUploads] = errorsOrUploadReports.right map {
       uploadReports => awaitForUploads(uploadReports)
     }
+    afterUploadsFinished(errorsOrFinishedUploads)
+  }
+
+  def afterUploadsFinished(errorsOrFinishedUploads: Either[Error, FinishedUploads])(implicit site: Site): Int = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
       val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
       println(s"$pushCounts")
