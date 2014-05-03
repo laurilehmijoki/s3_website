@@ -111,7 +111,11 @@ object LocalFile {
     }
   } match {
     case Success(localFiles) =>
-      Right(localFiles)
+      Right(
+        // Sort by key, because this will improve the performance when pushing existing sites.
+        // The lazy-loading diff take advantage of this arrangement.
+        localFiles sortBy (_.s3Key)
+      )
     case Failure(error) =>
       Left(IOError(error))
   }
