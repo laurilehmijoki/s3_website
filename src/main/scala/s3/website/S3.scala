@@ -39,6 +39,7 @@ class S3(implicit s3Client: S3ClientProvider) {
         val md = new ObjectMetadata()
         md.setContentLength(uploadBody.contentLength)
         md.setContentType(uploadBody.contentType)
+        md.setContentMD5(uploadBody.md5)
         uploadBody.contentEncoding.foreach(md.setContentEncoding)
         uploadBody.maxAge.foreach(seconds => md.setCacheControl(s"max-age=$seconds"))
         new PutObjectRequest(config.s3_bucket, upload.s3Key, uploadBody.openInputStream(), md)

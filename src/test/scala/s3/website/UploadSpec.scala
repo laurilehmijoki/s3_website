@@ -3,69 +3,87 @@ package s3.website
 import org.specs2.mutable.{After, Specification}
 import s3.website.model._
 import org.specs2.specification.Scope
-import java.io.File.createTempFile
-import org.apache.commons.io.FileUtils.write
-import org.apache.commons.io.{FileUtils, IOUtils}
-import java.util.zip.GZIPInputStream
+import org.apache.commons.io.FileUtils
 import org.apache.commons.codec.digest.DigestUtils
 import java.io.File
 import scala.util.Random
 import org.mockito.{Matchers, ArgumentCaptor}
 import org.mockito.Mockito._
 import com.amazonaws.services.s3.AmazonS3
-import s3.website.model.Encoding.Gzip
-import scala.Some
 import com.amazonaws.services.s3.model._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import s3.website.S3.S3ClientProvider
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
-import s3.website.model.Encoding.Gzip
 import s3.website.model.NewFile
 import scala.Some
 
 class UploadSpec extends Specification {
 
-  "gzip" should {
-    "gzip the file" in new TempFile {
-      val upload = LocalFile.toUpload(LocalFile("index.html", tempFile, Some(Left(Gzip())))).right.get
-      IOUtils.toString(new GZIPInputStream(upload.essence.right.get.openInputStream())) must equalTo(fileContents)
+  "push" should {
+    "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(
+        config = defaultConfig.copy(gzip = Some(Left(true)))                  ,
+        filesWithContent = ("styles.css", "<h1>hi again</h1>") :: Nil
+      )
+      setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      Push.pushSite
+      sentPutObjectRequest.getKey must equalTo("styles.css")
     }
 
-    "calculate the md5 for the gzipped data" in new TempFile {
-      val upload = LocalFile.toUpload(LocalFile("index.html", tempFile, Some(Left(Gzip())))).right.get
-      upload.essence.right.get.md5 must equalTo("9b0474867213eeedf33dfe055680e7fa")
+    "not update a gzipped S3 object if the contents has not changed" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(
+        config = defaultConfig.copy(gzip = Some(Left(true)))                  ,
+        filesWithContent = ("styles.css", "<h1>hi</h1>") :: Nil
+      )
+      setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      Push.pushSite
+      noUploadsOccurred must beTrue
     }
 
-    "calculate the md5 for the non-gzipped data" in new TempFile {
-      val upload = LocalFile.toUpload(LocalFile("index.html", tempFile, None)).right.get
-      upload.essence.right.get.md5 must equalTo(DigestUtils.md5Hex(fileContents))
+    "not upload a file if it has not changed" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<div>hello</div>") :: Nil)
+      setS3Files(S3File("index.html", DigestUtils.md5Hex("<div>hello</div>")))
+      Push.pushSite
+      noUploadsOccurred must beTrue
+    }
+
+    "update a file if it has changed" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>old text</h1>") :: Nil)
+      setS3Files(S3File("index.html", DigestUtils.md5Hex("<h1>new text</h1>")))
+      Push.pushSite
+      sentPutObjectRequest.getKey must equalTo("index.html")
+    }
+
+    "create a file if does not exist on S3" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getKey must equalTo("index.html")
     }
   }
 
   "max-age in config" can {
     "be applied to all files" in new SiteDirectory with MockS3 {
-      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Left(60))), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(60))), files = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
     "be applied to files that match the glob" in new SiteDirectory with MockS3 {
-      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), files = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
     "be applied to directories that match the glob" in new SiteDirectory with MockS3 {
-      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), files = "assets/lib/jquery.js" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), files = "assets/lib/jquery.js" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
     "not be applied if the glob doesn't match" in new SiteDirectory with MockS3 {
-      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), files = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
@@ -80,8 +98,8 @@ class UploadSpec extends Specification {
   }
 
   "dotfiles" should {
-    "included in the pushed files" in new SiteDirectory with MockS3 {
-      implicit val site = buildSite(files = ".vimrc" :: Nil)
+    "be included in the pushed files" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(files = ".vimrc" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
@@ -90,11 +108,20 @@ class UploadSpec extends Specification {
   trait MockS3 extends Scope {
     val amazonS3Client = mock(classOf[AmazonS3])
     implicit val s3ClientProvider: S3ClientProvider = _ => amazonS3Client
-    when(amazonS3Client.listObjects(Matchers.any(classOf[ListObjectsRequest]))).thenReturn {
-      val listing = new ObjectListing
-      //listing.getObjectSummaries.add(new ObjectSummary())
-      listing
+    val s3ObjectListing = new ObjectListing
+    when(amazonS3Client.listObjects(Matchers.any(classOf[ListObjectsRequest]))).thenReturn(s3ObjectListing)
+
+    def setS3Files(s3Files: S3File*) {
+      s3Files.foreach { s3File =>
+        s3ObjectListing.getObjectSummaries.add({
+          val summary = new S3ObjectSummary
+          summary.setETag(s3File.md5)
+          summary.setKey(s3File.s3Key)
+          summary
+        })
+      }
     }
+
     val s3 = new S3()
 
     def asSeenByS3Client(upload: Upload)(implicit config: Config): PutObjectRequest = {
@@ -110,6 +137,11 @@ class UploadSpec extends Specification {
       req.getAllValues
     }
 
+    def noUploadsOccurred = {
+      verify(amazonS3Client, never()).putObject(Matchers.any(classOf[PutObjectRequest]))
+      true // Mockito is based on exceptions
+    }
+
     def sentPutObjectRequest = sentPutObjectRequests.ensuring(_.length == 1).head
   }
   
@@ -123,21 +155,19 @@ class UploadSpec extends Specification {
 
     def buildSite(config: Config): Site = Site(siteDir.getAbsolutePath, config)
 
-    def buildSite(config: Config = defaultConfig, files: Seq[String]): Site = {
-      files.foreach { file =>
-        FileUtils.forceMkdir(new File(siteDir, file).getParentFile)
-        new File(siteDir, file).createNewFile()
+    def siteWithFilesAndContent(config: Config = defaultConfig, filesWithContent: Seq[(String, String)]): Site = {
+      filesWithContent.foreach {
+        case (filePath, content) =>
+          val file = new File(siteDir, filePath)
+          FileUtils.forceMkdir(file.getParentFile)
+          file.createNewFile()
+          FileUtils.write(file, content)
       }
       buildSite(config)
     }
-  }
 
-  class TempFile(val fileContents: String = "<html></html>") extends Scope {
-    val tempFile = createTempFile("test", "file")
-    tempFile.deleteOnExit()
-    write(tempFile, fileContents)
-
-    implicit val config: Config = defaultConfig
+    def siteWithFiles(config: Config = defaultConfig, files: Seq[String]): Site =
+      siteWithFilesAndContent(config, filesWithContent = files.map((_, "file contents")))
   }
 
   val defaultConfig = Config(
