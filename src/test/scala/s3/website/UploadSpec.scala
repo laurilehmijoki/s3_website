@@ -1,6 +1,6 @@
 package s3.website
 
-import org.specs2.mutable.Specification
+import org.specs2.mutable.{After, Specification}
 import s3.website.model._
 import org.specs2.specification.Scope
 import java.io.File.createTempFile
@@ -46,39 +46,44 @@ class UploadSpec extends Specification {
   }
 
   "max-age in config" can {
-    "be applied to all files" in new TempFile with MockS3 {
-      val upload = LocalFile.toUpload(LocalFile("index.html", tempFile, None))(config.copy(max_age = Some(Left(60))))
-      asSeenByS3Client(upload.right.get).getMetadata.getCacheControl must equalTo("max-age=60")
+    "be applied to all files" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Left(60))), files = "index.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
-    "be applied to files that match the glob" in new TempFile with MockS3 {
-      val upload = LocalFile.toUpload(LocalFile("index.html", tempFile, None))(config.copy(max_age = Some(Right(Map("*.html" -> 90)))))
-      asSeenByS3Client(upload.right.get).getMetadata.getCacheControl must equalTo("max-age=90")
+    "be applied to files that match the glob" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), files = "index.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
-    "be applied to directories that match the glob" in new TempFile with MockS3 {
-      val upload = LocalFile.toUpload(LocalFile("assets/lib/jquery.js", tempFile, None))(config.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))))
-      asSeenByS3Client(upload.right.get).getMetadata.getCacheControl must equalTo("max-age=90")
+    "be applied to directories that match the glob" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), files = "assets/lib/jquery.js" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
-    "not be applied if the glob doesn't match" in new TempFile with MockS3 {
-      val upload = LocalFile.toUpload(LocalFile("index.html", tempFile, None))(config.copy(max_age = Some(Right(Map("*.js" -> 90)))))
-      asSeenByS3Client(upload.right.get).getMetadata.getCacheControl must beNull
+    "not be applied if the glob doesn't match" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), files = "index.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
   }
 
   "redirect in config" should {
     "result in a redirect instruction that is sent to AWS" in new SiteDirectory with MockS3 {
-      implicit val site = Site(siteDir.getAbsolutePath, defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
+      implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
       Push.pushSite
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
   }
 
-  "#resolveLocalFiles" should {
-    "find .dot files" in new TestSiteWithDotFile {
-      val localFiles = LocalFile.resolveLocalFiles(site).right.get
-      localFiles.map(_.s3Key) must contain(".vimrc")
+  "dotfiles" should {
+    "included in the pushed files" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(files = ".vimrc" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
   }
 
@@ -108,29 +113,25 @@ class UploadSpec extends Specification {
     def sentPutObjectRequest = sentPutObjectRequests.ensuring(_.length == 1).head
   }
   
-  trait SiteDirectory extends Scope {
+  trait SiteDirectory extends After {
     val siteDir = new File(FileUtils.getTempDirectory, "site" + Random.nextLong())
     siteDir.mkdir()
-    FileUtils.forceDeleteOnExit(siteDir)
+
+    def after {
+      FileUtils.forceDelete(siteDir)
+    }
+
+    def buildSite(config: Config): Site = Site(siteDir.getAbsolutePath, config)
+
+    def buildSite(config: Config = defaultConfig, files: Seq[String]): Site = {
+      files.foreach { file =>
+        FileUtils.forceMkdir(new File(siteDir, file).getParentFile)
+        new File(siteDir, file).createNewFile()
+      }
+      buildSite(config)
+    }
   }
-  
-  trait TestSiteWithDotFile extends Scope with SiteDirectory {
-    val configYaml =
-      """
-        |s3_id: foo
-        |s3_secret: bar
-        |s3_bucket: baz
-      """.stripMargin
-    val configFile = new File(siteDir, "s3_website.yml")
-    FileUtils.write(configFile, configYaml)
 
-    val files = ".vimrc" :: Nil
-
-    files.foreach { file => new File(siteDir, file).createNewFile()}
-
-    val site = Site.loadSite(configFile.getAbsolutePath, siteDir.getAbsolutePath).right.get
-  }
-  
   class TempFile(val fileContents: String = "<html></html>") extends Scope {
     val tempFile = createTempFile("test", "file")
     tempFile.deleteOnExit()
