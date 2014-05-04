@@ -8,7 +8,7 @@ import scala.io.Source.fromFile
 import scala.language.postfixOps
 
 case class Site(rootDirectory: String, config: Config) {
-  def localFilePath(file: File) = file.getAbsolutePath.replace(rootDirectory, "").replaceFirst("^/", "")
+  def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory, "").replaceFirst("^/", "")
 }
 
 object Site {
