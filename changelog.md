@@ -2,6 +2,14 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.0.0
+
+### Removed features
+
+* `extensionless_mime_type`
+
+    We now rely on Apache Tika to infer the mime type.
+
 ## 1.7.6
 
 * Remove a test setting from *Gemfile*
