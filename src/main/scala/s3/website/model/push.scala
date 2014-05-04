@@ -110,8 +110,9 @@ object LocalFile {
       LocalFile(s3Key, file, encodingOnS3(s3Key))
     } filterNot { file =>
       site.config.exclude_from_upload exists { _.fold(
-        (exclusionRegex: String) => file.s3Key matches exclusionRegex,
-        (exclusionRegexes: Seq[String]) => exclusionRegexes exists (exclusion => file.s3Key.matches(exclusion))
+        // For backward compatibility, use Ruby regex matching
+        (exclusionRegex: String) => rubyRegexMatches(file.s3Key, exclusionRegex),
+        (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(file.s3Key, _))
       ) }
     } filterNot { _.sourceFile.getName == "s3_website.yml" } // For security reasons, the s3_website.yml should never be pushed
   } match {
