@@ -22,10 +22,10 @@ import com.amazonaws.AmazonServiceException
 
 class S3WebsiteSpec extends Specification {
 
-  "push" should {
+  "gzip: true" should {
     "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFilesAndContent(
-        config = defaultConfig.copy(gzip = Some(Left(true)))                  ,
+        config = defaultConfig.copy(gzip = Some(Left(true))),
         filesWithContent = ("styles.css", "<h1>hi again</h1>") :: Nil
       )
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
@@ -35,14 +35,32 @@ class S3WebsiteSpec extends Specification {
 
     "not update a gzipped S3 object if the contents has not changed" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFilesAndContent(
-        config = defaultConfig.copy(gzip = Some(Left(true)))                  ,
+        config = defaultConfig.copy(gzip = Some(Left(true))),
         filesWithContent = ("styles.css", "<h1>hi</h1>") :: Nil
       )
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
       Push.pushSite
       noUploadsOccurred must beTrue
     }
+  }
 
+  """
+    gzip:
+      - .xml
+  """ should {
+    "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFilesAndContent(
+        config = defaultConfig.copy(gzip = Some(Right(".xml" :: Nil))),
+        filesWithContent = ("file.xml", "<h1>hi again</h1>") :: Nil
+      )
+      setS3Files(S3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      Push.pushSite
+      sentPutObjectRequest.getKey must equalTo("file.xml")
+    }
+  }
+
+
+  "push" should {
     "not upload a file if it has not changed" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<div>hello</div>") :: Nil)
       setS3Files(S3File("index.html", DigestUtils.md5Hex("<div>hello</div>")))
