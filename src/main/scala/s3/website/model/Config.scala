@@ -146,8 +146,6 @@ object Config {
         ERB.new("$erbStringWithoutComments").result
       """
     ).asJavaString()
-  } recoverWith {
-    case rubyError => Failure(new UserException(rubyError))
   }
 
   case class UnsafeYaml(yamlObject: AnyRef)
