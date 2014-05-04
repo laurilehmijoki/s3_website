@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](http://semver.org).
 * `extensionless_mime_type`
 
     We now rely on Apache Tika to infer the mime type.
+* the `--headless` switch on the command-line
+
+    s3_website always deletes the files that are on the S3 bucket but not on the local file system.
+    Use the settings `ignore_on_server` and `exclude_from_upload` to control the retained files.
 
 ## 1.7.4
 
