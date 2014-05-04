@@ -121,7 +121,7 @@ class S3WebsiteSpec extends Specification {
   """ should {
     "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(exclude_from_upload = Some(Right(".DS_.*?" :: "logs/.*" :: Nil))),
+        config = defaultConfig.copy(exclude_from_upload = Some(Right(".DS_.*?" :: "logs" :: Nil))),
         files = ".DS_Store" :: "logs/test.log" :: Nil
       )
       Push.pushSite
