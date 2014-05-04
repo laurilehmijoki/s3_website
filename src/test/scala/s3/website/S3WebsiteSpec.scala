@@ -20,7 +20,7 @@ import s3.website.model.NewFile
 import scala.Some
 import com.amazonaws.AmazonServiceException
 
-class UploadSpec extends Specification {
+class S3WebsiteSpec extends Specification {
 
   "push" should {
     "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
