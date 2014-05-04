@@ -106,8 +106,13 @@ object LocalFile {
   def resolveLocalFiles(implicit site: Site): Either[Error, Seq[LocalFile]] = Try {
     val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory)
     files map { file =>
-      val path = site.localFilePath(file)
-      LocalFile(path, file, encodingOnS3(path))
+      val s3Key = site.resolveS3Key(file)
+      LocalFile(s3Key, file, encodingOnS3(s3Key))
+    } filterNot { file =>
+      site.config.exclude_from_upload exists { _.fold(
+        (exclusionRegex: String) => file.s3Key matches exclusionRegex,
+        (exclusionRegexes: Seq[String]) => exclusionRegexes exists (exclusion => file.s3Key.matches(exclusion))
+      ) }
     }
   } match {
     case Success(localFiles) =>

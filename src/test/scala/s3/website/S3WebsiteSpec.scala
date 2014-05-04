@@ -95,6 +95,32 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "exclude_from_upload: string" should {
+    "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(exclude_from_upload = Some(Left(".DS_.*?"))),
+        files = ".DS_Store" :: Nil
+      )
+      Push.pushSite
+      noUploadsOccurred must beTrue
+    }
+  }
+
+  """
+     exclude_from_upload:
+       - regex
+       - another_exclusion
+  """ should {
+    "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(exclude_from_upload = Some(Right(".DS_.*?" :: "logs/.*" :: Nil))),
+        files = ".DS_Store" :: "logs/test.log" :: Nil
+      )
+      Push.pushSite
+      noUploadsOccurred must beTrue
+    }
+  }
+
   "max-age in config" can {
     "be applied to all files" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(60))), files = "index.html" :: Nil)
