@@ -12,7 +12,6 @@ case class Config(
   max_age:                    Option[Either[Int, Map[String, Int]]],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
-  extensionless_mime_type:    Option[String],
   ignore_on_server:           Option[Either[String, Seq[String]]],
   exclude_from_upload:        Option[Either[String, Seq[String]]],
   s3_reduced_redundancy:      Option[Boolean],

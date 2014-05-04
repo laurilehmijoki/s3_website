@@ -192,7 +192,6 @@ class S3WebsiteSpec extends Specification {
     max_age = None,
     gzip = None,
     gzip_zopfli = None,
-    extensionless_mime_type = None,
     ignore_on_server = None,
     exclude_from_upload = None,
     s3_reduced_redundancy = None,

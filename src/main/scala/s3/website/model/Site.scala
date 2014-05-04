@@ -39,6 +39,7 @@ object Site {
           redirects <- loadRedirects.right
         } yield {
           gzip_zopfli.foreach(_ => println("zopfli is not currently supported"))
+          extensionless_mime_type.foreach(_ => println(s"The extensionless_mime_type setting in ${yamlConfigPath} is no longer supported."))
           Config(
             s3_id,
             s3_secret,
@@ -47,7 +48,6 @@ object Site {
             max_age,
             gzip,
             gzip_zopfli,
-            extensionless_mime_type,
             ignore_on_server = ignore_on_server,
             exclude_from_upload = exclude_from_upload,
             s3_reduced_redundancy,
