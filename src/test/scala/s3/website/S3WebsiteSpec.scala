@@ -106,6 +106,14 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "s3_website.yml file" should {
+    "never be uploaded" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(files = "s3_website.yml" :: Nil)
+      Push.pushSite
+      noUploadsOccurred must beTrue
+    }
+  }
+
   """
      exclude_from_upload:
        - regex

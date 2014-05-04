@@ -113,7 +113,7 @@ object LocalFile {
         (exclusionRegex: String) => file.s3Key matches exclusionRegex,
         (exclusionRegexes: Seq[String]) => exclusionRegexes exists (exclusion => file.s3Key.matches(exclusion))
       ) }
-    }
+    } filterNot { _.sourceFile.getName == "s3_website.yml" } // For security reasons, the s3_website.yml should never be pushed
   } match {
     case Success(localFiles) =>
       Right(
