@@ -39,7 +39,9 @@ object Site {
           redirects <- loadRedirects.right
         } yield {
           gzip_zopfli.foreach(_ => println("zopfli is not currently supported"))
-          extensionless_mime_type.foreach(_ => println(s"The extensionless_mime_type setting in ${yamlConfigPath} is no longer supported."))
+          extensionless_mime_type.foreach(_ => println(
+            s"Ignoring the extensionless_mime_type setting in $yamlConfigPath. Counting on Apache Tika to infer correct mime types.")
+          )
           Config(
             s3_id,
             s3_secret,
