@@ -103,6 +103,22 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "s3_reduced_redundancy: true in config" should {
+    "result in uploads being marked with reduced redundancy" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(true)), files = "index.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getStorageClass must equalTo("REDUCED_REDUNDANCY")
+    }
+  }
+
+  "s3_reduced_redundancy: false in config" should {
+    "result in uploads being marked with the default storage class" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(false)), files = "index.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getStorageClass must beNull
+    }
+  }
+
   "redirect in config" should {
     "result in a redirect instruction that is sent to AWS" in new SiteDirectory with MockS3 {
       implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))

@@ -3,7 +3,7 @@ package s3.website
 import s3.website.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.auth.BasicAWSCredentials
-import com.amazonaws.services.s3.model.{PutObjectRequest, ObjectMetadata, ListObjectsRequest, ObjectListing}
+import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.util.Try
 import com.amazonaws.AmazonClientException
@@ -13,6 +13,14 @@ import scala.Some
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.model.{UserError, IOError}
 import s3.website.S3.{S3ClientProvider, SuccessfulUpload, FailedUpload}
+import s3.website.S3.SuccessfulUpload
+import s3.website.S3.FailedUpload
+import scala.util.Failure
+import scala.Some
+import s3.website.model.IOError
+import scala.util.Success
+import s3.website.model.UserError
+import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 
 class S3(implicit s3Client: S3ClientProvider) {
 
@@ -42,11 +50,13 @@ class S3(implicit s3Client: S3ClientProvider) {
       },
       uploadBody => {
         val md = new ObjectMetadata()
-        md.setContentLength(uploadBody.contentLength)
-        md.setContentType(uploadBody.contentType)
-        uploadBody.contentEncoding.foreach(md.setContentEncoding)
-        uploadBody.maxAge.foreach(seconds => md.setCacheControl(s"max-age=$seconds"))
-        new PutObjectRequest(config.s3_bucket, upload.s3Key, uploadBody.openInputStream(), md)
+        md setContentLength uploadBody.contentLength
+        md setContentType uploadBody.contentType
+        uploadBody.contentEncoding foreach md.setContentEncoding
+        uploadBody.maxAge foreach (seconds => md.setCacheControl(s"max-age=$seconds"))
+        val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, uploadBody.openInputStream(), md)
+        config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
+        req
       }
     )
 }
