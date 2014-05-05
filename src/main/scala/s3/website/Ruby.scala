@@ -6,12 +6,7 @@ object Ruby {
   def rubyRegexMatches(text: String, regex: String) =
     rubyRuntime.evalScriptlet(
       s"""
-         match_data = Regexp.new('$regex').match('$text')
-         if match_data
-           true
-         else
-           false
-         end
+         !!Regexp.new('$regex').match('$text') # Use !! to force a boolean conversion
        """
     ).toJava(classOf[Boolean]).asInstanceOf[Boolean]
 }
