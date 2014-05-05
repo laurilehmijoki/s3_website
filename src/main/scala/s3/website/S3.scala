@@ -7,14 +7,8 @@ import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.util.Try
 import com.amazonaws.AmazonClientException
-import scala.util.Success
-import scala.Some
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import s3.website.model.UserError
 import s3.website.S3._
-import scala.util.Failure
-import s3.website.model.IOError
-import s3.website.model.UserError
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.FailedUpload
