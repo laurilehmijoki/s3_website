@@ -34,7 +34,7 @@ object Push {
                 s3ClientProvider: S3ClientProvider = S3.awsS3Client,
                 cloudFrontClientProvider: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
                 cloudFrontSleepTimeUnit: TimeUnit = MINUTES
-                ): Int = {
+                ): ExitCode = {
     println(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
 
     val errorsOrReports = for {
@@ -93,7 +93,7 @@ object Push {
     }
   }
 
-  def afterPushFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): Int = {
+  def afterPushFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): ExitCode = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
       val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
       println(s"$pushCounts")
@@ -161,6 +161,7 @@ object Push {
   type FinishedPushOperations = ParSeq[Either[model.Error, Either[PushFailureReport, PushSuccessReport]]]
   type PushReports = ParSeq[Either[model.Error, Future[Either[PushFailureReport, PushSuccessReport]]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
+  type ExitCode = Int
 
   trait CliArgs {
     import com.lexicalscope.jewel.cli.Option
