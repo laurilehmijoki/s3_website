@@ -167,7 +167,6 @@ object Push {
 
     @Option def site: String
     @Option(longName = Array("config-dir")) def configDir: String
-    @Option def headless: Boolean // TODO use this
 
   }
 

@@ -279,15 +279,6 @@ index file, your source bucket in Cloudfront likely is pointing to the S3 Origin
 *example.com.s3.amazonaws.com*. Update the source to the S3 Website Endpoint,
 *e.g. example.com.s3-website-us-east-1.amazonaws.com*, to fix this.
 
-### The headless mode
-
-s3_website has a headless mode, where human interactions are disabled.
-
-In the headless mode, `s3_website` will automatically delete the files on the S3
-bucket that are not on your local computer.
-
-Enable the headless mode by adding the `--headless` argument after `s3_website`.
-
 ### Configuring redirects on your S3 website
 
 You can set HTTP redirects on your S3 website in two ways. If you only need
