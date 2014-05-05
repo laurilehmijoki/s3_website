@@ -103,20 +103,20 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "s3_website.yml file" should {
+    "never be uploaded" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(localFiles = "s3_website.yml" :: Nil)
+      Push.pushSite
+      noUploadsOccurred must beTrue
+    }
+  }
+
   "exclude_from_upload: string" should {
     "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(exclude_from_upload = Some(Left(".DS_.*?"))),
         localFiles = ".DS_Store" :: Nil
       )
-      Push.pushSite
-      noUploadsOccurred must beTrue
-    }
-  }
-
-  "s3_website.yml file" should {
-    "never be uploaded" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(localFiles = "s3_website.yml" :: Nil)
       Push.pushSite
       noUploadsOccurred must beTrue
     }
@@ -134,6 +134,28 @@ class S3WebsiteSpec extends Specification {
       )
       Push.pushSite
       noUploadsOccurred must beTrue
+    }
+  }
+
+  "ignore_on_server: value" should {
+    "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(config = defaultConfig.copy(ignore_on_server = Some(Left("logs"))))
+      setS3Files(S3File("logs/log.txt", ""))
+      Push.pushSite
+      noDeletesOccurred must beTrue
+    }
+  }
+
+  """
+     ignore_on_server:
+       - regex
+       - another_ignore
+  """ should {
+    "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite(config = defaultConfig.copy(ignore_on_server = Some(Right(".*txt" :: Nil))))
+      setS3Files(S3File("logs/log.txt", ""))
+      Push.pushSite
+      noDeletesOccurred must beTrue
     }
   }
 

@@ -1,13 +1,18 @@
 package s3.website
 
 import s3.website.model._
+import s3.website.Ruby.rubyRegexMatches
 
 object Diff {
 
-  def resolveDeletes(localFiles: Seq[LocalFile], s3Files: Seq[S3File], redirects: Seq[Upload with UploadTypeResolved]): Seq[S3File] = {
+  def resolveDeletes(localFiles: Seq[LocalFile], s3Files: Seq[S3File], redirects: Seq[Upload with UploadTypeResolved])(implicit config: Config): Seq[S3File] = {
     val keysNotToBeDeleted: Set[String] = (localFiles ++ redirects).map(_.s3Key).toSet
-    s3Files.filterNot { s3ObjectKey =>
-      keysNotToBeDeleted exists(_ == s3ObjectKey.s3Key)
+    s3Files.filterNot { s3File =>
+      val ignoreOnServer = config.ignore_on_server.exists(_.fold(
+        (ignoreRegex: String)        => rubyRegexMatches(s3File.s3Key, ignoreRegex),
+        (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3File.s3Key, _))
+      ))
+      keysNotToBeDeleted.exists(_ == s3File.s3Key) || ignoreOnServer
     }
   }
 
