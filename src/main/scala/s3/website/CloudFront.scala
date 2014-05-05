@@ -1,13 +1,13 @@
 package s3.website
 
-import s3.website.model.Config
+import s3.website.model.{Redirect, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
 import s3.website.CloudFront.{FailedInvalidation, SuccessfulInvalidation, CloudFrontClientProvider}
 import scala.util.{Failure, Success, Try}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
-import s3.website.S3.PushSuccessReport
+import s3.website.S3.{SuccessfulUpload, PushSuccessReport}
 import com.amazonaws.auth.BasicAWSCredentials
 
 class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUnit) {
@@ -67,9 +67,10 @@ object CloudFront {
 
   def awsCloudFrontClient(config: Config) =
     new AmazonCloudFrontClient(new BasicAWSCredentials(config.s3_id, config.s3_secret))
-
+  
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] =
     pushSuccessReports
+      .filterNot(isRedirect) // Assume that redirect objects are never cached.
       .map("/" + _.s3Key) // CloudFront keys always have the slash in front
       .map { path =>
         if (config.cloudfront_invalidate_root.exists(_ == true))
@@ -84,4 +85,12 @@ object CloudFront {
             s"s3_website gem ${System.currentTimeMillis()}"
       }
       .toSeq
+
+  def isRedirect: PartialFunction[PushSuccessReport, Boolean] = {
+    case SuccessfulUpload(upload) => upload.uploadType match {
+      case Redirect => true
+      case _ => false
+    }
+    case _ => false
+  }
 }
