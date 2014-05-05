@@ -41,12 +41,6 @@ class Cli < Thor
     :desc => "The directory where your website files are. When not defined, s3_website will look for the site in #{S3Website::Paths.site_paths.join(' or ')}."
   )
   option(
-    :headless,
-    :type => :boolean,
-    :desc =>
-      'When headless, s3_website will not require human interaction at any point'
-  )
-  option(
     :config_dir,
     :type => :string,
     :default => Dir.pwd,
@@ -74,7 +68,7 @@ class Cli < Thor
       # Then run it
       site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
       config_dir = File.expand_path options[:config_dir]
-      args = "--site=#{site_path} --config-dir=#{config_dir} #{'headless' if options[:headless]}"
+      args = "--site=#{site_path} --config-dir=#{config_dir}"
       exit system("java -cp #{jar_file} s3.website.Push #{args}")
     }
   end
