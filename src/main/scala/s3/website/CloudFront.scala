@@ -68,9 +68,15 @@ object CloudFront {
   def awsCloudFrontClient(config: Config) =
     new AmazonCloudFrontClient(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport]): Seq[InvalidationBatch] =
+  def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] =
     pushSuccessReports
       .map("/" + _.s3Key) // CloudFront keys always have the slash in front
+      .map { path =>
+        if (config.cloudfront_invalidate_root.exists(_ == true))
+          path.replaceFirst("/index.html$", "/")
+        else
+          path
+      }
       .grouped(1000) // CloudFront supports max 1000 invalidations in one request (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html#InvalidationLimits)
       .map { batchKeys =>
         new InvalidationBatch() withPaths

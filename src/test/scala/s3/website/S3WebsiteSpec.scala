@@ -114,6 +114,17 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "cloudfront_invalidate_root: true" should {
+    "convert CloudFront invalidation paths with the '/index.html' suffix into '/'"  in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z"), cloudfront_invalidate_root = Some(true)),
+        localFiles = "index.html" :: "articles/index.html" :: Nil
+      )
+      Push.pushSite
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/articles/" :: Nil).sorted)
+    }
+  }
+
   "a site with over 1000 items" should {
     "split the CloudFront invalidation requests into batches of 1000 items" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
