@@ -63,7 +63,7 @@ object Push {
   
   def invalidateCloudFrontItems
     (errorsOrFinishedPushOps: Either[Error, FinishedPushOperations])
-    (implicit config: Config, cloudFrontClientProvider: CloudFrontClientProvider, cloudFrontSleepTimeUnit: TimeUnit): Option[Boolean] = {
+    (implicit config: Config, cloudFrontClientProvider: CloudFrontClientProvider, cloudFrontSleepTimeUnit: TimeUnit): Option[InvalidationSucceeded] = {
     config.cloudfront_distribution_id.map {
       distributionId =>
         val pushSuccessReports = errorsOrFinishedPushOps.fold(
@@ -92,6 +92,8 @@ object Push {
           true
     }
   }
+
+  type InvalidationSucceeded = Boolean
 
   def afterPushFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): ExitCode = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
