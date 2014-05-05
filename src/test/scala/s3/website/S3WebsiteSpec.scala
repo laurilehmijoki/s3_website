@@ -19,6 +19,7 @@ import scala.collection.JavaConversions._
 import s3.website.model.NewFile
 import scala.Some
 import com.amazonaws.AmazonServiceException
+import org.apache.commons.codec.digest.DigestUtils.md5Hex
 
 class S3WebsiteSpec extends Specification {
 
@@ -26,7 +27,7 @@ class S3WebsiteSpec extends Specification {
     "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFilesAndContent(
         config = defaultConfig.copy(gzip = Some(Left(true))),
-        filesWithContent = ("styles.css", "<h1>hi again</h1>") :: Nil
+        localFilesWithContent = ("styles.css", "<h1>hi again</h1>") :: Nil
       )
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
       Push.pushSite
@@ -36,7 +37,7 @@ class S3WebsiteSpec extends Specification {
     "not update a gzipped S3 object if the contents has not changed" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFilesAndContent(
         config = defaultConfig.copy(gzip = Some(Left(true))),
-        filesWithContent = ("styles.css", "<h1>hi</h1>") :: Nil
+        localFilesWithContent = ("styles.css", "<h1>hi</h1>") :: Nil
       )
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
       Push.pushSite
@@ -51,7 +52,7 @@ class S3WebsiteSpec extends Specification {
     "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFilesAndContent(
         config = defaultConfig.copy(gzip = Some(Right(".xml" :: Nil))),
-        filesWithContent = ("file.xml", "<h1>hi again</h1>") :: Nil
+        localFilesWithContent = ("file.xml", "<h1>hi again</h1>") :: Nil
       )
       setS3Files(S3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
       Push.pushSite
@@ -62,34 +63,41 @@ class S3WebsiteSpec extends Specification {
 
   "push" should {
     "not upload a file if it has not changed" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<div>hello</div>") :: Nil)
-      setS3Files(S3File("index.html", DigestUtils.md5Hex("<div>hello</div>")))
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<div>hello</div>") :: Nil)
+      setS3Files(S3File("index.html", md5Hex("<div>hello</div>")))
       Push.pushSite
       noUploadsOccurred must beTrue
     }
 
     "update a file if it has changed" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>old text</h1>") :: Nil)
-      setS3Files(S3File("index.html", DigestUtils.md5Hex("<h1>new text</h1>")))
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>old text</h1>") :: Nil)
+      setS3Files(S3File("index.html", md5Hex("<h1>new text</h1>")))
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
     "create a file if does not exist on S3" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo("index.html")
+    }
+
+    "delete files that are on S3 but not on local file system" in new SiteDirectory with MockS3 {
+      implicit val site = buildSite()
+      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      Push.pushSite
+      sentDelete must equalTo("old.html")
     }
   }
 
   "push exit status" should {
     "be 0 all uploads succeed" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       Push.pushSite must equalTo(0)
     }
 
     "be 1 if any of the uploads fails" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFilesAndContent(filesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
       Push.pushSite must equalTo(1)
     }
@@ -99,7 +107,7 @@ class S3WebsiteSpec extends Specification {
     "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(exclude_from_upload = Some(Left(".DS_.*?"))),
-        files = ".DS_Store" :: Nil
+        localFiles = ".DS_Store" :: Nil
       )
       Push.pushSite
       noUploadsOccurred must beTrue
@@ -108,7 +116,7 @@ class S3WebsiteSpec extends Specification {
 
   "s3_website.yml file" should {
     "never be uploaded" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(files = "s3_website.yml" :: Nil)
+      implicit val site = siteWithFiles(localFiles = "s3_website.yml" :: Nil)
       Push.pushSite
       noUploadsOccurred must beTrue
     }
@@ -122,7 +130,7 @@ class S3WebsiteSpec extends Specification {
     "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(exclude_from_upload = Some(Right(".DS_.*?" :: "logs" :: Nil))),
-        files = ".DS_Store" :: "logs/test.log" :: Nil
+        localFiles = ".DS_Store" :: "logs/test.log" :: Nil
       )
       Push.pushSite
       noUploadsOccurred must beTrue
@@ -131,25 +139,25 @@ class S3WebsiteSpec extends Specification {
 
   "max-age in config" can {
     "be applied to all files" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(60))), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(60))), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
     "be applied to files that match the glob" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
     "be applied to directories that match the glob" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), files = "assets/lib/jquery.js" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), localFiles = "assets/lib/jquery.js" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
     "not be applied if the glob doesn't match" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
@@ -157,7 +165,7 @@ class S3WebsiteSpec extends Specification {
 
   "s3_reduced_redundancy: true in config" should {
     "result in uploads being marked with reduced redundancy" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(true)), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(true)), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getStorageClass must equalTo("REDUCED_REDUNDANCY")
     }
@@ -165,7 +173,7 @@ class S3WebsiteSpec extends Specification {
 
   "s3_reduced_redundancy: false in config" should {
     "result in uploads being marked with the default storage class" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(false)), files = "index.html" :: Nil)
+      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(false)), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getStorageClass must beNull
     }
@@ -179,9 +187,21 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "redirect in config and an object on the S3 bucket" should {
+    "not result in the S3 object being deleted" in new SiteDirectory with MockS3 {
+      implicit val site = siteWithFiles(
+        localFiles = "index.html" :: Nil,
+        config = defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html")))
+      )
+      setS3Files(S3File("index.php", "md5"))
+      Push.pushSite
+      noDeletesOccurred must beTrue
+    }
+  }
+
   "dotfiles" should {
     "be included in the pushed files" in new SiteDirectory with MockS3 {
-      implicit val site = siteWithFiles(files = ".vimrc" :: Nil)
+      implicit val site = siteWithFiles(localFiles = ".vimrc" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
@@ -219,12 +239,27 @@ class S3WebsiteSpec extends Specification {
       req.getAllValues
     }
 
+    def sentPutObjectRequest = sentPutObjectRequests.ensuring(_.length == 1).head
+
+    def sentDeletes: Seq[S3Key] = {
+      val deleteKey = ArgumentCaptor.forClass(classOf[S3Key])
+      verify(amazonS3Client).deleteObject(Matchers.anyString(), deleteKey.capture())
+      deleteKey.getAllValues
+    }
+
+    def sentDelete = sentDeletes.ensuring(_.length == 1).head
+
+    def noDeletesOccurred = {
+      verify(amazonS3Client, never()).deleteObject(Matchers.anyString(), Matchers.anyString())
+      true // Mockito is based on exceptions
+    }
+
     def noUploadsOccurred = {
       verify(amazonS3Client, never()).putObject(Matchers.any(classOf[PutObjectRequest]))
       true // Mockito is based on exceptions
     }
-
-    def sentPutObjectRequest = sentPutObjectRequests.ensuring(_.length == 1).head
+    
+    type S3Key = String
   }
   
   trait SiteDirectory extends After {
@@ -235,10 +270,10 @@ class S3WebsiteSpec extends Specification {
       FileUtils.forceDelete(siteDir)
     }
 
-    def buildSite(config: Config): Site = Site(siteDir.getAbsolutePath, config)
+    def buildSite(config: Config = defaultConfig): Site = Site(siteDir.getAbsolutePath, config)
 
-    def siteWithFilesAndContent(config: Config = defaultConfig, filesWithContent: Seq[(String, String)]): Site = {
-      filesWithContent.foreach {
+    def siteWithFilesAndContent(config: Config = defaultConfig, localFilesWithContent: Seq[(String, String)]): Site = {
+      localFilesWithContent.foreach {
         case (filePath, content) =>
           val file = new File(siteDir, filePath)
           FileUtils.forceMkdir(file.getParentFile)
@@ -248,8 +283,8 @@ class S3WebsiteSpec extends Specification {
       buildSite(config)
     }
 
-    def siteWithFiles(config: Config = defaultConfig, files: Seq[String]): Site =
-      siteWithFilesAndContent(config, filesWithContent = files.map((_, "file contents")))
+    def siteWithFiles(config: Config = defaultConfig, localFiles: Seq[String]): Site =
+      siteWithFilesAndContent(config, localFilesWithContent = localFiles.map((_, "file contents")))
   }
 
   val defaultConfig = Config(

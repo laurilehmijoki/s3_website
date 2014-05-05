@@ -3,7 +3,15 @@ package s3.website
 import s3.website.model._
 
 object Diff {
-  def resolveDiff(localFiles: Seq[LocalFile], s3Files: Seq[S3File])(implicit config: Config):
+
+  def resolveDeletes(localFiles: Seq[LocalFile], s3Files: Seq[S3File], redirects: Seq[Upload with UploadTypeResolved]): Seq[S3File] = {
+    val keysNotToBeDeleted: Set[String] = (localFiles ++ redirects).map(_.s3Key).toSet
+    s3Files.filterNot { s3ObjectKey =>
+      keysNotToBeDeleted exists(_ == s3ObjectKey.s3Key)
+    }
+  }
+
+  def resolveUploads(localFiles: Seq[LocalFile], s3Files: Seq[S3File])(implicit config: Config):
   Stream[Either[Error, Upload with UploadTypeResolved]] = {
     val remoteS3KeysIndex = s3Files.map(_.s3Key).toSet
     val remoteMd5Index = s3Files.map(_.md5).toSet
@@ -17,7 +25,6 @@ object Diff {
         for (upload <- errorOrUpload.right) yield upload withUploadType Update
     }
   }
-
 
   def isNewUpload(remoteS3KeysIndex: Set[String])(u: Upload) = !remoteS3KeysIndex.exists(_ == u.s3Key)
 

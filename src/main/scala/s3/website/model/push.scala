@@ -39,6 +39,10 @@ object Encoding {
   type MD5 = String
 }
 
+sealed trait S3KeyProvider {
+  def s3Key: String
+}
+
 trait UploadTypeResolved {
   def uploadType: UploadType
 }
@@ -52,7 +56,7 @@ case class LocalFile(
   s3Key: String,
   sourceFile: File,
   encodingOnS3: Option[Either[Gzip, Zopfli]]
-)
+) extends S3KeyProvider
 
 object LocalFile {
   def toUpload(localFile: LocalFile)(implicit config: Config): Either[Error, Upload] = Try {
@@ -155,7 +159,7 @@ object Redirect extends UploadType {
 case class Upload(
   s3Key: String,
   essence: Either[Redirect, UploadBody]
-) {
+) extends S3KeyProvider {
 
   def withUploadType(ut: UploadType) =
     new Upload(s3Key, essence) with UploadTypeResolved {

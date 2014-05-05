@@ -8,11 +8,14 @@ import scala.collection.JavaConversions._
 import scala.util.Try
 import com.amazonaws.AmazonClientException
 import scala.util.Success
-import scala.util.Failure
 import scala.Some
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import s3.website.model.{UserError, IOError}
-import s3.website.S3.{S3ClientProvider, SuccessfulUpload, FailedUpload}
+import s3.website.model.UserError
+import s3.website.S3._
+import scala.util.Failure
+import s3.website.model.IOError
+import s3.website.model.UserError
+import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.FailedUpload
 import scala.util.Failure
@@ -20,7 +23,6 @@ import scala.Some
 import s3.website.model.IOError
 import scala.util.Success
 import s3.website.model.UserError
-import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 
 class S3(implicit s3Client: S3ClientProvider) {
 
@@ -33,6 +35,19 @@ class S3(implicit s3Client: S3ClientProvider) {
     } recover {
       case error =>
         val report = FailedUpload(upload.s3Key, error)
+        println(report.reportMessage)
+        Left(report)
+    }
+
+  def delete(s3Key: String)(implicit config: Config, executor: ExecutionContextExecutor): Future[Either[FailedDelete, SuccessfulDelete]] =
+    Future {
+      s3Client(config) deleteObject(config.s3_bucket, s3Key)
+      val report = SuccessfulDelete(s3Key)
+      println(report.reportMessage)
+      Right(report)
+    } recover {
+      case error =>
+        val report = FailedDelete(s3Key, error)
         println(report.reportMessage)
         Left(report)
     }
@@ -89,11 +104,14 @@ object S3 {
       summaries
   }
 
-  trait UploadReport {
+  sealed trait PushItemReport {
     def reportMessage: String
   }
 
-  case class SuccessfulUpload(upload: Upload with UploadTypeResolved) extends UploadReport {
+  sealed trait PushFailureReport extends PushItemReport
+  sealed trait PushSuccessReport extends PushItemReport
+
+  case class SuccessfulUpload(upload: Upload with UploadTypeResolved) extends PushSuccessReport {
     def reportMessage =
       upload.uploadType match {
         case NewFile  => s"Created ${upload.s3Key}"
@@ -102,8 +120,16 @@ object S3 {
       }
   }
 
-  case class FailedUpload(s3Key: String, error: Throwable) extends UploadReport {
+  case class SuccessfulDelete(s3Key: String) extends PushSuccessReport {
+    def reportMessage = s"Deleted $s3Key"
+  }
+
+  case class FailedUpload(s3Key: String, error: Throwable) extends PushFailureReport {
     def reportMessage = s"Failed to upload $s3Key (${error.getMessage})"
+  }
+
+  case class FailedDelete(s3Key: String, error: Throwable) extends PushFailureReport {
+    def reportMessage = s"Failed to delete $s3Key (${error.getMessage})"
   }
 
   type S3ClientProvider = (Config) => AmazonS3
