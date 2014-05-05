@@ -103,6 +103,14 @@ class S3WebsiteSpec extends Specification {
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/test.css" :: "/articles/index.html" :: Nil).sorted)
     }
 
+    "not send CloudFront invalidation requests on redirect objects" in new SiteDirectory with MockAWS {
+      implicit val site = buildSite(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z"), redirects = Some(Map("/index.php" -> "index.html")))
+      )
+      Push.pushSite
+      noInvalidationsOccurred must beTrue
+    }
+
     "retry CloudFront responds with TooManyInvalidationsInProgressException" in new SiteDirectory with MockAWS {
       setTooManyInvalidationsInProgress(4)
       implicit val site = siteWithFiles(
@@ -272,6 +280,12 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
+
+    "result in max-age=0 Cache-Control header on the object" in new SiteDirectory with MockAWS {
+      implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=0, no-cache")
+    }
   }
 
   "redirect in config and an object on the S3 bucket" should {
@@ -308,6 +322,11 @@ class S3WebsiteSpec extends Specification {
     }
 
     def sentInvalidationRequest = sentInvalidationRequests.ensuring(_.length == 1).head
+
+    def noInvalidationsOccurred = {
+      verify(amazonCloudFrontClient, Mockito.never()).createInvalidation(Matchers.any(classOf[CreateInvalidationRequest]))
+      true // Mockito is based on exceptions
+    }
 
     def setTooManyInvalidationsInProgress(attemptWhenInvalidationSucceeds: Int) {
       var callCount = 0

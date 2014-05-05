@@ -53,6 +53,11 @@ class S3(implicit s3Client: S3ClientProvider) {
         req.setMetadata({
           val md = new ObjectMetadata()
           md.setContentLength(0) // Otherwise the AWS SDK will log a warning
+          /*
+           * Instruct HTTP clients to always re-check the redirect. The 301 status code may override this, though.
+           * This is for the sake of simplicity.
+           */
+          md.setCacheControl("max-age=0")
           md
         })
         req
