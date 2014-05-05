@@ -114,6 +114,19 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "a site with over 1000 items" should {
+    "split the CloudFront invalidation requests into batches of 1000 items" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = (1 to 1002).map { i => s"file-$i"}
+      )
+      Push.pushSite
+      sentInvalidationRequests.length must equalTo(2)
+      sentInvalidationRequests(0).getInvalidationBatch.getPaths.getItems.length must equalTo(1000)
+      sentInvalidationRequests(1).getInvalidationBatch.getPaths.getItems.length must equalTo(2)
+    }
+  }
+
   "push exit status" should {
     "be 0 all uploads succeed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
