@@ -4,6 +4,14 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ## 2.0.0
 
+This release contains backward breaking changes. Please read the section below
+for more info.
+
+### Java is now required
+
+* The `push` command is now written in Scala. This means that you need Java 1.6
+  or above to run the command `s3_website push`.
+
 ### Removed features
 
 * `extensionless_mime_type`
