@@ -103,7 +103,9 @@ object S3 {
   }
 
   sealed trait PushFailureReport extends PushItemReport
-  sealed trait PushSuccessReport extends PushItemReport
+  sealed trait PushSuccessReport extends PushItemReport {
+    def s3Key: String
+  }
 
   case class SuccessfulUpload(upload: Upload with UploadTypeResolved) extends PushSuccessReport {
     def reportMessage =
@@ -112,6 +114,8 @@ object S3 {
         case Update   => s"Updated ${upload.s3Key}"
         case Redirect => s"Redirecting ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
       }
+
+    def s3Key = upload.s3Key
   }
 
   case class SuccessfulDelete(s3Key: String) extends PushSuccessReport {

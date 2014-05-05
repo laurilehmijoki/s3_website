@@ -19,12 +19,22 @@ import s3.website.Implicits._
 import s3.website.model.Update
 import s3.website.model.NewFile
 import s3.website.S3.PushSuccessReport
-import s3.website.S3.FailedUpload
 import scala.collection.mutable.ArrayBuffer
+import s3.website.CloudFront.{SuccessfulInvalidation, FailedInvalidation, CloudFrontClientProvider, toInvalidationBatches}
+import s3.website.S3.SuccessfulDelete
+import s3.website.CloudFront.SuccessfulInvalidation
+import s3.website.S3.SuccessfulUpload
+import s3.website.CloudFront.FailedInvalidation
 
 object Push {
 
-  def pushSite(implicit site: Site, executor: ExecutionContextExecutor, s3ClientProvider: S3ClientProvider = S3.awsS3Client): Int = {
+  def pushSite(
+                implicit site: Site,
+                executor: ExecutionContextExecutor,
+                s3ClientProvider: S3ClientProvider = S3.awsS3Client,
+                cloudFrontClientProvider: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
+                cloudFrontSleepTimeUnit: TimeUnit = MINUTES
+                ): Int = {
     println(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
 
     val errorsOrReports = for {
@@ -41,20 +51,53 @@ object Push {
         .map { errorOrUpload => errorOrUpload.right.map(new S3() upload ) }
         .par
       uploadReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
-      val z = uploadReports ++ deleteReports
-      z
+      uploadReports ++ deleteReports
     }
-    val errorsOrFinishedUploads: Either[Error, FinishedPushOperations] = errorsOrReports.right map {
+    val errorsOrFinishedPushOps: Either[Error, FinishedPushOperations] = errorsOrReports.right map {
       uploadReports => awaitForUploads(uploadReports)
     }
-    afterUploadsFinished(errorsOrFinishedUploads)
+    val invalidationSucceeded = invalidateCloudFrontItems(errorsOrFinishedPushOps)
+    
+    afterPushFinished(errorsOrFinishedPushOps, invalidationSucceeded)
+  }
+  
+  def invalidateCloudFrontItems
+    (errorsOrFinishedPushOps: Either[Error, FinishedPushOperations])
+    (implicit config: Config, cloudFrontClientProvider: CloudFrontClientProvider, cloudFrontSleepTimeUnit: TimeUnit): Option[Boolean] = {
+    config.cloudfront_distribution_id.map {
+      distributionId =>
+        val pushSuccessReports = errorsOrFinishedPushOps.fold(
+          errors => Nil,
+          finishedPushOps => {
+            finishedPushOps.map {
+              ops =>
+                for {
+                  failedOrSucceededPushes <- ops.right
+                  successfulPush <- failedOrSucceededPushes.right
+                } yield successfulPush
+            }.foldLeft(Seq(): Seq[PushSuccessReport]) {
+              (reports, failOrSucc) =>
+                failOrSucc.fold(
+                  _ => reports,
+                  (pushSuccessReport: PushSuccessReport) => reports :+ pushSuccessReport
+                )
+            }
+          }
+        )
+        val invalidationResults: Seq[Either[FailedInvalidation, SuccessfulInvalidation]] =
+          toInvalidationBatches(pushSuccessReports) map (new CloudFront().invalidate(_, distributionId))
+        if (invalidationResults.exists(_.isLeft))
+          false // If one of the invalidations failed, mark the whole process as failed
+        else
+          true
+    }
   }
 
-  def afterUploadsFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations])(implicit site: Site): Int = {
+  def afterPushFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): Int = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
       val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
       println(s"$pushCounts")
-      println(s"Go visit: http://${site.config.s3_bucket}.${site.config.s3_endpoint.s3WebsiteHostname}")
+      println(s"Go visit: http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
     }
     errorsOrFinishedUploads.left foreach (err => println(s"Failed to push the site: ${err.message}"))
     errorsOrFinishedUploads.fold(
@@ -66,6 +109,8 @@ object Push {
             if (failedOrSucceededUpload.isLeft) 1 else 0
         )
       } min 1
+    ) max invalidationSucceeded.fold(0)(allInvalidationsSucceeded =>
+      if (allInvalidationsSucceeded) 0 else 1
     )
   }
 
@@ -106,7 +151,13 @@ object Push {
         reportClauses.mkString(" ")
     }
 
-  case class PushCounts(updates: Int = 0, newFiles: Int = 0, failures: Int = 0, redirects: Int = 0, deletes: Int = 0)
+  case class PushCounts(
+                         updates: Int = 0, 
+                         newFiles: Int = 0, 
+                         failures: Int = 0, 
+                         redirects: Int = 0, 
+                         deletes: Int = 0
+                         )
   type FinishedPushOperations = ParSeq[Either[model.Error, Either[PushFailureReport, PushSuccessReport]]]
   type PushReports = ParSeq[Either[model.Error, Future[Either[PushFailureReport, PushSuccessReport]]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
