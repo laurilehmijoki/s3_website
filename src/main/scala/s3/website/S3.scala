@@ -57,7 +57,7 @@ class S3(implicit s3Client: S3ClientProvider) {
            * Instruct HTTP clients to always re-check the redirect. The 301 status code may override this, though.
            * This is for the sake of simplicity.
            */
-          md.setCacheControl("max-age=0")
+          md.setCacheControl("max-age=0, no-cache")
           md
         })
         req
