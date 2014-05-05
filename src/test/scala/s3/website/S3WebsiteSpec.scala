@@ -7,7 +7,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.codec.digest.DigestUtils
 import java.io.File
 import scala.util.Random
-import org.mockito.{Matchers, ArgumentCaptor}
+import org.mockito.{Mockito, Matchers, ArgumentCaptor}
 import org.mockito.Mockito._
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model._
@@ -20,11 +20,16 @@ import s3.website.model.NewFile
 import scala.Some
 import com.amazonaws.AmazonServiceException
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
+import s3.website.CloudFront.CloudFrontClientProvider
+import com.amazonaws.services.cloudfront.AmazonCloudFront
+import com.amazonaws.services.cloudfront.model.{CreateInvalidationResult, CreateInvalidationRequest, TooManyInvalidationsInProgressException}
+import org.mockito.stubbing.Answer
+import org.mockito.invocation.InvocationOnMock
 
 class S3WebsiteSpec extends Specification {
 
   "gzip: true" should {
-    "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
+    "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(
         config = defaultConfig.copy(gzip = Some(Left(true))),
         localFilesWithContent = ("styles.css", "<h1>hi again</h1>") :: Nil
@@ -34,7 +39,7 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getKey must equalTo("styles.css")
     }
 
-    "not update a gzipped S3 object if the contents has not changed" in new SiteDirectory with MockS3 {
+    "not update a gzipped S3 object if the contents has not changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(
         config = defaultConfig.copy(gzip = Some(Left(true))),
         localFilesWithContent = ("styles.css", "<h1>hi</h1>") :: Nil
@@ -49,7 +54,7 @@ class S3WebsiteSpec extends Specification {
     gzip:
       - .xml
   """ should {
-    "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockS3 {
+    "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(
         config = defaultConfig.copy(gzip = Some(Right(".xml" :: Nil))),
         localFilesWithContent = ("file.xml", "<h1>hi again</h1>") :: Nil
@@ -62,49 +67,85 @@ class S3WebsiteSpec extends Specification {
 
 
   "push" should {
-    "not upload a file if it has not changed" in new SiteDirectory with MockS3 {
+    "not upload a file if it has not changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<div>hello</div>") :: Nil)
       setS3Files(S3File("index.html", md5Hex("<div>hello</div>")))
       Push.pushSite
       noUploadsOccurred must beTrue
     }
 
-    "update a file if it has changed" in new SiteDirectory with MockS3 {
+    "update a file if it has changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>old text</h1>") :: Nil)
       setS3Files(S3File("index.html", md5Hex("<h1>new text</h1>")))
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
-    "create a file if does not exist on S3" in new SiteDirectory with MockS3 {
+    "create a file if does not exist on S3" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
-    "delete files that are on S3 but not on local file system" in new SiteDirectory with MockS3 {
+    "delete files that are on S3 but not on local file system" in new SiteDirectory with MockAWS {
       implicit val site = buildSite()
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
       Push.pushSite
       sentDelete must equalTo("old.html")
     }
+    
+    "invalidate the CloudFront items" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "test.css" :: "articles/index.html" :: Nil
+      )
+      Push.pushSite
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/test.css" :: "/articles/index.html" :: Nil).sorted)
+    }
+
+    "retry CloudFront responds with TooManyInvalidationsInProgressException" in new SiteDirectory with MockAWS {
+      setTooManyInvalidationsInProgress(4)
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "test.css" :: Nil
+      )
+      Push.pushSite must equalTo(0) // The retries should finally result in a success
+      sentInvalidationRequests.length must equalTo(4)
+    }
   }
 
   "push exit status" should {
-    "be 0 all uploads succeed" in new SiteDirectory with MockS3 {
+    "be 0 all uploads succeed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       Push.pushSite must equalTo(0)
     }
 
-    "be 1 if any of the uploads fails" in new SiteDirectory with MockS3 {
+    "be 1 if any of the uploads fails" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
+      Push.pushSite must equalTo(1)
+    }
+
+    "be 0 if CloudFront invalidations and uploads succeed"in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "test.css" :: "articles/index.html" :: Nil
+      )
+      Push.pushSite must equalTo(0)
+    }
+
+    "be 1 if CloudFront invalidation fails"in new SiteDirectory with MockAWS {
+      setCloudFrontAsInternallyBroken()
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "test.css" :: "articles/index.html" :: Nil
+      )
       Push.pushSite must equalTo(1)
     }
   }
 
   "s3_website.yml file" should {
-    "never be uploaded" in new SiteDirectory with MockS3 {
+    "never be uploaded" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(localFiles = "s3_website.yml" :: Nil)
       Push.pushSite
       noUploadsOccurred must beTrue
@@ -112,7 +153,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "exclude_from_upload: string" should {
-    "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
+    "result in matching files not being uploaded" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(exclude_from_upload = Some(Left(".DS_.*?"))),
         localFiles = ".DS_Store" :: Nil
@@ -127,7 +168,7 @@ class S3WebsiteSpec extends Specification {
        - regex
        - another_exclusion
   """ should {
-    "result in matching files not being uploaded" in new SiteDirectory with MockS3 {
+    "result in matching files not being uploaded" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(exclude_from_upload = Some(Right(".DS_.*?" :: "logs" :: Nil))),
         localFiles = ".DS_Store" :: "logs/test.log" :: Nil
@@ -138,7 +179,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "ignore_on_server: value" should {
-    "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockS3 {
+    "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockAWS {
       implicit val site = buildSite(config = defaultConfig.copy(ignore_on_server = Some(Left("logs"))))
       setS3Files(S3File("logs/log.txt", ""))
       Push.pushSite
@@ -151,7 +192,7 @@ class S3WebsiteSpec extends Specification {
        - regex
        - another_ignore
   """ should {
-    "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockS3 {
+    "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockAWS {
       implicit val site = buildSite(config = defaultConfig.copy(ignore_on_server = Some(Right(".*txt" :: Nil))))
       setS3Files(S3File("logs/log.txt", ""))
       Push.pushSite
@@ -160,25 +201,25 @@ class S3WebsiteSpec extends Specification {
   }
 
   "max-age in config" can {
-    "be applied to all files" in new SiteDirectory with MockS3 {
+    "be applied to all files" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(60))), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
-    "be applied to files that match the glob" in new SiteDirectory with MockS3 {
+    "be applied to files that match the glob" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
-    "be applied to directories that match the glob" in new SiteDirectory with MockS3 {
+    "be applied to directories that match the glob" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), localFiles = "assets/lib/jquery.js" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
-    "not be applied if the glob doesn't match" in new SiteDirectory with MockS3 {
+    "not be applied if the glob doesn't match" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
@@ -186,7 +227,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "s3_reduced_redundancy: true in config" should {
-    "result in uploads being marked with reduced redundancy" in new SiteDirectory with MockS3 {
+    "result in uploads being marked with reduced redundancy" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(true)), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getStorageClass must equalTo("REDUCED_REDUNDANCY")
@@ -194,7 +235,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "s3_reduced_redundancy: false in config" should {
-    "result in uploads being marked with the default storage class" in new SiteDirectory with MockS3 {
+    "result in uploads being marked with the default storage class" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(false)), localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getStorageClass must beNull
@@ -202,7 +243,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "redirect in config" should {
-    "result in a redirect instruction that is sent to AWS" in new SiteDirectory with MockS3 {
+    "result in a redirect instruction that is sent to AWS" in new SiteDirectory with MockAWS {
       implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
       Push.pushSite
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
@@ -210,7 +251,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "redirect in config and an object on the S3 bucket" should {
-    "not result in the S3 object being deleted" in new SiteDirectory with MockS3 {
+    "not result in the S3 object being deleted" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         localFiles = "index.html" :: Nil,
         config = defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html")))
@@ -222,14 +263,47 @@ class S3WebsiteSpec extends Specification {
   }
 
   "dotfiles" should {
-    "be included in the pushed files" in new SiteDirectory with MockS3 {
+    "be included in the pushed files" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(localFiles = ".vimrc" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
   }
+  
+  trait MockAWS extends MockS3 with MockCloudFront with Scope
+  
+  trait MockCloudFront {
+    val amazonCloudFrontClient = mock(classOf[AmazonCloudFront])
+    implicit val cfClientProvider: CloudFrontClientProvider = _ => amazonCloudFrontClient
+    implicit val cloudFrontSleepTimeUnit: TimeUnit = MILLISECONDS
 
-  trait MockS3 extends Scope {
+    def sentInvalidationRequests: Seq[CreateInvalidationRequest] = {
+      val createInvalidationReq = ArgumentCaptor.forClass(classOf[CreateInvalidationRequest])
+      verify(amazonCloudFrontClient, Mockito.atLeastOnce()).createInvalidation(createInvalidationReq.capture())
+      createInvalidationReq.getAllValues
+    }
+
+    def sentInvalidationRequest = sentInvalidationRequests.ensuring(_.length == 1).head
+
+    def setTooManyInvalidationsInProgress(attemptWhenInvalidationSucceeds: Int) {
+      var callCount = 0
+      doAnswer(new Answer[CreateInvalidationResult] {
+        override def answer(invocation: InvocationOnMock): CreateInvalidationResult = {
+          callCount += 1
+          if (callCount < attemptWhenInvalidationSucceeds)
+            throw new TooManyInvalidationsInProgressException("just too many, man")
+          else
+            mock(classOf[CreateInvalidationResult])
+        }
+      }).when(amazonCloudFrontClient).createInvalidation(Matchers.anyObject())
+    }
+
+    def setCloudFrontAsInternallyBroken() {
+      when(amazonCloudFrontClient.createInvalidation(Matchers.anyObject())).thenThrow(new AmazonServiceException("CloudFront is down"))
+    }
+  }
+  
+  trait MockS3 {
     val amazonS3Client = mock(classOf[AmazonS3])
     implicit val s3ClientProvider: S3ClientProvider = _ => amazonS3Client
     val s3ObjectListing = new ObjectListing
@@ -280,8 +354,8 @@ class S3WebsiteSpec extends Specification {
       verify(amazonS3Client, never()).putObject(Matchers.any(classOf[PutObjectRequest]))
       true // Mockito is based on exceptions
     }
-    
-    type S3Key = String
+
+    type S3Key = String 
   }
   
   trait SiteDirectory extends After {
