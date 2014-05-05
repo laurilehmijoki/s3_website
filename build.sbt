@@ -29,3 +29,5 @@ libraryDependencies += "org.specs2" %% "specs2" % "2.3.11" % "test"
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 jarName in assembly := "s3_website.jar"
+
+test in assembly := {}
