@@ -145,7 +145,7 @@ object Push {
         val reportClauses: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
         if (updates > 0)   reportClauses += s"Updated $updates file(s)."
         if (newFiles > 0)  reportClauses += s"Created $newFiles file(s)."
-        if (failures > 0)  reportClauses += s"$failures operations failed." // This includes both failed uploads and deletes.
+        if (failures > 0)  reportClauses += s"$failures operation(s) failed." // This includes both failed uploads and deletes.
         if (redirects > 0) reportClauses += s"Applied $redirects redirect(s)."
         if (deletes > 0)   reportClauses += s"Deleted $deletes files(s)."
         reportClauses.mkString(" ")
