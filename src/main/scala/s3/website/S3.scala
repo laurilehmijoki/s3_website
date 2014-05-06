@@ -26,11 +26,8 @@ class S3(implicit s3Client: S3ClientProvider) {
       val report = SuccessfulUpload(upload)
       println(report.reportMessage)
       Right(report)
-    } recover {
-      case error =>
-        val report = FailedUpload(upload.s3Key, error)
-        println(report.reportMessage)
-        Left(report)
+    } recover usingErrorHandler { error =>
+      FailedUpload(upload.s3Key, error)
     }
 
   def delete(s3Key: String)(implicit config: Config, executor: ExecutionContextExecutor): Future[Either[FailedDelete, SuccessfulDelete]] =
@@ -39,12 +36,16 @@ class S3(implicit s3Client: S3ClientProvider) {
       val report = SuccessfulDelete(s3Key)
       println(report.reportMessage)
       Right(report)
-    } recover {
-      case error =>
-        val report = FailedDelete(s3Key, error)
-        println(report.reportMessage)
-        Left(report)
+    } recover usingErrorHandler { error =>
+      FailedDelete(s3Key, error)
     }
+
+  def usingErrorHandler[T <: PushFailureReport, F <: PushFailureReport](f: (Throwable) => T): PartialFunction[Throwable, Either[T, F]] = {
+    case error =>
+      val report = f(error)
+      println(report.reportMessage)
+      Left(report)
+  }
 
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
     upload.essence.fold(
