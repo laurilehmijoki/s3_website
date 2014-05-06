@@ -1,3 +1,3 @@
-s3_id: foo 
-s3_secret: foo
+s3_id: foo
+s3_secret: bar
 s3_bucket: s3-website-test.net

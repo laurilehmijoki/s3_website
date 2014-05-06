@@ -7,6 +7,7 @@ Feature: upload a Nanoc site
     Then the output should contain
       """
       Deploying features/support/test_site_dirs/nanoc.ws/public/output/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       Uploading 2 new file(s)
       """

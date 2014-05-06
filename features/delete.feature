@@ -11,6 +11,7 @@ Feature: remove an S3 website page from S3
     Then the output should equal
       """
       Deploying features/support/test_site_dirs/unpublish-a-post.com/_site/* to s3-website-test.net
+      Downloading list of the objects in a bucket ... done
       Calculating diff ... done
       No new or changed files to upload
       Delete index.html: Success!
