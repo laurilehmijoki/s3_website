@@ -78,7 +78,7 @@ class S3(implicit s3Client: S3ClientProvider) {
 object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def resolveS3Files(implicit config: Config, s3ClientProvider: S3ClientProvider): Either[Error, Seq[S3File]] = Try {
+  def resolveS3Files(implicit config: Config, s3ClientProvider: S3ClientProvider): Either[Error, Stream[S3File]] = Try {
     objectSummaries()
   } match {
     case Success(remoteFiles) =>
@@ -89,16 +89,16 @@ object S3 {
       Left(IOError(error))
   }
 
-  def objectSummaries(nextMarker: Option[String] = None)(implicit config: Config, s3ClientProvider: S3ClientProvider): Seq[S3File] = {
+  def objectSummaries(nextMarker: Option[String] = None)(implicit config: Config, s3ClientProvider: S3ClientProvider): Stream[S3File] = {
     val objects: ObjectListing = s3ClientProvider(config).listObjects({
       val req = new ListObjectsRequest()
       req.setBucketName(config.s3_bucket)
       nextMarker.foreach(req.setMarker)
       req
     })
-    val summaries = objects.getObjectSummaries map (S3File(_))
+    val summaries = (objects.getObjectSummaries map (S3File(_))).toStream
     if (objects.isTruncated)
-      summaries ++ objectSummaries(Some(objects.getNextMarker))
+      summaries #::: objectSummaries(Some(objects.getNextMarker)) // Call the next Get Bucket request lazily
     else
       summaries
   }
