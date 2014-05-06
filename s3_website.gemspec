@@ -2,8 +2,8 @@
 $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
-  s.name        = "s3_website"
-  s.version     = "1.7.6"
+  s.name        = "s3_website_monadic"
+  s.version     = "0.0.2"
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   }
   s.license     = 'MIT'
 
-  s.default_executable = %q{s3_website}
+  s.default_executable = %q{s3_website_monadic}
 
   s.add_dependency 'aws-sdk', '~> 1'
   s.add_dependency 'filey-diff', '~> 2.0.0'
