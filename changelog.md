@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.7.5
+
+* Improve significantly the performance of the push command.
+
+    See <https://github.com/laurilehmijoki/s3_website/pull/88> for more info.
+
 ## 1.7.4
 
 * Fix issue https://github.com/laurilehmijoki/s3_website/issues/83
