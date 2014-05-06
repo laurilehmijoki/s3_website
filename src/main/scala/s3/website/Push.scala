@@ -43,7 +43,7 @@ object Push {
       val redirects = Redirect.resolveRedirects
       val deleteReports: PushReports = utils toParSeq resolveDeletes(localFiles, s3Files, redirects)
         .map { s3File => new S3() delete s3File.s3Key }
-        .map { Right(_) /* To make delete reports type-compatible with upload reports */ }
+        .map { Right(_) } // To make delete reports type-compatible with upload reports
       val uploadReports: PushReports = utils toParSeq (redirects.toStream.map(Right(_)) ++ resolveUploads(localFiles, s3Files))
         .map { errorOrUpload => errorOrUpload.right.map(new S3() upload ) }
       uploadReports ++ deleteReports
