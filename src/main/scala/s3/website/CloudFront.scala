@@ -15,6 +15,8 @@ import scala.util.Failure
 import s3.website.CloudFront.SuccessfulInvalidation
 import scala.util.Success
 import s3.website.CloudFront.FailedInvalidation
+import java.net.{URI, URLEncoder}
+import java.net.URLEncoder.encode
 
 class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUnit) {
 
@@ -82,7 +84,14 @@ object CloudFront {
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] =
     pushSuccessReports
       .filterNot(isRedirect) // Assume that redirect objects are never cached.
-      .map("/" + _.s3Key) // CloudFront keys always have the slash in front
+      .map(report =>
+        new URI(
+          "http",
+          "cloudfront", // We want to use the encoder in the URI class. These must be passed in.
+          "/" + report.s3Key,  // CloudFront keys have the slash in front
+          null
+        ).toURL.getPath // The URL class encodes the unsafe characters
+      )
       .map { path =>
         if (config.cloudfront_invalidate_root.exists(_ == true))
           path.replaceFirst("/index.html$", "/")
