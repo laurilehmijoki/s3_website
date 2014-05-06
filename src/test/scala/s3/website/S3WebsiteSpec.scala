@@ -93,7 +93,9 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite
       sentDelete must equalTo("old.html")
     }
-    
+  }
+
+  "push with CloudFront" should {
     "invalidate the CloudFront items" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
