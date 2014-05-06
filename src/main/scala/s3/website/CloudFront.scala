@@ -9,6 +9,12 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import s3.website.S3.{SuccessfulUpload, PushSuccessReport}
 import com.amazonaws.auth.BasicAWSCredentials
+import s3.website.Logger._
+import s3.website.S3.SuccessfulUpload
+import scala.util.Failure
+import s3.website.CloudFront.SuccessfulInvalidation
+import scala.util.Success
+import s3.website.CloudFront.FailedInvalidation
 
 class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUnit) {
 
@@ -18,7 +24,7 @@ class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUni
         val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
         cfClient(config).createInvalidation(invalidationReq)
         val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
-        println(s"Invalidated ${result.invalidatedItemsCount} item(s) on the CloudFront distribution $distributionId.")
+        info(result)
         result
       } recoverWith {
         case e: TooManyInvalidationsInProgressException =>
@@ -26,7 +32,7 @@ class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUni
             (fibs drop attempt).head min 15, /* AWS docs way that invalidations complete in 15 minutes */
             sleepUnit
           )
-          println(maxInvalidationsExceededInfo)
+          pending(maxInvalidationsExceededInfo)
           Thread.sleep(duration.toMillis)
           tryInvalidate(attempt + 1)
       }
@@ -35,8 +41,9 @@ class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUni
       case Success(res) =>
         Right(res)
       case Failure(err) =>
-        println(s"Failed to invalidate the CloudFront distribution $distributionId (${err.getMessage})")
-        Left(FailedInvalidation())
+        val report = FailedInvalidation(err)
+        info(report)
+        Left(report)
     }
   }
 
@@ -61,9 +68,13 @@ object CloudFront {
 
   type CloudFrontClientProvider = (Config) => AmazonCloudFront
 
-  case class SuccessfulInvalidation(invalidatedItemsCount: Int)
+  case class SuccessfulInvalidation(invalidatedItemsCount: Int) extends SuccessReport {
+    def reportMessage = s"Invalidated $invalidatedItemsCount item(s) on CloudFront"
+  }
 
-  case class FailedInvalidation()
+  case class FailedInvalidation(error: Throwable) extends FailureReport{
+    def reportMessage = s"Failed to invalidate the CloudFront distribution (${error.getMessage})"
+  }
 
   def awsCloudFrontClient(config: Config) =
     new AmazonCloudFrontClient(new BasicAWSCredentials(config.s3_id, config.s3_secret))

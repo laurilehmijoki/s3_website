@@ -17,6 +17,16 @@ import scala.Some
 import s3.website.model.IOError
 import scala.util.Success
 import s3.website.model.UserError
+import s3.website.Logger._
+import s3.website.S3.SuccessfulUpload
+import s3.website.S3.SuccessfulDelete
+import s3.website.S3.FailedUpload
+import scala.util.Failure
+import scala.Some
+import s3.website.S3.FailedDelete
+import s3.website.model.IOError
+import scala.util.Success
+import s3.website.model.UserError
 
 class S3(implicit s3Client: S3ClientProvider) {
 
@@ -24,7 +34,7 @@ class S3(implicit s3Client: S3ClientProvider) {
     Future {
       s3Client(config) putObject toPutObjectRequest(upload)
       val report = SuccessfulUpload(upload)
-      println(report.reportMessage)
+      info(report)
       Right(report)
     } recover usingErrorHandler { error =>
       FailedUpload(upload.s3Key, error)
@@ -34,7 +44,7 @@ class S3(implicit s3Client: S3ClientProvider) {
     Future {
       s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
-      println(report.reportMessage)
+      info(report)
       Right(report)
     } recover usingErrorHandler { error =>
       FailedDelete(s3Key, error)
@@ -43,7 +53,7 @@ class S3(implicit s3Client: S3ClientProvider) {
   def usingErrorHandler[T <: PushFailureReport, F <: PushFailureReport](f: (Throwable) => T): PartialFunction[Throwable, Either[T, F]] = {
     case error =>
       val report = f(error)
-      println(report.reportMessage)
+      info(report)
       Left(report)
   }
 
@@ -104,12 +114,8 @@ object S3 {
       summaries
   }
 
-  sealed trait PushItemReport {
-    def reportMessage: String
-  }
-
-  sealed trait PushFailureReport extends PushItemReport
-  sealed trait PushSuccessReport extends PushItemReport {
+  sealed trait PushFailureReport extends FailureReport
+  sealed trait PushSuccessReport extends SuccessReport {
     def s3Key: String
   }
 

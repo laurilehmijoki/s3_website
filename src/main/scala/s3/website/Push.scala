@@ -23,6 +23,15 @@ import s3.website.S3.SuccessfulDelete
 import s3.website.CloudFront.SuccessfulInvalidation
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
+import s3.website.Logger._
+import s3.website.S3.SuccessfulDelete
+import s3.website.CloudFront.SuccessfulInvalidation
+import s3.website.S3.SuccessfulUpload
+import s3.website.CloudFront.FailedInvalidation
+import s3.website.S3.SuccessfulDelete
+import s3.website.CloudFront.SuccessfulInvalidation
+import s3.website.S3.SuccessfulUpload
+import s3.website.CloudFront.FailedInvalidation
 
 object Push {
 
@@ -33,7 +42,7 @@ object Push {
                 cloudFrontClientProvider: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
                 cloudFrontSleepTimeUnit: TimeUnit = MINUTES
                 ): ExitCode = {
-    println(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
+    info(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val utils: Utils = new Utils
 
     val errorsOrReports = for {
@@ -93,11 +102,10 @@ object Push {
   def afterPushFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): ExitCode = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
       val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
-      println(s"$pushCounts")
-      println(s"Go visit: http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
+      info(s"Summary: $pushCounts")
     }
-    errorsOrFinishedUploads.left foreach (err => println(s"Failed to push the site: ${err.message}"))
-    errorsOrFinishedUploads.fold(
+    errorsOrFinishedUploads.left foreach (err => fail(s"Encountered error: ${err.message}"))
+    val exitCode = errorsOrFinishedUploads.fold(
       _ => 1,
       finishedUploads => finishedUploads.foldLeft(0) { (memo, finishedUpload) =>
         memo + finishedUpload.fold(
@@ -109,6 +117,12 @@ object Push {
     ) max invalidationSucceeded.fold(0)(allInvalidationsSucceeded =>
       if (allInvalidationsSucceeded) 0 else 1
     )
+
+    if (exitCode == 0)
+      info(s"Successfully pushed the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
+    else
+      fail(s"Failed to push the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
+    exitCode
   }
 
   def awaitForUploads(uploadReports: PushReports)(implicit executor: ExecutionContextExecutor): FinishedPushOperations =
@@ -180,7 +194,7 @@ object Push {
         threadPool.shutdownNow()
         pushStatus
     }
-    errorOrPushStatus.left foreach (err => println(s"Could not load the site: ${err.message}"))
+    errorOrPushStatus.left foreach (err => fail(s"Could not load the site: ${err.message}"))
     System.exit(errorOrPushStatus.fold(_ => 1, pushStatus => pushStatus))
   }
 }
