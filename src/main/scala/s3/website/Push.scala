@@ -2,8 +2,6 @@ package s3.website
 
 import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
 import scala.concurrent.duration._
 import com.lexicalscope.jewel.cli.CliFactory
 import scala.language.postfixOps
@@ -20,7 +18,7 @@ import s3.website.model.Update
 import s3.website.model.NewFile
 import s3.website.S3.PushSuccessReport
 import scala.collection.mutable.ArrayBuffer
-import s3.website.CloudFront.{SuccessfulInvalidation, FailedInvalidation, CloudFrontClientProvider, toInvalidationBatches}
+import s3.website.CloudFront.{CloudFrontClientProvider, toInvalidationBatches}
 import s3.website.S3.SuccessfulDelete
 import s3.website.CloudFront.SuccessfulInvalidation
 import s3.website.S3.SuccessfulUpload
@@ -36,21 +34,18 @@ object Push {
                 cloudFrontSleepTimeUnit: TimeUnit = MINUTES
                 ): ExitCode = {
     println(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
+    val utils: Utils = new Utils
 
     val errorsOrReports = for {
       s3Files    <- resolveS3Files.right
       localFiles <- resolveLocalFiles.right
     } yield {
       val redirects = Redirect.resolveRedirects
-      val deleteReports: PushReports = resolveDeletes(localFiles, s3Files, redirects)
+      val deleteReports: PushReports = utils toParSeq resolveDeletes(localFiles, s3Files, redirects)
         .map { s3File => new S3() delete s3File.s3Key }
         .map { Right(_) /* To make delete reports type-compatible with upload reports */ }
-        .par
-      deleteReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
-      val uploadReports: PushReports = (redirects.toStream.map(Right(_)) ++ resolveUploads(localFiles, s3Files))
+      val uploadReports: PushReports = utils toParSeq (redirects.toStream.map(Right(_)) ++ resolveUploads(localFiles, s3Files))
         .map { errorOrUpload => errorOrUpload.right.map(new S3() upload ) }
-        .par
-      uploadReports.tasksupport_=(new ForkJoinTaskSupport(new ForkJoinPool(site.config.concurrency_level)))
       uploadReports ++ deleteReports
     }
     val errorsOrFinishedPushOps: Either[Error, FinishedPushOperations] = errorsOrReports.right map {
