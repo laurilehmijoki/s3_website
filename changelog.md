@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.7.6
+
+* Remove a test setting from *Gemfile*
+
 ## 1.7.5
 
 * Improve significantly the performance of the push command.
