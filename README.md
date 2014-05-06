@@ -452,6 +452,7 @@ Contributors (in alphabetical order)
 * Michael Bleigh
 * Philip I. Thomas
 * Philippe Creux
+* Piotr Janik
 * Shigeaki Matsumura
 * stanislas
 * Tate Johnson
