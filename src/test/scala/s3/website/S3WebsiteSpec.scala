@@ -122,6 +122,15 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite must equalTo(0) // The retries should finally result in a success
       sentInvalidationRequests.length must equalTo(4)
     }
+
+    "encode unsafe characters in the keys" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "articles/arnold's file.html" :: Nil
+      )
+      Push.pushSite
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
+    }
   }
 
   "cloudfront_invalidate_root: true" should {
