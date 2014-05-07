@@ -26,6 +26,7 @@ import com.amazonaws.services.cloudfront.model.{CreateInvalidationResult, Create
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
 import com.amazonaws.AmazonServiceException.ErrorType
+import java.util.concurrent.atomic.AtomicInteger
 
 class S3WebsiteSpec extends Specification {
 
@@ -435,45 +436,33 @@ class S3WebsiteSpec extends Specification {
 
     val s3 = new S3()
 
-    def uploadFailsAndThenSucceeds(howManyFailures: Int) {
-      var callCount = 0
-      doAnswer(new Answer[PutObjectResult] {
-        override def answer(invocation: InvocationOnMock) = {
-          callCount += 1
-          if (callCount <= howManyFailures)
-            throw new AmazonServiceException("AWS is temporarily down")
-          else
-            mock(classOf[PutObjectResult])
-        }
-      }).when(amazonS3Client).putObject(Matchers.anyObject())
+    def uploadFailsAndThenSucceeds(implicit howManyFailures: Int, callCount: AtomicInteger = new AtomicInteger(0)) {
+      doAnswer(temporaryFailure(classOf[PutObjectResult]))
+        .when(amazonS3Client)
+        .putObject(Matchers.anyObject())
     }
 
-    def deleteFailsAndThenSucceeds(howManyFailures: Int) {
-      var callCount = 0
-      doAnswer(new Answer[DeleteObjectRequest] {
-        override def answer(invocation: InvocationOnMock) = {
-          callCount += 1
-          if (callCount <= howManyFailures)
-            throw new AmazonServiceException("AWS is temporarily down")
-          else
-            mock(classOf[DeleteObjectRequest])
-        }
-      }).when(amazonS3Client).deleteObject(Matchers.anyString(), Matchers.anyString())
+    def deleteFailsAndThenSucceeds(implicit howManyFailures: Int, callCount: AtomicInteger = new AtomicInteger(0)) {
+      doAnswer(temporaryFailure(classOf[DeleteObjectRequest]))
+        .when(amazonS3Client)
+        .deleteObject(Matchers.anyString(), Matchers.anyString())
     }
 
-    def objectListingFailsAndThenSucceeds(howManyFailures: Int) {
-      var callCount = 0
-      doAnswer(new Answer[ObjectListing] {
-        override def answer(invocation: InvocationOnMock) = {
-          callCount += 1
-          if (callCount <= howManyFailures)
-            throw new AmazonServiceException("AWS is temporarily down")
-          else
-            mock(classOf[ObjectListing])
-        }
-      }).when(amazonS3Client).listObjects(Matchers.any(classOf[ListObjectsRequest]))
+    def objectListingFailsAndThenSucceeds(implicit howManyFailures: Int, callCount: AtomicInteger = new AtomicInteger(0)) {
+      doAnswer(temporaryFailure(classOf[ObjectListing]))
+        .when(amazonS3Client)
+        .listObjects(Matchers.any(classOf[ListObjectsRequest]))
     }
 
+    def temporaryFailure[T](clazz: Class[T])(implicit callCount: AtomicInteger, howManyFailures: Int) = new Answer[T] {
+      def answer(invocation: InvocationOnMock) = {
+        callCount.incrementAndGet()
+        if (callCount.get() <= howManyFailures)
+          throw new AmazonServiceException("AWS is temporarily down")
+        else
+          mock(clazz)
+      }
+    }
 
     def asSeenByS3Client(upload: Upload)(implicit config: Config): PutObjectRequest = {
       Await.ready(s3.upload(upload withUploadType NewFile), Duration("1 s"))
