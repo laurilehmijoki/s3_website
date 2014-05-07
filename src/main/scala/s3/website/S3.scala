@@ -11,6 +11,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.S3._
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 import s3.website.Logger._
+import s3.website.Utils._
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.SuccessfulDelete
 import s3.website.S3.FailedUpload
@@ -20,34 +21,50 @@ import s3.website.S3.FailedDelete
 import s3.website.model.IOError
 import scala.util.Success
 import s3.website.model.UserError
+import scala.concurrent.duration.{TimeUnit, Duration}
+import java.util.concurrent.TimeUnit.SECONDS
 
-class S3(implicit s3Client: S3ClientProvider) {
+class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
-  def upload(upload: Upload with UploadTypeResolved)(implicit config: Config, executor: ExecutionContextExecutor): Future[Either[FailedUpload, SuccessfulUpload]] =
+  def upload(upload: Upload with UploadTypeResolved)(implicit a: Attempt = 1, config: Config): S3PushResult =
     Future {
-      s3Client(config) putObject toPutObjectRequest(upload)
+      s3Settings.s3Client(config) putObject toPutObjectRequest(upload)
       val report = SuccessfulUpload(upload)
       info(report)
       Right(report)
-    } recover usingErrorHandler { error =>
-      FailedUpload(upload.s3Key, error)
-    }
+    } recoverWith retry(
+      createReport = error => FailedUpload(upload.s3Key, error),
+      retryAction  = newAttempt => this.upload(upload)(newAttempt, config)
+    )
 
-  def delete(s3Key: String)(implicit config: Config, executor: ExecutionContextExecutor): Future[Either[FailedDelete, SuccessfulDelete]] =
+  def delete(s3Key: String)(implicit a: Attempt = 1, config: Config): S3PushResult =
     Future {
-      s3Client(config) deleteObject(config.s3_bucket, s3Key)
+      s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
       info(report)
       Right(report)
-    } recover usingErrorHandler { error =>
-      FailedDelete(s3Key, error)
-    }
-
-  def usingErrorHandler[T <: PushFailureReport, F <: PushFailureReport](f: (Throwable) => T): PartialFunction[Throwable, Either[T, F]] = {
-    case error =>
-      val report = f(error)
-      info(report)
-      Left(report)
+    } recoverWith retry(
+      createReport = error => FailedDelete(s3Key, error),
+      retryAction  = newAttempt => this.delete(s3Key)(newAttempt, config)
+    )
+      
+  type S3PushResult = Future[Either[PushFailureReport, PushSuccessReport]]
+  
+  type Attempt = Int
+  
+  def retry(createReport: (Throwable) => PushFailureReport, retryAction: (Attempt) => S3PushResult)(implicit attempt: Attempt):
+  PartialFunction[Throwable, S3PushResult] = {
+    case error: Throwable =>
+      val failureReport = createReport(error)
+      if (attempt == 6) {
+        info(failureReport)
+        Future(Left(failureReport))
+      } else {
+        val sleepDuration = Duration(fibs.drop(attempt + 1).head, s3Settings.retrySleepTimeUnit)
+        pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
+        Thread.sleep(sleepDuration.toMillis)
+        retryAction(attempt + 1)
+      }
   }
 
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
@@ -82,7 +99,7 @@ class S3(implicit s3Client: S3ClientProvider) {
 object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def resolveS3Files(implicit config: Config, s3ClientProvider: S3ClientProvider): Either[Error, Stream[S3File]] = Try {
+  def resolveS3Files(implicit config: Config, s3Settings: S3Settings): Either[Error, Stream[S3File]] = Try {
     objectSummaries()
   } match {
     case Success(remoteFiles) =>
@@ -93,8 +110,8 @@ object S3 {
       Left(IOError(error))
   }
 
-  def objectSummaries(nextMarker: Option[String] = None)(implicit config: Config, s3ClientProvider: S3ClientProvider): Stream[S3File] = {
-    val objects: ObjectListing = s3ClientProvider(config).listObjects({
+  def objectSummaries(nextMarker: Option[String] = None)(implicit config: Config, s3Settings: S3Settings): Stream[S3File] = {
+    val objects: ObjectListing = s3Settings.s3Client(config).listObjects({
       val req = new ListObjectsRequest()
       req.setBucketName(config.s3_bucket)
       nextMarker.foreach(req.setMarker)
@@ -136,4 +153,9 @@ object S3 {
   }
 
   type S3ClientProvider = (Config) => AmazonS3
+
+  case class S3Settings(
+    s3Client: S3ClientProvider = S3.awsS3Client,
+    retrySleepTimeUnit: TimeUnit = SECONDS
+  )
 }

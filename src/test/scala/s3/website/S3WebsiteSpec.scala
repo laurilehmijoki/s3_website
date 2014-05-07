@@ -14,13 +14,13 @@ import com.amazonaws.services.s3.model._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import s3.website.S3.S3ClientProvider
+import s3.website.S3.{S3Settings, S3ClientProvider}
 import scala.collection.JavaConversions._
 import s3.website.model.NewFile
 import scala.Some
 import com.amazonaws.AmazonServiceException
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
-import s3.website.CloudFront.CloudFrontClientProvider
+import s3.website.CloudFront.{CloudFrontSettings, CloudFrontClientProvider}
 import com.amazonaws.services.cloudfront.AmazonCloudFront
 import com.amazonaws.services.cloudfront.model.{CreateInvalidationResult, CreateInvalidationRequest, TooManyInvalidationsInProgressException}
 import org.mockito.stubbing.Answer
@@ -92,6 +92,21 @@ class S3WebsiteSpec extends Specification {
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
       Push.pushSite
       sentDelete must equalTo("old.html")
+    }
+
+    "try again if the upload fails" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      uploadFailsAndThenSucceeds(howManyFailures = 5)
+      Push.pushSite
+      verify(amazonS3Client, times(6)).putObject(Matchers.any(classOf[PutObjectRequest]))
+    }
+
+    "try again if the delete fails" in new SiteDirectory with MockAWS {
+      implicit val site = buildSite()
+      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      deleteFailsAndThenSucceeds(howManyFailures = 5)
+      Push.pushSite
+      verify(amazonS3Client, times(6)).deleteObject(Matchers.anyString(), Matchers.anyString())
     }
   }
 
@@ -183,6 +198,18 @@ class S3WebsiteSpec extends Specification {
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
         localFiles = "test.css" :: "articles/index.html" :: Nil
       )
+      Push.pushSite must equalTo(1)
+    }
+
+    "be 0 if upload retry succeeds" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      uploadFailsAndThenSucceeds(howManyFailures = 1)
+      Push.pushSite must equalTo(0)
+    }
+
+    "be 1 if delete retry fails" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      uploadFailsAndThenSucceeds(howManyFailures = 6)
       Push.pushSite must equalTo(1)
     }
   }
@@ -323,8 +350,10 @@ class S3WebsiteSpec extends Specification {
   
   trait MockCloudFront {
     val amazonCloudFrontClient = mock(classOf[AmazonCloudFront])
-    implicit val cfClientProvider: CloudFrontClientProvider = _ => amazonCloudFrontClient
-    implicit val cloudFrontSleepTimeUnit: TimeUnit = MILLISECONDS
+    implicit val cfSettings: CloudFrontSettings = CloudFrontSettings(
+      cfClient = _ => amazonCloudFrontClient,
+      cloudFrontSleepTimeUnit = MICROSECONDS
+    )
 
     def sentInvalidationRequests: Seq[CreateInvalidationRequest] = {
       val createInvalidationReq = ArgumentCaptor.forClass(classOf[CreateInvalidationRequest])
@@ -359,7 +388,10 @@ class S3WebsiteSpec extends Specification {
   
   trait MockS3 {
     val amazonS3Client = mock(classOf[AmazonS3])
-    implicit val s3ClientProvider: S3ClientProvider = _ => amazonS3Client
+    implicit val s3Settings: S3Settings = S3Settings(
+      s3Client = _ => amazonS3Client,
+      retrySleepTimeUnit = MICROSECONDS
+    )
     val s3ObjectListing = new ObjectListing
     when(amazonS3Client.listObjects(Matchers.any(classOf[ListObjectsRequest]))).thenReturn(s3ObjectListing)
 
@@ -375,6 +407,32 @@ class S3WebsiteSpec extends Specification {
     }
 
     val s3 = new S3()
+
+    def uploadFailsAndThenSucceeds(howManyFailures: Int) {
+      var callCount = 0
+      doAnswer(new Answer[PutObjectResult] {
+        override def answer(invocation: InvocationOnMock) = {
+          callCount += 1
+          if (callCount <= howManyFailures)
+            throw new AmazonServiceException("AWS is temporarily down")
+          else
+            mock(classOf[PutObjectResult])
+        }
+      }).when(amazonS3Client).putObject(Matchers.anyObject())
+    }
+
+    def deleteFailsAndThenSucceeds(howManyFailures: Int) {
+      var callCount = 0
+      doAnswer(new Answer[DeleteObjectRequest] {
+        override def answer(invocation: InvocationOnMock) = {
+          callCount += 1
+          if (callCount <= howManyFailures)
+            throw new AmazonServiceException("AWS is temporarily down")
+          else
+            mock(classOf[DeleteObjectRequest])
+        }
+      }).when(amazonS3Client).deleteObject(Matchers.anyString(), Matchers.anyString())
+    }
 
     def asSeenByS3Client(upload: Upload)(implicit config: Config): PutObjectRequest = {
       Await.ready(s3.upload(upload withUploadType NewFile), Duration("1 s"))
