@@ -23,12 +23,6 @@ import s3.website.Logger._
 import s3.website.S3.SuccessfulDelete
 import s3.website.CloudFront.SuccessfulInvalidation
 import s3.website.S3.S3Settings
-import s3.website.S3.SuccessfulUpload
-import s3.website.CloudFront.FailedInvalidation
-import s3.website._
-import s3.website.S3.SuccessfulDelete
-import s3.website.CloudFront.SuccessfulInvalidation
-import s3.website.S3.S3Settings
 import s3.website.CloudFront.CloudFrontSettings
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
