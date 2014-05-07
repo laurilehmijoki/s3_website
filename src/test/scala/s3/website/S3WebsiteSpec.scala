@@ -205,6 +205,12 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite must equalTo(1)
     }
 
+    "be 1 if any of the redirects fails" in new SiteDirectory with MockAWS {
+      implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
+      when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
+      Push.pushSite must equalTo(1)
+    }
+
     "be 0 if CloudFront invalidations and uploads succeed"in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
