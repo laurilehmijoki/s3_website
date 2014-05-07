@@ -7,4 +7,6 @@ package object website {
   trait SuccessReport extends Report
 
   trait FailureReport extends Report
+
+  trait ErrorReport extends Report
 }

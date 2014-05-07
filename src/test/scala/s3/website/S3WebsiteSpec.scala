@@ -120,6 +120,14 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite
       verify(amazonS3Client, times(6)).deleteObject(Matchers.anyString(), Matchers.anyString())
     }
+
+    "try again if the object listing fails" in new SiteDirectory with MockAWS {
+      implicit val site = buildSite()
+      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      objectListingFailsAndThenSucceeds(howManyFailures = 5)
+      Push.pushSite
+      verify(amazonS3Client, times(6)).listObjects(Matchers.any(classOf[ListObjectsRequest]))
+    }
   }
 
   "push with CloudFront" should {
@@ -222,6 +230,13 @@ class S3WebsiteSpec extends Specification {
     "be 1 if delete retry fails" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       uploadFailsAndThenSucceeds(howManyFailures = 6)
+      Push.pushSite must equalTo(1)
+    }
+
+    "be 1 if an object listing fails" in new SiteDirectory with MockAWS {
+      implicit val site = buildSite()
+      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      objectListingFailsAndThenSucceeds(howManyFailures = 6)
       Push.pushSite must equalTo(1)
     }
   }
@@ -445,6 +460,20 @@ class S3WebsiteSpec extends Specification {
         }
       }).when(amazonS3Client).deleteObject(Matchers.anyString(), Matchers.anyString())
     }
+
+    def objectListingFailsAndThenSucceeds(howManyFailures: Int) {
+      var callCount = 0
+      doAnswer(new Answer[ObjectListing] {
+        override def answer(invocation: InvocationOnMock) = {
+          callCount += 1
+          if (callCount <= howManyFailures)
+            throw new AmazonServiceException("AWS is temporarily down")
+          else
+            mock(classOf[ObjectListing])
+        }
+      }).when(amazonS3Client).listObjects(Matchers.any(classOf[ListObjectsRequest]))
+    }
+
 
     def asSeenByS3Client(upload: Upload)(implicit config: Config): PutObjectRequest = {
       Await.ready(s3.upload(upload withUploadType NewFile), Duration("1 s"))

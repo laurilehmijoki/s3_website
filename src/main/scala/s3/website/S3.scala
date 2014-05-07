@@ -5,70 +5,45 @@ import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
-import scala.util.Try
-import com.amazonaws.{AmazonServiceException, AmazonClientException}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.S3._
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 import s3.website.Logger._
 import s3.website.Utils._
-import scala.concurrent.duration.{TimeUnit, Duration}
+import scala.concurrent.duration.{Duration, TimeUnit}
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.SuccessfulDelete
 import s3.website.S3.FailedUpload
-import scala.util.Failure
 import scala.Some
 import s3.website.S3.FailedDelete
-import s3.website.model.IOError
 import s3.website.S3.S3Settings
-import scala.util.Success
-import s3.website.model.UserError
-import com.amazonaws.AmazonServiceException.ErrorType
 import s3.website.model.Error.isClientError
 
 class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
-  def upload(upload: Upload with UploadTypeResolved)(implicit a: Attempt = 1, config: Config): S3PushResult =
+  def upload(upload: Upload with UploadTypeResolved)(implicit a: Attempt = 1, config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       s3Settings.s3Client(config) putObject toPutObjectRequest(upload)
       val report = SuccessfulUpload(upload)
       info(report)
       Right(report)
     } recoverWith retry(
-      createReport = error => FailedUpload(upload.s3Key, error),
+      createFailureReport = error => FailedUpload(upload.s3Key, error),
       retryAction  = newAttempt => this.upload(upload)(newAttempt, config)
     )
 
-  def delete(s3Key: String)(implicit a: Attempt = 1, config: Config): S3PushResult =
+  def delete(s3Key: String)(implicit a: Attempt = 1, config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
       s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
       info(report)
       Right(report)
     } recoverWith retry(
-      createReport = error => FailedDelete(s3Key, error),
+      createFailureReport = error => FailedDelete(s3Key, error),
       retryAction  = newAttempt => this.delete(s3Key)(newAttempt, config)
     )
       
-  type S3PushResult = Future[Either[PushFailureReport, PushSuccessReport]]
-  
-  type Attempt = Int
-  
-  def retry(createReport: (Throwable) => PushFailureReport, retryAction: (Attempt) => S3PushResult)(implicit attempt: Attempt):
-  PartialFunction[Throwable, S3PushResult] = {
-    case error: Throwable if attempt == 6 || isClientError(error) =>
-      val failureReport = createReport(error)
-      info(failureReport)
-      Future(Left(failureReport))
-    case error: Throwable =>
-      val failureReport = createReport(error)
-      val sleepDuration = Duration(fibs.drop(attempt + 1).head, s3Settings.retrySleepTimeUnit)
-      pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
-      Thread.sleep(sleepDuration.toMillis)
-      retryAction(attempt + 1)
-  }
-
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
     upload.essence.fold(
       redirect => {
@@ -101,35 +76,48 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def resolveS3Files(implicit config: Config, s3Settings: S3Settings): Either[Error, Stream[S3File]] = Try {
-    objectSummaries()
-  } match {
-    case Success(remoteFiles) =>
-      Right(remoteFiles)
-    case Failure(error) if error.isInstanceOf[AmazonClientException] =>
-      Left(UserError(error.getMessage))
-    case Failure(error) =>
-      Left(IOError(error))
-  }
-
-  def objectSummaries(nextMarker: Option[String] = None)(implicit config: Config, s3Settings: S3Settings): Stream[S3File] = {
+  def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil)
+                    (implicit attempt: Attempt = 1, config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor): ObjectListingResult = Future {
+    nextMarker.foreach(m => info(s"Fetching the next part of the object listing from S3 (starting from $m)"))
     val objects: ObjectListing = s3Settings.s3Client(config).listObjects({
       val req = new ListObjectsRequest()
       req.setBucketName(config.s3_bucket)
       nextMarker.foreach(req.setMarker)
       req
     })
-    val summaries = (objects.getObjectSummaries map (S3File(_))).toStream
-    if (objects.isTruncated)
-      summaries #::: objectSummaries(Some(objects.getNextMarker)) // Call the next Get Bucket request lazily
-    else
-      summaries
-  }
+    objects
+  } flatMap { objects =>
+    val s3Files = alreadyResolved ++ (objects.getObjectSummaries.toIndexedSeq.toSeq map (S3File(_)))
+    Option(objects.getNextMarker)
+      .fold(Future(Right(s3Files)): ObjectListingResult)(nextMarker => resolveS3Files(Some(nextMarker), s3Files))
+  } recoverWith retry(
+    createFailureReport = error => UserError(s"Failed to fetch an object listing (${error.getMessage})"),
+    retryAction = nextAttempt => resolveS3Files(nextMarker, alreadyResolved)(nextAttempt, config, s3Settings, ec)
+  )
+
+  type ObjectListingResult = Future[Either[ErrorReport, Seq[S3File]]]
 
   sealed trait PushFailureReport extends FailureReport
   sealed trait PushSuccessReport extends SuccessReport {
     def s3Key: String
   }
+
+  def retry[L <: Report, R](createFailureReport: (Throwable) => L, retryAction: (Attempt) => Future[Either[L, R]])
+           (implicit attempt: Attempt, s3Settings: S3Settings, ec: ExecutionContextExecutor):
+  PartialFunction[Throwable, Future[Either[L, R]]] = {
+    case error: Throwable if attempt == 6 || isClientError(error) =>
+      val failureReport = createFailureReport(error)
+      fail(failureReport.reportMessage)
+      Future(Left(failureReport))
+    case error: Throwable =>
+      val failureReport = createFailureReport(error)
+      val sleepDuration = Duration(fibs.drop(attempt + 1).head, s3Settings.retrySleepTimeUnit)
+      pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
+      Thread.sleep(sleepDuration.toMillis)
+      retryAction(attempt + 1)
+  }
+
+  type Attempt = Int
 
   case class SuccessfulUpload(upload: Upload with UploadTypeResolved) extends PushSuccessReport {
     def reportMessage =

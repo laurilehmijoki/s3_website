@@ -3,6 +3,7 @@ package s3.website.model
 import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
+import s3.website.ErrorReport
 
 case class Config(
   s3_id:                      String,
@@ -22,7 +23,7 @@ case class Config(
 )
 
 object Config {
-  def loadOptionalBooleanOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[Either[Boolean, Seq[String]]]] = {
+  def loadOptionalBooleanOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Boolean, Seq[String]]]] = {
     val yamlValue = for {
       optionalValue <- loadOptionalValue(key)
     } yield {
@@ -35,7 +36,7 @@ object Config {
     yamlValue getOrElse Left(UserError(s"The key $key has to have a boolean or [string] value"))
   }
 
-  def loadOptionalStringOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[Either[String, Seq[String]]]] = {
+  def loadOptionalStringOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[String, Seq[String]]]] = {
     val yamlValue = for {
       valueOption <- loadOptionalValue(key)
     } yield {
@@ -48,7 +49,7 @@ object Config {
     yamlValue getOrElse Left(UserError(s"The key $key has to have a string or [string] value"))
   }
 
-  def loadMaxAge(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[Either[Int, Map[String, Int]]]] = {
+  def loadMaxAge(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Int, Map[String, Int]]]] = {
     val key = "max_age"
     val yamlValue = for {
       maxAgeOption <- loadOptionalValue(key)
@@ -62,7 +63,7 @@ object Config {
     yamlValue getOrElse Left(UserError(s"The key $key has to have an int or (string -> int) value"))
   }
 
-  def loadEndpoint(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[S3Endpoint]] =
+  def loadEndpoint(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[S3Endpoint]] =
     loadOptionalString("s3_endpoint").right flatMap { endpointString =>
       endpointString.map(S3Endpoint.forString) match {
         case Some(Right(endpoint)) => Right(Some(endpoint))
@@ -71,7 +72,7 @@ object Config {
       }
     }
 
-  def loadRedirects(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[Map[String, String]]] = {
+  def loadRedirects(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Map[String, String]]] = {
     val key = "redirects"
     val yamlValue = for {
       redirectsOption <- loadOptionalValue(key)
@@ -81,7 +82,7 @@ object Config {
     yamlValue getOrElse Left(UserError(s"The key $key has to have an int or (string -> int) value"))
   }
 
-  def loadRequiredString(key: String)(implicit unsafeYaml: UnsafeYaml): Either[Error, String] = {
+  def loadRequiredString(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, String] = {
     val yamlValue = for {
       valueOption <- loadOptionalValue(key)
       stringValue <- Try(valueOption.asInstanceOf[Option[String]].get)
@@ -94,7 +95,7 @@ object Config {
     }
   }
 
-  def loadOptionalString(key: String)(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[String]] = {
+  def loadOptionalString(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[String]] = {
     val yamlValueOption = for {
       valueOption <- loadOptionalValue(key)
       optionalString <- Try(valueOption.asInstanceOf[Option[String]])
@@ -107,7 +108,7 @@ object Config {
     }
   }
 
-  def loadOptionalBoolean(key: String)(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[Boolean]] = {
+  def loadOptionalBoolean(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Boolean]] = {
     val yamlValueOption = for {
       valueOption <- loadOptionalValue(key)
       optionalBoolean <- Try(valueOption.asInstanceOf[Option[Boolean]])
@@ -120,7 +121,7 @@ object Config {
     }
   }
 
-  def loadOptionalInt(key: String)(implicit unsafeYaml: UnsafeYaml): Either[Error, Option[Int]] = {
+  def loadOptionalInt(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Int]] = {
     val yamlValueOption = for {
       valueOption <- loadOptionalValue(key)
       optionalInt <- Try(valueOption.asInstanceOf[Option[Int]])
