@@ -23,6 +23,16 @@ import scala.util.Success
 import s3.website.model.UserError
 import scala.concurrent.duration.{TimeUnit, Duration}
 import java.util.concurrent.TimeUnit.SECONDS
+import s3.website.S3.SuccessfulUpload
+import s3.website.S3.SuccessfulDelete
+import s3.website.S3.FailedUpload
+import scala.util.Failure
+import scala.Some
+import s3.website.S3.FailedDelete
+import s3.website.model.IOError
+import s3.website.S3.S3Settings
+import scala.util.Success
+import s3.website.model.UserError
 
 class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
@@ -54,17 +64,16 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
   
   def retry(createReport: (Throwable) => PushFailureReport, retryAction: (Attempt) => S3PushResult)(implicit attempt: Attempt):
   PartialFunction[Throwable, S3PushResult] = {
+    case error: Throwable if attempt == 6 =>
+      val failureReport = createReport(error)
+      info(failureReport)
+      Future(Left(failureReport))
     case error: Throwable =>
       val failureReport = createReport(error)
-      if (attempt == 6) {
-        info(failureReport)
-        Future(Left(failureReport))
-      } else {
-        val sleepDuration = Duration(fibs.drop(attempt + 1).head, s3Settings.retrySleepTimeUnit)
-        pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
-        Thread.sleep(sleepDuration.toMillis)
-        retryAction(attempt + 1)
-      }
+      val sleepDuration = Duration(fibs.drop(attempt + 1).head, s3Settings.retrySleepTimeUnit)
+      pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
+      Thread.sleep(sleepDuration.toMillis)
+      retryAction(attempt + 1)
   }
 
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
