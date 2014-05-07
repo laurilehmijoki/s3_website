@@ -10,13 +10,14 @@ import s3.website.Logger._
 import scala.util.Failure
 import s3.website.model.Config.UnsafeYaml
 import scala.util.Success
+import s3.website.ErrorReport
 
 case class Site(rootDirectory: String, config: Config) {
   def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory, "").replaceFirst("^/", "")
 }
 
 object Site {
-  def loadSite(yamlConfigPath: String, siteRootDirectory: String): Either[Error, Site] = {
+  def loadSite(yamlConfigPath: String, siteRootDirectory: String): Either[ErrorReport, Site] = {
     val yamlObjectTry = for {
       yamlString <- Try(fromFile(new File(yamlConfigPath)).mkString)
       yamlWithErbEvaluated <- erbEval(yamlString)
@@ -25,7 +26,7 @@ object Site {
     yamlObjectTry match {
       case Success(yamlObject) =>
         implicit val unsafeYaml = UnsafeYaml(yamlObject)
-        val config: Either[Error, Config] = for {
+        val config: Either[ErrorReport, Config] = for {
           s3_id <- loadRequiredString("s3_id").right
           s3_secret <- loadRequiredString("s3_secret").right
           s3_bucket <- loadRequiredString("s3_bucket").right

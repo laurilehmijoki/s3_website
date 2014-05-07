@@ -25,6 +25,13 @@ import s3.website.CloudFront.SuccessfulInvalidation
 import s3.website.S3.S3Settings
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
+import s3.website._
+import s3.website.S3.SuccessfulDelete
+import s3.website.CloudFront.SuccessfulInvalidation
+import s3.website.S3.S3Settings
+import s3.website.CloudFront.CloudFrontSettings
+import s3.website.S3.SuccessfulUpload
+import s3.website.CloudFront.FailedInvalidation
 
 object Push {
 
@@ -38,7 +45,7 @@ object Push {
     val utils: Utils = new Utils
 
     val errorsOrReports = for {
-      s3Files    <- resolveS3Files.right
+      s3Files    <- Await.result(resolveS3Files(), 1 minutes).right
       localFiles <- resolveLocalFiles.right
     } yield {
       val redirects = Redirect.resolveRedirects
@@ -49,7 +56,7 @@ object Push {
         .map { errorOrUpload => errorOrUpload.right.map(new S3() upload) }
       uploadReports ++ deleteReports
     }
-    val errorsOrFinishedPushOps: Either[Error, FinishedPushOperations] = errorsOrReports.right map {
+    val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {
       uploadReports => awaitForUploads(uploadReports)
     }
     val invalidationSucceeded = invalidateCloudFrontItems(errorsOrFinishedPushOps)
@@ -58,7 +65,7 @@ object Push {
   }
   
   def invalidateCloudFrontItems
-    (errorsOrFinishedPushOps: Either[Error, FinishedPushOperations])
+    (errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations])
     (implicit config: Config, cloudFrontSettings: CloudFrontSettings): Option[InvalidationSucceeded] = {
     config.cloudfront_distribution_id.map {
       distributionId =>
@@ -91,17 +98,17 @@ object Push {
 
   type InvalidationSucceeded = Boolean
 
-  def afterPushFinished(errorsOrFinishedUploads: Either[Error, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): ExitCode = {
+  def afterPushFinished(errorsOrFinishedUploads: Either[ErrorReport, FinishedPushOperations], invalidationSucceeded: Option[Boolean])(implicit config: Config): ExitCode = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
       val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
       info(s"Summary: $pushCounts")
     }
-    errorsOrFinishedUploads.left foreach (err => fail(s"Encountered error: ${err.message}"))
+    errorsOrFinishedUploads.left foreach (err => fail(s"Encountered an error: ${err.reportMessage}"))
     val exitCode = errorsOrFinishedUploads.fold(
       _ => 1,
       finishedUploads => finishedUploads.foldLeft(0) { (memo, finishedUpload) =>
         memo + finishedUpload.fold(
-          (error: Error) => 1,
+          (error: ErrorReport) => 1,
           (failedOrSucceededUpload: Either[PushFailureReport, PushSuccessReport]) =>
             if (failedOrSucceededUpload.isLeft) 1 else 0
         )
@@ -124,7 +131,7 @@ object Push {
 
   def resolvePushCounts(implicit finishedOperations: FinishedPushOperations) = finishedOperations.foldLeft(PushCounts()) {
     (counts: PushCounts, uploadReport) => uploadReport.fold(
-      (error: model.Error) => counts.copy(failures = counts.failures + 1),
+      (error: ErrorReport) => counts.copy(failures = counts.failures + 1),
       failureOrSuccess => failureOrSuccess.fold(
         (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
         (successReport: PushSuccessReport) => successReport match {
@@ -161,8 +168,8 @@ object Push {
                          redirects: Int = 0, 
                          deletes: Int = 0
                          )
-  type FinishedPushOperations = ParSeq[Either[model.Error, Either[PushFailureReport, PushSuccessReport]]]
-  type PushReports = ParSeq[Either[model.Error, Future[Either[PushFailureReport, PushSuccessReport]]]]
+  type FinishedPushOperations = ParSeq[Either[ErrorReport, Either[PushFailureReport, PushSuccessReport]]]
+  type PushReports = ParSeq[Either[ErrorReport, Future[Either[PushFailureReport, PushSuccessReport]]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
   type ExitCode = Int
 
@@ -188,7 +195,7 @@ object Push {
         threadPool.shutdownNow()
         pushStatus
     }
-    errorOrPushStatus.left foreach (err => fail(s"Could not load the site: ${err.message}"))
+    errorOrPushStatus.left foreach (err => fail(s"Could not load the site: ${err.reportMessage}"))
     System.exit(errorOrPushStatus.fold(_ => 1, pushStatus => pushStatus))
   }
 }

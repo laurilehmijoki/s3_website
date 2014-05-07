@@ -9,6 +9,7 @@ import java.util.zip.GZIPOutputStream
 import org.apache.commons.io.IOUtils
 import org.apache.tika.Tika
 import s3.website.Ruby._
+import s3.website._
 import s3.website.model.Encoding.Gzip
 import scala.util.Failure
 import scala.Some
@@ -59,7 +60,7 @@ case class LocalFile(
 ) extends S3KeyProvider
 
 object LocalFile {
-  def toUpload(localFile: LocalFile)(implicit config: Config): Either[Error, Upload] = Try {
+  def toUpload(localFile: LocalFile)(implicit config: Config): Either[ErrorReport, Upload] = Try {
     def fis(file: File): InputStream = new FileInputStream(file)
     def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
     val sourceFile: File = localFile
@@ -107,7 +108,7 @@ object LocalFile {
 
   lazy val tika = new Tika()
 
-  def resolveLocalFiles(implicit site: Site): Either[Error, Seq[LocalFile]] = Try {
+  def resolveLocalFiles(implicit site: Site): Either[ErrorReport, Seq[LocalFile]] = Try {
     val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory)
     files map { file =>
       val s3Key = site.resolveS3Key(file)
