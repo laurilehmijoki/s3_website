@@ -18,13 +18,14 @@ import s3.website.S3.{S3Settings, S3ClientProvider}
 import scala.collection.JavaConversions._
 import s3.website.model.NewFile
 import scala.Some
-import com.amazonaws.AmazonServiceException
+import com.amazonaws.{AmazonClientException, AmazonServiceException}
 import org.apache.commons.codec.digest.DigestUtils.md5Hex
 import s3.website.CloudFront.{CloudFrontSettings, CloudFrontClientProvider}
 import com.amazonaws.services.cloudfront.AmazonCloudFront
 import com.amazonaws.services.cloudfront.model.{CreateInvalidationResult, CreateInvalidationRequest, TooManyInvalidationsInProgressException}
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
+import com.amazonaws.AmazonServiceException.ErrorType
 
 class S3WebsiteSpec extends Specification {
 
@@ -99,6 +100,17 @@ class S3WebsiteSpec extends Specification {
       uploadFailsAndThenSucceeds(howManyFailures = 5)
       Push.pushSite
       verify(amazonS3Client, times(6)).putObject(Matchers.any(classOf[PutObjectRequest]))
+    }
+
+    "not try again if the upload fails on because of the client" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow {
+        val e = new AmazonServiceException("your credentials are incorrect")
+        e.setErrorType(ErrorType.Client)
+        e
+      }
+      Push.pushSite
+      verify(amazonS3Client, times(1)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
     "try again if the delete fails" in new SiteDirectory with MockAWS {
