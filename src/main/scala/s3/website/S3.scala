@@ -6,21 +6,12 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.util.Try
-import com.amazonaws.AmazonClientException
+import com.amazonaws.{AmazonServiceException, AmazonClientException}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.S3._
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 import s3.website.Logger._
 import s3.website.Utils._
-import s3.website.S3.SuccessfulUpload
-import s3.website.S3.SuccessfulDelete
-import s3.website.S3.FailedUpload
-import scala.util.Failure
-import scala.Some
-import s3.website.S3.FailedDelete
-import s3.website.model.IOError
-import scala.util.Success
-import s3.website.model.UserError
 import scala.concurrent.duration.{TimeUnit, Duration}
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload
@@ -33,6 +24,8 @@ import s3.website.model.IOError
 import s3.website.S3.S3Settings
 import scala.util.Success
 import s3.website.model.UserError
+import com.amazonaws.AmazonServiceException.ErrorType
+import s3.website.model.Error.isClientError
 
 class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
@@ -64,7 +57,7 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
   
   def retry(createReport: (Throwable) => PushFailureReport, retryAction: (Attempt) => S3PushResult)(implicit attempt: Attempt):
   PartialFunction[Throwable, S3PushResult] = {
-    case error: Throwable if attempt == 6 =>
+    case error: Throwable if attempt == 6 || isClientError(error) =>
       val failureReport = createReport(error)
       info(failureReport)
       Future(Left(failureReport))
