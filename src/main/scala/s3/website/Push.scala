@@ -18,18 +18,11 @@ import s3.website.model.Update
 import s3.website.model.NewFile
 import s3.website.S3.PushSuccessReport
 import scala.collection.mutable.ArrayBuffer
-import s3.website.CloudFront.{CloudFrontClientProvider, toInvalidationBatches}
-import s3.website.S3.SuccessfulDelete
-import s3.website.CloudFront.SuccessfulInvalidation
-import s3.website.S3.SuccessfulUpload
-import s3.website.CloudFront.FailedInvalidation
+import s3.website.CloudFront._
 import s3.website.Logger._
 import s3.website.S3.SuccessfulDelete
 import s3.website.CloudFront.SuccessfulInvalidation
-import s3.website.S3.SuccessfulUpload
-import s3.website.CloudFront.FailedInvalidation
-import s3.website.S3.SuccessfulDelete
-import s3.website.CloudFront.SuccessfulInvalidation
+import s3.website.S3.S3Settings
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
 
@@ -38,9 +31,8 @@ object Push {
   def pushSite(
                 implicit site: Site,
                 executor: ExecutionContextExecutor,
-                s3ClientProvider: S3ClientProvider = S3.awsS3Client,
-                cloudFrontClientProvider: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
-                cloudFrontSleepTimeUnit: TimeUnit = MINUTES
+                s3Settings: S3Settings,
+                cloudFrontSettings: CloudFrontSettings
                 ): ExitCode = {
     info(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val utils: Utils = new Utils
@@ -54,7 +46,7 @@ object Push {
         .map { s3File => new S3() delete s3File.s3Key }
         .map { Right(_) } // To make delete reports type-compatible with upload reports
       val uploadReports: PushReports = utils toParSeq (redirects.toStream.map(Right(_)) ++ resolveUploads(localFiles, s3Files))
-        .map { errorOrUpload => errorOrUpload.right.map(new S3() upload ) }
+        .map { errorOrUpload => errorOrUpload.right.map(new S3() upload) }
       uploadReports ++ deleteReports
     }
     val errorsOrFinishedPushOps: Either[Error, FinishedPushOperations] = errorsOrReports.right map {
@@ -67,7 +59,7 @@ object Push {
   
   def invalidateCloudFrontItems
     (errorsOrFinishedPushOps: Either[Error, FinishedPushOperations])
-    (implicit config: Config, cloudFrontClientProvider: CloudFrontClientProvider, cloudFrontSleepTimeUnit: TimeUnit): Option[InvalidationSucceeded] = {
+    (implicit config: Config, cloudFrontSettings: CloudFrontSettings): Option[InvalidationSucceeded] = {
     config.cloudfront_distribution_id.map {
       distributionId =>
         val pushSuccessReports = errorsOrFinishedPushOps.fold(
@@ -190,6 +182,8 @@ object Push {
       implicit site =>
         val threadPool = newFixedThreadPool(site.config.concurrency_level)
         implicit val executor = fromExecutor(threadPool)
+        implicit val s3Settings = S3Settings()
+        implicit val cloudFrontSettings = CloudFrontSettings()
         val pushStatus = pushSite
         threadPool.shutdownNow()
         pushStatus

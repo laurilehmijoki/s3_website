@@ -2,29 +2,28 @@ package s3.website
 
 import s3.website.model.{Redirect, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
-import s3.website.CloudFront.{FailedInvalidation, SuccessfulInvalidation, CloudFrontClientProvider}
-import scala.util.{Failure, Success, Try}
+import s3.website.CloudFront.{CloudFrontSettings, CloudFrontClientProvider, SuccessfulInvalidation, FailedInvalidation}
+import scala.util.Try
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
-import s3.website.S3.{SuccessfulUpload, PushSuccessReport}
+import s3.website.S3.PushSuccessReport
 import com.amazonaws.auth.BasicAWSCredentials
 import s3.website.Logger._
 import s3.website.S3.SuccessfulUpload
 import scala.util.Failure
-import s3.website.CloudFront.SuccessfulInvalidation
 import scala.util.Success
-import s3.website.CloudFront.FailedInvalidation
-import java.net.{URI, URLEncoder}
-import java.net.URLEncoder.encode
+import java.net.URI
+import Utils._
 
-class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUnit) {
+class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config) {
+  val cloudFront = cloudFrontSettings.cfClient(config)
 
-  def invalidate(invalidationBatch: InvalidationBatch, distributionId: String)(implicit config: Config): InvalidationResult = {
+  def invalidate(invalidationBatch: InvalidationBatch, distributionId: String): InvalidationResult = {
     def tryInvalidate(implicit attempt: Int = 1): Try[SuccessfulInvalidation] =
       Try {
         val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
-        cfClient(config).createInvalidation(invalidationReq)
+        cloudFront.createInvalidation(invalidationReq)
         val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
         info(result)
         result
@@ -32,7 +31,7 @@ class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUni
         case e: TooManyInvalidationsInProgressException =>
           implicit val duration: Duration = Duration(
             (fibs drop attempt).head min 15, /* AWS docs way that invalidations complete in 15 minutes */
-            sleepUnit
+            cloudFrontSettings.cloudFrontSleepTimeUnit
           )
           pending(maxInvalidationsExceededInfo)
           Thread.sleep(duration.toMillis)
@@ -63,7 +62,6 @@ class CloudFront(implicit cfClient: CloudFrontClientProvider, sleepUnit: TimeUni
 
   type InvalidationResult = Either[FailedInvalidation, SuccessfulInvalidation]
 
-  lazy val fibs: Stream[Int] = 0 #:: 1 #:: fibs.zip(fibs.tail).map { n => n._1 + n._2 }
 }
 
 object CloudFront {
@@ -113,4 +111,9 @@ object CloudFront {
     }
     case _ => false
   }
+
+  case class CloudFrontSettings(
+    cfClient: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
+    cloudFrontSleepTimeUnit: TimeUnit = MINUTES
+  )
 }
