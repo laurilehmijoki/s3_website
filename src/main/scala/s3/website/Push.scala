@@ -38,17 +38,19 @@ object Push {
     info(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val utils: Utils = new Utils
 
+    val redirects = Redirect.resolveRedirects
+    val redirectResults = redirects.map(new S3() upload)
+
     val errorsOrReports = for {
       s3Files    <- Await.result(resolveS3Files(), 1 minutes).right
       localFiles <- resolveLocalFiles.right
     } yield {
-      val redirects = Redirect.resolveRedirects
       val deleteReports: PushReports = utils toParSeq resolveDeletes(localFiles, s3Files, redirects)
         .map { s3File => new S3() delete s3File.s3Key }
         .map { Right(_) } // To make delete reports type-compatible with upload reports
-      val uploadReports: PushReports = utils toParSeq (redirects.toStream.map(Right(_)) ++ resolveUploads(localFiles, s3Files))
-        .map { errorOrUpload => errorOrUpload.right.map(new S3() upload) }
-      uploadReports ++ deleteReports
+      val uploadReports: PushReports = utils toParSeq resolveUploads(localFiles, s3Files)
+        .map { _.right.map(new S3() upload) }
+      uploadReports ++ deleteReports ++ redirectResults.map(Right(_))
     }
     val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {
       uploadReports => awaitForUploads(uploadReports)
