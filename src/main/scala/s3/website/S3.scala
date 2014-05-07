@@ -10,13 +10,6 @@ import com.amazonaws.AmazonClientException
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.S3._
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
-import s3.website.S3.SuccessfulUpload
-import s3.website.S3.FailedUpload
-import scala.util.Failure
-import scala.Some
-import s3.website.model.IOError
-import scala.util.Success
-import s3.website.model.UserError
 import s3.website.Logger._
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.SuccessfulDelete
