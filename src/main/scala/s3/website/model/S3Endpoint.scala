@@ -8,7 +8,7 @@ case class S3Endpoint(
 object S3Endpoint {
   val defaultEndpoint = S3Endpoint("s3-website-us-east-1.amazonaws.com", "s3.amazonaws.com")
 
-  def forString(locationConstraint: String): Either[UserError, S3Endpoint] = locationConstraint match {
+  def forString(locationConstraint: String): Either[ClientError, S3Endpoint] = locationConstraint match {
     case "EU" | "eu-west-1" => Right(S3Endpoint("s3-website-eu-west-1.amazonaws.com",      "s3-eu-west-1.amazonaws.com"))
     case "us-east-1" =>        Right(defaultEndpoint)
     case "us-west-1" =>        Right(S3Endpoint("s3-website-us-west-1.amazonaws.com",      "s3-us-west-1.amazonaws.com"))
@@ -17,6 +17,6 @@ object S3Endpoint {
     case "ap-southeast-2" =>   Right(S3Endpoint("s3-website-ap-southeast-2.amazonaws.com", "s3-ap-southeast-2.amazonaws.com"))
     case "ap-northeast-1" =>   Right(S3Endpoint("s3-website-ap-northeast-1.amazonaws.com", "s3-ap-northeast-1.amazonaws.com"))
     case "sa-east-1" =>        Right(S3Endpoint("s3-website-sa-east-1.amazonaws.com",      "s3-sa-east-1.amazonaws.com"))
-    case _ =>                  Left(UserError(s"Unrecognised endpoint: $locationConstraint"))
+    case _ =>                  Left(ClientError(s"Unrecognised endpoint: $locationConstraint"))
   }
 }

@@ -98,7 +98,7 @@ object S3 {
     Option(objects.getNextMarker)
       .fold(Future(Right(s3Files)): ObjectListingResult)(nextMarker => resolveS3Files(Some(nextMarker), s3Files))
   } recoverWith retry(
-    createFailureReport = error => UserError(s"Failed to fetch an object listing (${error.getMessage})"),
+    createFailureReport = error => ClientError(s"Failed to fetch an object listing (${error.getMessage})"),
     retryAction = nextAttempt => resolveS3Files(nextMarker, alreadyResolved)(nextAttempt, config, s3Settings, ec)
   )
 
@@ -108,23 +108,6 @@ object S3 {
   sealed trait PushSuccessReport extends SuccessReport {
     def s3Key: String
   }
-
-  def retry[L <: Report, R](createFailureReport: (Throwable) => L, retryAction: (Attempt) => Future[Either[L, R]])
-           (implicit attempt: Attempt, s3Settings: S3Settings, ec: ExecutionContextExecutor):
-  PartialFunction[Throwable, Future[Either[L, R]]] = {
-    case error: Throwable if attempt == 6 || isClientError(error) =>
-      val failureReport = createFailureReport(error)
-      fail(failureReport.reportMessage)
-      Future(Left(failureReport))
-    case error: Throwable =>
-      val failureReport = createFailureReport(error)
-      val sleepDuration = Duration(fibs.drop(attempt + 1).head, s3Settings.retrySleepTimeUnit)
-      pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
-      Thread.sleep(sleepDuration.toMillis)
-      retryAction(attempt + 1)
-  }
-
-  type Attempt = Int
 
   case class SuccessfulUpload(upload: Upload with UploadTypeResolved) extends PushSuccessReport {
     def reportMessage =
@@ -153,6 +136,6 @@ object S3 {
 
   case class S3Settings(
     s3Client: S3ClientProvider = S3.awsS3Client,
-    retrySleepTimeUnit: TimeUnit = SECONDS
-  )
+    retryTimeUnit: TimeUnit = SECONDS
+  ) extends RetrySettings
 }
