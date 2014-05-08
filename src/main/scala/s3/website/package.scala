@@ -50,4 +50,9 @@ package object website {
       }
     httpStatusCode.exists(c => c >= 400 && c < 500)
   }
+  
+  def countToString(count: Int, singular: String) = {
+    def plural = s"${singular}s"
+    s"$count ${if (count > 1) plural else singular}"
+  }
 }
