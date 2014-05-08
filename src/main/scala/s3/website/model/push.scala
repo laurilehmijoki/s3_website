@@ -55,38 +55,51 @@ case object Update extends UploadType
 
 case class LocalFile(
   s3Key: String,
-  sourceFile: File,
+  originalFile: File,
   encodingOnS3: Option[Either[Gzip, Zopfli]]
-) extends S3KeyProvider
+) extends S3KeyProvider {
+
+  // May throw an exception, so remember to call this in a Try or Future monad
+  lazy val length = uploadFile.length()
+
+  /**
+   * This is the file we should upload, because it contains the potentially gzipped contents of the original file.
+   *
+   * May throw an exception, so remember to call this in a Try or Future monad
+   */
+  lazy val uploadFile: File = encodingOnS3
+    .fold(originalFile)(algorithm => {
+    val tempFile = File.createTempFile(originalFile.getName, "gzip")
+    tempFile.deleteOnExit()
+    using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
+      IOUtils.copy(fis(originalFile), stream)
+    }
+    tempFile
+  })
+
+  /**
+   * May throw an exception, so remember to call this in a Try or Future monad
+   */
+  lazy val md5 = using(fis(uploadFile)) { inputStream =>
+    DigestUtils.md5Hex(inputStream)
+  }
+
+  private[this] def fis(file: File): InputStream = new FileInputStream(file)
+  private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
+}
 
 object LocalFile {
   def toUpload(localFile: LocalFile)(implicit config: Config): Either[ErrorReport, Upload] = Try {
-    def fis(file: File): InputStream = new FileInputStream(file)
-    def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
-    val sourceFile: File = localFile
-      .encodingOnS3
-      .fold(localFile.sourceFile)(algorithm => {
-      val tempFile = File.createTempFile(localFile.sourceFile.getName, "gzip")
-      tempFile.deleteOnExit()
-      using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
-        IOUtils.copy(fis(localFile.sourceFile), stream)
-      }
-      tempFile
-    })
-    val md5 = using(fis(sourceFile)) { inputStream =>
-      DigestUtils.md5Hex(inputStream)
-    }
-
     Upload(
       s3Key = localFile.s3Key,
       essence = Right(
         UploadBody(
-          md5 = md5,
+          md5 = localFile.md5,
           contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
-          contentLength = sourceFile.length(),
+          contentLength = localFile.length,
           maxAge = resolveMaxAge(localFile),
-          contentType = resolveContentType(localFile.sourceFile),
-          openInputStream = () => new FileInputStream(sourceFile)
+          contentType = resolveContentType(localFile.originalFile),
+          openInputStream = () => new FileInputStream(localFile.uploadFile)
         )
       )
     )
@@ -135,7 +148,7 @@ object LocalFile {
         (exclusionRegex: String) => rubyRegexMatches(file.s3Key, exclusionRegex),
         (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(file.s3Key, _))
       ) }
-    } filterNot { _.sourceFile.getName == "s3_website.yml" } // For security reasons, the s3_website.yml should never be pushed
+    } filterNot { _.originalFile.getName == "s3_website.yml" } // For security reasons, the s3_website.yml should never be pushed
   } match {
     case Success(localFiles) =>
       Right(

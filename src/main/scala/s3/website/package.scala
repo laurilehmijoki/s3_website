@@ -5,6 +5,7 @@ import s3.website.model.Error._
 import s3.website.Logger._
 import scala.concurrent.duration.{TimeUnit, Duration}
 import s3.website.Utils._
+import s3.website.S3.{PushSuccessReport, PushFailureReport}
 
 package object website {
   trait Report {
@@ -19,6 +20,8 @@ package object website {
   trait RetrySettings {
     def retryTimeUnit: TimeUnit
   }
+
+  type PushErrorOrSuccess = Either[PushFailureReport, PushSuccessReport]
 
   type Attempt = Int
 

@@ -6,11 +6,9 @@ import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import s3.website.S3._
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
 import s3.website.Logger._
-import s3.website.Utils._
-import scala.concurrent.duration.{Duration, TimeUnit}
+import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.SuccessfulDelete
@@ -18,7 +16,6 @@ import s3.website.S3.FailedUpload
 import scala.Some
 import s3.website.S3.FailedDelete
 import s3.website.S3.S3Settings
-import s3.website.model.Error.isClientError
 
 class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
@@ -83,26 +80,56 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
-                    (implicit config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor): ObjectListingResult = Future {
-    nextMarker.foreach(m => info(s"Fetching the next part of the object listing from S3 (starting from $m)"))
+  def resolveS3FilesAndUpdates(localFiles: Seq[LocalFile])
+                              (nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1, onFlightUpdateFutures: UpdateFutures = Nil)
+                              (implicit config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor):
+  ErrorOrS3FilesAndUpdates = Future {
+    debug(nextMarker.fold
+      ("Querying S3 files")
+      {m => s"Querying more S3 files (starting from $m)"}
+    )
     val objects: ObjectListing = s3Settings.s3Client(config).listObjects({
       val req = new ListObjectsRequest()
       req.setBucketName(config.s3_bucket)
       nextMarker.foreach(req.setMarker)
       req
     })
-    objects
-  } flatMap { objects =>
+    val summaryIndex = objects.getObjectSummaries.map { summary => (summary.getETag, summary.getKey) }.toSet // Index to avoid O(n^2) lookups 
+    def isUpdate(lf: LocalFile) =
+      summaryIndex.exists((md5AndS3Key) => 
+        md5AndS3Key._1 != lf.md5 && md5AndS3Key._2 == lf.s3Key
+      )
+    val updateFutures: UpdateFutures = localFiles.collect {
+      case lf: LocalFile if isUpdate(lf) =>
+        val errorOrUpdate = LocalFile
+          .toUpload(lf)
+          .right
+          .map { (upload: Upload) =>
+            upload.withUploadType(Update)
+          }
+        errorOrUpdate.right.map(update => new S3 upload update)
+    }
+
+    (objects, onFlightUpdateFutures ++ updateFutures)
+  } flatMap { (objectsAndUpdateFutures) =>
+    val objects: ObjectListing = objectsAndUpdateFutures._1
+    val updateFutures: UpdateFutures = objectsAndUpdateFutures._2
     val s3Files = alreadyResolved ++ (objects.getObjectSummaries.toIndexedSeq.toSeq map (S3File(_)))
     Option(objects.getNextMarker)
-      .fold(Future(Right(s3Files)): ObjectListingResult)(nextMarker => resolveS3Files(Some(nextMarker), s3Files))
+      .fold(Future(Right((Right(s3Files), updateFutures))): ErrorOrS3FilesAndUpdates) // We've received all the S3 keys from the bucket
+      { nextMarker => // There are more S3 keys on the bucket. Fetch them.
+        resolveS3FilesAndUpdates(localFiles)(Some(nextMarker), s3Files, attempt = attempt, updateFutures)
+      }
   } recoverWith retry(attempt)(
     createFailureReport = error => ClientError(s"Failed to fetch an object listing (${error.getMessage})"),
-    retryAction = nextAttempt => resolveS3Files(nextMarker, alreadyResolved, nextAttempt)
+    retryAction = nextAttempt => resolveS3FilesAndUpdates(localFiles)(nextMarker, alreadyResolved, nextAttempt, onFlightUpdateFutures)
   )
 
-  type ObjectListingResult = Future[Either[ErrorReport, Seq[S3File]]]
+  type S3FilesAndUpdates = (ErrorOrS3Files, UpdateFutures)
+  type S3FilesAndUpdatesFuture = Future[S3FilesAndUpdates]
+  type ErrorOrS3FilesAndUpdates = Future[Either[ErrorReport, S3FilesAndUpdates]]
+  type UpdateFutures = Seq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
+  type ErrorOrS3Files = Either[ErrorReport, Seq[S3File]]
 
   sealed trait PushFailureReport extends FailureReport
   sealed trait PushSuccessReport extends SuccessReport {
