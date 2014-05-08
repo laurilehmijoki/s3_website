@@ -398,6 +398,12 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite
       sentPutObjectRequest.getMetadata.getContentType must equalTo("application/json; charset=utf-8")
     }
+
+    "resolve the content type from file contents" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index", "<html><body><h1>hi</h1></body></html>") :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
+    }
   }
   
   trait MockAWS extends MockS3 with MockCloudFront with Scope
