@@ -1,15 +1,14 @@
 package s3.website
 
-import s3.website.model.{Redirect, Config}
+import s3.website.model.{Update, Redirect, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
 import s3.website.CloudFront.{CloudFrontSettings, SuccessfulInvalidation, FailedInvalidation}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
-import s3.website.S3.PushSuccessReport
+import s3.website.S3.{SuccessfulDelete, PushSuccessReport, SuccessfulUpload}
 import com.amazonaws.auth.BasicAWSCredentials
 import s3.website.Logger._
-import s3.website.S3.SuccessfulUpload
 import java.net.URI
 import Utils._
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -74,7 +73,7 @@ object CloudFront {
   
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] =
     pushSuccessReports
-      .filterNot(isRedirect) // Assume that redirect objects are never cached.
+      .filter(needsInvalidation) // Assume that redirect objects are never cached.
       .map(report =>
         new URI(
           "http",
@@ -97,11 +96,12 @@ object CloudFront {
       }
       .toSeq
 
-  def isRedirect: PartialFunction[PushSuccessReport, Boolean] = {
+  def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
     case SuccessfulUpload(upload) => upload.uploadType match {
-      case Redirect => true
+      case Update => true
       case _ => false
     }
+    case SuccessfulDelete(_) => true
     case _ => false
   }
 

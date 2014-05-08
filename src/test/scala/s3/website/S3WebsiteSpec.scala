@@ -27,6 +27,7 @@ import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
 import com.amazonaws.AmazonServiceException.ErrorType
 import java.util.concurrent.atomic.AtomicInteger
+import scala.collection.immutable.IndexedSeq
 
 class S3WebsiteSpec extends Specification {
 
@@ -132,13 +133,23 @@ class S3WebsiteSpec extends Specification {
   }
 
   "push with CloudFront" should {
-    "invalidate the CloudFront items" in new SiteDirectory with MockAWS {
+    "invalidate the updated CloudFront items" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
         localFiles = "test.css" :: "articles/index.html" :: Nil
       )
+      setOutdatedS3Keys("test.css", "articles/index.html")
       Push.pushSite
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/test.css" :: "/articles/index.html" :: Nil).sorted)
+    }
+
+    "not send CloudFront invalidation requests on new objects"  in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "newfile.js" :: Nil
+      )
+      Push.pushSite
+      noInvalidationsOccurred must beTrue
     }
 
     "not send CloudFront invalidation requests on redirect objects" in new SiteDirectory with MockAWS {
@@ -155,6 +166,7 @@ class S3WebsiteSpec extends Specification {
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
         localFiles = "test.css" :: Nil
       )
+      setOutdatedS3Keys("test.css")
       Push.pushSite must equalTo(0) // The retries should finally result in a success
       sentInvalidationRequests.length must equalTo(4)
     }
@@ -165,6 +177,7 @@ class S3WebsiteSpec extends Specification {
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
         localFiles = "test.css" :: Nil
       )
+      setOutdatedS3Keys("test.css")
       Push.pushSite
       sentInvalidationRequests.length must equalTo(6)
     }
@@ -174,6 +187,7 @@ class S3WebsiteSpec extends Specification {
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
         localFiles = "articles/arnold's file.html" :: Nil
       )
+      setOutdatedS3Keys("articles/arnold's file.html")
       Push.pushSite
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
     }
@@ -185,6 +199,7 @@ class S3WebsiteSpec extends Specification {
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z"), cloudfront_invalidate_root = Some(true)),
         localFiles = "index.html" :: "articles/index.html" :: Nil
       )
+      setOutdatedS3Keys("index.html", "articles/index.html")
       Push.pushSite
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/articles/" :: Nil).sorted)
     }
@@ -192,10 +207,12 @@ class S3WebsiteSpec extends Specification {
 
   "a site with over 1000 items" should {
     "split the CloudFront invalidation requests into batches of 1000 items" in new SiteDirectory with MockAWS {
+      val files = (1 to 1002).map { i => s"file-$i"}
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
-        localFiles = (1 to 1002).map { i => s"file-$i"}
+        localFiles = files
       )
+      setOutdatedS3Keys(files:_*)
       Push.pushSite
       sentInvalidationRequests.length must equalTo(2)
       sentInvalidationRequests(0).getInvalidationBatch.getPaths.getItems.length must equalTo(1000)
@@ -233,8 +250,9 @@ class S3WebsiteSpec extends Specification {
       setCloudFrontAsInternallyBroken()
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
-        localFiles = "test.css" :: "articles/index.html" :: Nil
+        localFiles = "test.css" :: Nil
       )
+      setOutdatedS3Keys("test.css")
       Push.pushSite must equalTo(1)
     }
 
@@ -493,6 +511,14 @@ class S3WebsiteSpec extends Specification {
     )
     val s3ObjectListing = new ObjectListing
     when(amazonS3Client.listObjects(Matchers.any(classOf[ListObjectsRequest]))).thenReturn(s3ObjectListing)
+
+    def setOutdatedS3Keys(s3Keys: String*) {
+      s3Keys
+        .map(key =>
+          S3File(key, md5Hex(Random.nextLong().toString)) // Simulate the situation where the file on S3 is outdated (as compared to the local file)
+        )
+        .foreach (setS3Files(_))
+    }
 
     def setS3Files(s3Files: S3File*) {
       s3Files.foreach { s3File =>
