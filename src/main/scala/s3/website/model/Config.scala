@@ -79,7 +79,7 @@ object Config {
       redirects <- Try(redirectsOption.map(_.asInstanceOf[java.util.Map[String,String]].toMap))
     } yield Right(redirects)
 
-    yamlValue getOrElse Left(UserError(s"The key $key has to have an int or (string -> int) value"))
+    yamlValue getOrElse Left(UserError(s"The key $key has to have a (string -> string) value"))
   }
 
   def loadRequiredString(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, String] = {
