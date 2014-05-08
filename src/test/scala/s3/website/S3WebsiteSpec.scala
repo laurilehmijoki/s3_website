@@ -336,6 +336,21 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "max-age in config" should {
+    "respect the more specific glob" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        defaultConfig.copy(max_age = Some(Right(Map(
+          "**" -> 150,
+          "assets/**" -> 86400
+        )))),
+        localFiles = "index.html" :: "assets/picture.gif" :: Nil
+      )
+      Push.pushSite
+      sentPutObjectRequests.find(_.getKey == "index.html").get.getMetadata.getCacheControl must equalTo("max-age=150")
+      sentPutObjectRequests.find(_.getKey == "assets/picture.gif").get.getMetadata.getCacheControl must equalTo("max-age=86400")
+    }
+  }
+
   "s3_reduced_redundancy: true in config" should {
     "result in uploads being marked with reduced redundancy" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(true)), localFiles = "index.html" :: Nil)
@@ -511,7 +526,7 @@ class S3WebsiteSpec extends Specification {
 
     def sentPutObjectRequests: Seq[PutObjectRequest] = {
       val req = ArgumentCaptor.forClass(classOf[PutObjectRequest])
-      verify(amazonS3Client).putObject(req.capture())
+      verify(amazonS3Client, Mockito.atLeast(1)).putObject(req.capture())
       req.getAllValues
     }
 

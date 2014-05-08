@@ -76,17 +76,6 @@ object LocalFile {
     val md5 = using(fis(sourceFile)) { inputStream =>
       DigestUtils.md5Hex(inputStream)
     }
-    val maxAge = config.max_age.flatMap { maxAgeIntOrGlob =>
-      maxAgeIntOrGlob.fold(
-        (seconds: Int) => Some(seconds),
-        (globs2Ints: Map[String, Int]) =>
-          globs2Ints.find { globAndInt =>
-            (rubyRuntime evalScriptlet s"File.fnmatch('${globAndInt._1}', '${localFile.s3Key}')")
-              .toJava(classOf[Boolean])
-              .asInstanceOf[Boolean]
-          } map (_._2)
-      )
-    }
 
     Upload(
       s3Key = localFile.s3Key,
@@ -95,7 +84,7 @@ object LocalFile {
           md5 = md5,
           contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
           contentLength = sourceFile.length(),
-          maxAge = maxAge,
+          maxAge = resolveMaxAge(localFile),
           contentType = resolveContentType(localFile.sourceFile),
           openInputStream = () => new FileInputStream(sourceFile)
         )
@@ -114,6 +103,25 @@ object LocalFile {
       mimeType + "; charset=utf-8"
     else
       mimeType
+  }
+
+  def resolveMaxAge(localFile: LocalFile)(implicit config: Config): Option[Int] = {
+    type GlobsMap = Map[String, Int]
+    config.max_age.flatMap { (intOrGlobs: Either[Int, GlobsMap]) =>
+      type GlobsSeq = Seq[(String, Int)]
+      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1).reverse
+      intOrGlobs
+        .right.map(respectMostSpecific)
+        .fold(
+          (seconds: Int) => Some(seconds),
+          (globs: GlobsSeq) =>
+            globs.find { globAndInt =>
+              (rubyRuntime evalScriptlet s"File.fnmatch('${globAndInt._1}', '${localFile.s3Key}')")
+                .toJava(classOf[Boolean])
+                .asInstanceOf[Boolean]
+            } map (_._2)
+        )
+    }
   }
 
   def resolveLocalFiles(implicit site: Site): Either[ErrorReport, Seq[LocalFile]] = Try {
