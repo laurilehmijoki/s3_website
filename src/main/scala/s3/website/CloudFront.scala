@@ -90,13 +90,18 @@ object CloudFront {
     else
       path
 
-  def toInvalidationPath(report: PushSuccessReport) =
-    new URI(
-      "http",
-      "cloudfront", // We want to use the encoder in the URI class. These must be passed in.
-      "/" + report.s3Key,  // CloudFront keys have the slash in front
-      null
-    ).toURL.getPath // The URL class encodes the unsafe characters
+  def toInvalidationPath(report: PushSuccessReport) = {
+    def encodeUnsafeChars(path: String) =
+      new URI(
+        "http",
+        "cloudfront", // We want to use the encoder in the URI class. These must be passed in.
+        "/" + report.s3Key,  // CloudFront keys have the slash in front
+        path
+      ).toURL.getPath // The URL class encodes the unsafe characters
+    val invalidationPath = "/" + report.s3Key  // CloudFront keys have the slash in front
+    encodeUnsafeChars(invalidationPath)
+  }
+
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
     case SuccessfulUpload(upload) => upload.uploadType match {
