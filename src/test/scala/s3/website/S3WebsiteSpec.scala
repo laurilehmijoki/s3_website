@@ -379,6 +379,26 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
   }
+
+  "content type inference" should {
+    "add charset=utf-8 to all html documents" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(localFiles = "file.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
+    }
+
+    "add charset=utf-8 to all text documents" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(localFiles = "file.txt" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("text/plain; charset=utf-8")
+    }
+
+    "add charset=utf-8 to all json documents" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(localFiles = "file.json" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("application/json; charset=utf-8")
+    }
+  }
   
   trait MockAWS extends MockS3 with MockCloudFront with Scope
   
