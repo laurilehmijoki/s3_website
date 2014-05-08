@@ -104,11 +104,11 @@ class S3WebsiteSpec extends Specification {
       verify(amazonS3Client, times(6)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
-    "not try again if the upload fails on because of the client" in new SiteDirectory with MockAWS {
+    "not try again if the upload fails on because of invalid credentials" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow {
         val e = new AmazonServiceException("your credentials are incorrect")
-        e.setErrorType(ErrorType.Client)
+        e.setStatusCode(403)
         e
       }
       Push.pushSite
