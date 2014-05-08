@@ -20,7 +20,7 @@ object Site {
   def loadSite(yamlConfigPath: String, siteRootDirectory: String): Either[ErrorReport, Site] = {
     val yamlObjectTry = for {
       yamlString <- Try(fromFile(new File(yamlConfigPath)).mkString)
-      yamlWithErbEvaluated <- erbEval(yamlString)
+      yamlWithErbEvaluated <- erbEval(yamlString, yamlConfigPath)
       yamlObject <- Try(new Yaml() load yamlWithErbEvaluated)
     } yield yamlObject
     yamlObjectTry match {

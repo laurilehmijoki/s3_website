@@ -139,7 +139,7 @@ object Config {
       unsafeYaml.yamlObject.asInstanceOf[java.util.Map[String, _]].toMap get key
     }
 
-  def erbEval(erbString: String): Try[String] = Try {
+  def erbEval(erbString: String, yamlConfigPath: String): Try[String] = Try {
     val erbStringWithoutComments = erbString.replaceAll("^\\s*#.*", "")
     rubyRuntime.evalScriptlet(
       s"""
@@ -151,6 +151,9 @@ object Config {
         |ERB.new(str).result
       """.stripMargin
     ).asJavaString()
+  } match {
+    case Failure(err) => Failure(new RuntimeException(s"Failed to parse ERB in $yamlConfigPath:\n${err.getMessage}"))
+    case x => x
   }
 
   case class UnsafeYaml(yamlObject: AnyRef)
