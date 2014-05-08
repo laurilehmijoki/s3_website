@@ -51,8 +51,12 @@ package object website {
     httpStatusCode.exists(c => c >= 400 && c < 500)
   }
   
-  def countToString(count: Int, singular: String) = {
-    def plural = s"${singular}s"
-    s"$count ${if (count > 1) plural else singular}"
+  implicit class NumReport(val num: Int) extends AnyVal {
+    def ofType(itemType: String) = countToString(num, itemType)
+
+    private def countToString(count: Int, singular: String) = {
+      def plural = s"${singular}s"
+      s"$count ${if (count > 1) plural else singular}"
+    }
   }
 }

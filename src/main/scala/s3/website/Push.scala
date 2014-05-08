@@ -156,11 +156,11 @@ object Push {
           "There was nothing to push."
       case PushCounts(updates, newFiles, failures, redirects, deletes) =>
         val reportClauses: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
-        if (updates > 0)   reportClauses += s"Updated ${countToString(updates, "file")}."
-        if (newFiles > 0)  reportClauses += s"Created ${countToString(newFiles, "file")}."
-        if (failures > 0)  reportClauses += s"${countToString(failures, "operation")} failed." // This includes both failed uploads and deletes.
-        if (redirects > 0) reportClauses += s"Applied ${countToString(redirects, "redirect")}."
-        if (deletes > 0)   reportClauses += s"Deleted ${countToString(deletes, "file")}."
+        if (updates > 0)   reportClauses += s"Updated ${updates ofType "file"}."
+        if (newFiles > 0)  reportClauses += s"Created ${newFiles ofType "file"}."
+        if (failures > 0)  reportClauses += s"${failures ofType "operation"} failed." // This includes both failed uploads and deletes.
+        if (redirects > 0) reportClauses += s"Applied ${redirects ofType "redirect"}."
+        if (deletes > 0)   reportClauses += s"Deleted ${deletes ofType "file"}."
         reportClauses.mkString(" ")
     }
 

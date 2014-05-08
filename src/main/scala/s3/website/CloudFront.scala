@@ -61,7 +61,7 @@ object CloudFront {
   type CloudFrontClientProvider = (Config) => AmazonCloudFront
 
   case class SuccessfulInvalidation(invalidatedItemsCount: Int) extends SuccessReport {
-    def reportMessage = s"Invalidated ${countToString(invalidatedItemsCount, "item")} on CloudFront"
+    def reportMessage = s"Invalidated ${invalidatedItemsCount ofType "item"} on CloudFront"
   }
 
   case class FailedInvalidation(error: Throwable) extends FailureReport {
