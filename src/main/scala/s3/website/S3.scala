@@ -21,8 +21,9 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
   def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)(implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
-      s3Settings.s3Client(config) putObject toPutObjectRequest(upload)
-      val report = SuccessfulUpload(upload)
+      val putObjectRequest = toPutObjectRequest(upload)
+      s3Settings.s3Client(config) putObject putObjectRequest
+      val report = SuccessfulUpload(upload, putObjectRequest.getMetadata)
       info(report)
       Right(report)
     } recoverWith retry(a)(
@@ -136,11 +137,19 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(upload: Upload with UploadTypeResolved) extends PushSuccessReport {
+  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, metadata: ObjectMetadata) extends PushSuccessReport {
+    def metadataReport =
+      (metadata.getCacheControl :: metadata.getContentType :: metadata.getContentEncoding :: Nil)
+        .map(Option(_))
+        .collect {
+          case Some(metadatum) => metadatum
+        }
+        .mkString(" | ")
+
     def reportMessage =
       upload.uploadType match {
-        case NewFile  => s"Created ${upload.s3Key}"
-        case Update   => s"Updated ${upload.s3Key}"
+        case NewFile  => s"Created ${upload.s3Key} ($metadataReport)"
+        case Update   => s"Updated ${upload.s3Key} ($metadataReport)"
         case Redirect => s"Redirecting ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
       }
 

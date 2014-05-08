@@ -138,7 +138,7 @@ object Push {
       failureOrSuccess => failureOrSuccess.fold(
         (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
         (successReport: PushSuccessReport) => successReport match {
-          case SuccessfulUpload(upload) => upload.uploadType match {
+          case SuccessfulUpload(upload, _) => upload.uploadType match {
             case NewFile  => counts.copy(newFiles = counts.newFiles + 1)
             case Update   => counts.copy(updates = counts.updates + 1)
             case Redirect => counts.copy(redirects = counts.redirects + 1)
