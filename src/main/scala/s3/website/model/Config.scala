@@ -143,9 +143,13 @@ object Config {
     val erbStringWithoutComments = erbString.replaceAll("^\\s*#.*", "")
     rubyRuntime.evalScriptlet(
       s"""
-        require 'erb'
-        ERB.new("$erbStringWithoutComments").result
-      """
+        |require 'erb'
+        |
+        |str = <<-ERBSTR
+        |$erbStringWithoutComments
+        |ERBSTR
+        |ERB.new(str).result
+      """.stripMargin
     ).asJavaString()
   }
 
