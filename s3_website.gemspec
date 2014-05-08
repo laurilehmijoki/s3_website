@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
-  s.homepage    = "https://github.com/laurilehmijoki/s3_website"
+  s.homepage    = "https://github.com/laurilehmijoki/s3_website/tree/s3_website_monadic"
   s.summary     = %q{Manage your S3 website}
   s.description = %q{
     Sync website files, set redirects, use HTTP performance optimisations, deliver via
