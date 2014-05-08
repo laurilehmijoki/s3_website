@@ -22,26 +22,26 @@ import s3.website.model.Error.isClientError
 
 class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
-  def upload(upload: Upload with UploadTypeResolved)(implicit a: Attempt = 1, config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
+  def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)(implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       s3Settings.s3Client(config) putObject toPutObjectRequest(upload)
       val report = SuccessfulUpload(upload)
       info(report)
       Right(report)
-    } recoverWith retry(
+    } recoverWith retry(a)(
       createFailureReport = error => FailedUpload(upload.s3Key, error),
-      retryAction  = newAttempt => this.upload(upload)(newAttempt, config)
+      retryAction  = newAttempt => this.upload(upload, newAttempt)
     )
 
-  def delete(s3Key: String)(implicit a: Attempt = 1, config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
+  def delete(s3Key: String,  a: Attempt = 1)(implicit config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
       s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
       info(report)
       Right(report)
-    } recoverWith retry(
+    } recoverWith retry(a)(
       createFailureReport = error => FailedDelete(s3Key, error),
-      retryAction  = newAttempt => this.delete(s3Key)(newAttempt, config)
+      retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
       
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
@@ -83,8 +83,8 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil)
-                    (implicit attempt: Attempt = 1, config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor): ObjectListingResult = Future {
+  def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
+                    (implicit config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor): ObjectListingResult = Future {
     nextMarker.foreach(m => info(s"Fetching the next part of the object listing from S3 (starting from $m)"))
     val objects: ObjectListing = s3Settings.s3Client(config).listObjects({
       val req = new ListObjectsRequest()
@@ -97,9 +97,9 @@ object S3 {
     val s3Files = alreadyResolved ++ (objects.getObjectSummaries.toIndexedSeq.toSeq map (S3File(_)))
     Option(objects.getNextMarker)
       .fold(Future(Right(s3Files)): ObjectListingResult)(nextMarker => resolveS3Files(Some(nextMarker), s3Files))
-  } recoverWith retry(
+  } recoverWith retry(attempt)(
     createFailureReport = error => ClientError(s"Failed to fetch an object listing (${error.getMessage})"),
-    retryAction = nextAttempt => resolveS3Files(nextMarker, alreadyResolved)(nextAttempt, config, s3Settings, ec)
+    retryAction = nextAttempt => resolveS3Files(nextMarker, alreadyResolved, nextAttempt)
   )
 
   type ObjectListingResult = Future[Either[ErrorReport, Seq[S3File]]]

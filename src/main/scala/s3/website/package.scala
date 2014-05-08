@@ -22,8 +22,9 @@ package object website {
 
   type Attempt = Int
 
-  def retry[L <: Report, R](createFailureReport: (Throwable) => L, retryAction: (Attempt) => Future[Either[L, R]])
-                           (implicit attempt: Attempt, retrySettings: RetrySettings, ec: ExecutionContextExecutor):
+  def retry[L <: Report, R](attempt: Attempt)
+                           (createFailureReport: (Throwable) => L, retryAction: (Attempt) => Future[Either[L, R]])
+                           (implicit retrySettings: RetrySettings, ec: ExecutionContextExecutor):
   PartialFunction[Throwable, Future[Either[L, R]]] = {
     case error: Throwable if attempt == 6 || isClientError(error) =>
       val failureReport = createFailureReport(error)
