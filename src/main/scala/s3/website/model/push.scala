@@ -109,7 +109,7 @@ object LocalFile {
     type GlobsMap = Map[String, Int]
     config.max_age.flatMap { (intOrGlobs: Either[Int, GlobsMap]) =>
       type GlobsSeq = Seq[(String, Int)]
-      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1).reverse
+      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1.length).reverse
       intOrGlobs
         .right.map(respectMostSpecific)
         .fold(
