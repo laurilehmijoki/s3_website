@@ -18,6 +18,7 @@ object Utils {
 
 object Logger {
   import Rainbow._
+  def debug(msg: String) = println(s"[${"debg".cyan}] $msg")
   def info(msg: String) = println(s"[${"info".blue}] $msg")
   def fail(msg: String) = println(s"[${"fail".red}] $msg")
 

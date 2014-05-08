@@ -5,7 +5,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
 import com.lexicalscope.jewel.cli.CliFactory
 import scala.language.postfixOps
-import s3.website.Diff.{resolveUploads, resolveDeletes}
+import s3.website.Diff.{resolveNewFiles, resolveDeletes}
 import s3.website.S3._
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
@@ -42,15 +42,17 @@ object Push {
     val redirectResults = redirects.map(new S3() upload(_))
 
     val errorsOrReports = for {
-      s3Files    <- Await.result(resolveS3Files(), 1 minutes).right
-      localFiles <- resolveLocalFiles.right
+      localFiles        <- resolveLocalFiles.right
+      errorOrS3FilesAndUpdateFutures <- Await.result(resolveS3FilesAndUpdates(localFiles)(), 7 days).right
+      s3Files <- errorOrS3FilesAndUpdateFutures._1.right
     } yield {
+      val updateReports: PushReports = errorOrS3FilesAndUpdateFutures._2.par
       val deleteReports: PushReports = utils toParSeq resolveDeletes(localFiles, s3Files, redirects)
         .map { s3File => new S3() delete s3File.s3Key }
         .map { Right(_) } // To make delete reports type-compatible with upload reports
-      val uploadReports: PushReports = utils toParSeq resolveUploads(localFiles, s3Files)
+      val uploadReports: PushReports = utils toParSeq resolveNewFiles(localFiles, s3Files)
         .map { _.right.map(new S3() upload(_)) }
-      uploadReports ++ deleteReports ++ redirectResults.map(Right(_))
+      uploadReports ++ deleteReports ++ updateReports ++ redirectResults.map(Right(_))
     }
     val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {
       uploadReports => awaitForUploads(uploadReports)
@@ -169,8 +171,8 @@ object Push {
                          redirects: Int = 0, 
                          deletes: Int = 0
                          )
-  type FinishedPushOperations = ParSeq[Either[ErrorReport, Either[PushFailureReport, PushSuccessReport]]]
-  type PushReports = ParSeq[Either[ErrorReport, Future[Either[PushFailureReport, PushSuccessReport]]]]
+  type FinishedPushOperations = ParSeq[Either[ErrorReport, PushErrorOrSuccess]]
+  type PushReports = ParSeq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
   type ExitCode = Int
 
