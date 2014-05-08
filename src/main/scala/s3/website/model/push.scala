@@ -96,7 +96,7 @@ object LocalFile {
           contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
           contentLength = sourceFile.length(),
           maxAge = maxAge,
-          contentType = tika.detect(localFile.sourceFile),
+          contentType = resolveContentType(localFile.sourceFile),
           openInputStream = () => new FileInputStream(sourceFile)
         )
       )
@@ -107,6 +107,14 @@ object LocalFile {
   }
 
   lazy val tika = new Tika()
+
+  def resolveContentType(file: File) = {
+    val mimeType = tika.detect(file)
+    if (mimeType.startsWith("text/") || mimeType == "application/json")
+      mimeType + "; charset=utf-8"
+    else
+      mimeType
+  }
 
   def resolveLocalFiles(implicit site: Site): Either[ErrorReport, Seq[LocalFile]] = Try {
     val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory)
