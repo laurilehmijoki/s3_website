@@ -33,7 +33,7 @@ object Config {
       })
     }
 
-    yamlValue getOrElse Left(UserError(s"The key $key has to have a boolean or [string] value"))
+    yamlValue getOrElse Left(ClientError(s"The key $key has to have a boolean or [string] value"))
   }
 
   def loadOptionalStringOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[String, Seq[String]]]] = {
@@ -46,7 +46,7 @@ object Config {
       })
     }
 
-    yamlValue getOrElse Left(UserError(s"The key $key has to have a string or [string] value"))
+    yamlValue getOrElse Left(ClientError(s"The key $key has to have a string or [string] value"))
   }
 
   def loadMaxAge(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Int, Map[String, Int]]]] = {
@@ -60,7 +60,7 @@ object Config {
       })
     }
 
-    yamlValue getOrElse Left(UserError(s"The key $key has to have an int or (string -> int) value"))
+    yamlValue getOrElse Left(ClientError(s"The key $key has to have an int or (string -> int) value"))
   }
 
   def loadEndpoint(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[S3Endpoint]] =
@@ -79,7 +79,7 @@ object Config {
       redirects <- Try(redirectsOption.map(_.asInstanceOf[java.util.Map[String,String]].toMap))
     } yield Right(redirects)
 
-    yamlValue getOrElse Left(UserError(s"The key $key has to have a (string -> string) value"))
+    yamlValue getOrElse Left(ClientError(s"The key $key has to have a (string -> string) value"))
   }
 
   def loadRequiredString(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, String] = {
@@ -91,7 +91,7 @@ object Config {
     }
 
     yamlValue getOrElse {
-      Left(UserError(s"The key $key has to have a string value"))
+      Left(ClientError(s"The key $key has to have a string value"))
     }
   }
 
@@ -104,7 +104,7 @@ object Config {
     }
 
     yamlValueOption getOrElse {
-      Left(UserError(s"The key $key has to have a string value"))
+      Left(ClientError(s"The key $key has to have a string value"))
     }
   }
 
@@ -117,7 +117,7 @@ object Config {
     }
 
     yamlValueOption getOrElse {
-      Left(UserError(s"The key $key has to have a boolean value"))
+      Left(ClientError(s"The key $key has to have a boolean value"))
     }
   }
 
@@ -130,7 +130,7 @@ object Config {
     }
 
     yamlValueOption getOrElse {
-      Left(UserError(s"The key $key has to have an integer value"))
+      Left(ClientError(s"The key $key has to have an integer value"))
     }
   }
 

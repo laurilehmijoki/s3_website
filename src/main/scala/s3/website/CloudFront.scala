@@ -2,8 +2,7 @@ package s3.website
 
 import s3.website.model.{Redirect, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
-import s3.website.CloudFront.{CloudFrontSettings, CloudFrontClientProvider, SuccessfulInvalidation, FailedInvalidation}
-import scala.util.Try
+import s3.website.CloudFront.{CloudFrontSettings, SuccessfulInvalidation, FailedInvalidation}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -11,41 +10,36 @@ import s3.website.S3.PushSuccessReport
 import com.amazonaws.auth.BasicAWSCredentials
 import s3.website.Logger._
 import s3.website.S3.SuccessfulUpload
-import scala.util.Failure
-import scala.util.Success
 import java.net.URI
 import Utils._
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config) {
   val cloudFront = cloudFrontSettings.cfClient(config)
 
-  def invalidate(invalidationBatch: InvalidationBatch, distributionId: String): InvalidationResult = {
-    def tryInvalidate(implicit attempt: Int = 1): Try[SuccessfulInvalidation] =
-      Try {
-        val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
-        cloudFront.createInvalidation(invalidationReq)
-        val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
-        info(result)
-        result
-      } recoverWith {
-        case e: TooManyInvalidationsInProgressException =>
-          implicit val duration: Duration = Duration(
-            (fibs drop attempt).head min 15, /* AWS docs way that invalidations complete in 15 minutes */
-            cloudFrontSettings.cloudFrontSleepTimeUnit
-          )
-          pending(maxInvalidationsExceededInfo)
-          Thread.sleep(duration.toMillis)
-          tryInvalidate(attempt + 1)
-      }
+  def invalidate(invalidationBatch: InvalidationBatch, distributionId: String)
+                (implicit attempt: Attempt = 1, ec: ExecutionContextExecutor): InvalidationResult =
+    Future {
+      val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
+      cloudFront.createInvalidation(invalidationReq)
+      val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
+      info(result)
+      Right(result)
+    } recoverWith (tooManyInvalidationsRetry(invalidationBatch, distributionId) orElse retry (
+      createFailureReport = error => FailedInvalidation(error),
+      retryAction = nextAttempt => invalidate(invalidationBatch, distributionId)(nextAttempt, ec)
+    ))    
 
-    tryInvalidate() match {
-      case Success(res) =>
-        Right(res)
-      case Failure(err) =>
-        val report = FailedInvalidation(err)
-        info(report)
-        Left(report)
-    }
+  def tooManyInvalidationsRetry(invalidationBatch: InvalidationBatch, distributionId: String)
+                          (implicit attempt: Attempt, ec: ExecutionContextExecutor): PartialFunction[Throwable, InvalidationResult] = {
+    case e: TooManyInvalidationsInProgressException =>
+      implicit val duration: Duration = Duration(
+        (fibs drop attempt).head min 15, /* CloudFront invalidations complete within 15 minutes */
+        cloudFrontSettings.retryTimeUnit
+      )
+      pending(maxInvalidationsExceededInfo)
+      Thread.sleep(duration.toMillis)
+      invalidate(invalidationBatch, distributionId)(attempt + 1, ec)
   }
 
   def maxInvalidationsExceededInfo(implicit sleepDuration: Duration, attempt: Int) = {
@@ -60,8 +54,7 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config
       basicInfo
   }
 
-  type InvalidationResult = Either[FailedInvalidation, SuccessfulInvalidation]
-
+  type InvalidationResult = Future[Either[FailedInvalidation, SuccessfulInvalidation]]
 }
 
 object CloudFront {
@@ -72,7 +65,7 @@ object CloudFront {
     def reportMessage = s"Invalidated $invalidatedItemsCount item(s) on CloudFront"
   }
 
-  case class FailedInvalidation(error: Throwable) extends FailureReport{
+  case class FailedInvalidation(error: Throwable) extends FailureReport {
     def reportMessage = s"Failed to invalidate the CloudFront distribution (${error.getMessage})"
   }
 
@@ -114,6 +107,6 @@ object CloudFront {
 
   case class CloudFrontSettings(
     cfClient: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
-    cloudFrontSleepTimeUnit: TimeUnit = MINUTES
-  )
+    retryTimeUnit: TimeUnit = MINUTES
+  ) extends RetrySettings
 }

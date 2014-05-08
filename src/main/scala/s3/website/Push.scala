@@ -62,7 +62,7 @@ object Push {
   
   def invalidateCloudFrontItems
     (errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations])
-    (implicit config: Config, cloudFrontSettings: CloudFrontSettings): Option[InvalidationSucceeded] = {
+    (implicit config: Config, cloudFrontSettings: CloudFrontSettings, ec: ExecutionContextExecutor): Option[InvalidationSucceeded] = {
     config.cloudfront_distribution_id.map {
       distributionId =>
         val pushSuccessReports = errorsOrFinishedPushOps.fold(
@@ -84,7 +84,12 @@ object Push {
           }
         )
         val invalidationResults: Seq[Either[FailedInvalidation, SuccessfulInvalidation]] =
-          toInvalidationBatches(pushSuccessReports) map (new CloudFront().invalidate(_, distributionId))
+          toInvalidationBatches(pushSuccessReports) map { invalidationBatch =>
+            Await.result(
+              new CloudFront().invalidate(invalidationBatch, distributionId),
+              atMost = 1 day
+            )
+          }
         if (invalidationResults.exists(_.isLeft))
           false // If one of the invalidations failed, mark the whole process as failed
         else

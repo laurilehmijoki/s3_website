@@ -159,6 +159,16 @@ class S3WebsiteSpec extends Specification {
       sentInvalidationRequests.length must equalTo(4)
     }
 
+    "retry if CloudFront is temporarily unreachable" in new SiteDirectory with MockAWS {
+      invalidationsFailAndThenSucceed(5)
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "test.css" :: Nil
+      )
+      Push.pushSite
+      sentInvalidationRequests.length must equalTo(6)
+    }
+
     "encode unsafe characters in the keys" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
@@ -219,7 +229,7 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite must equalTo(0)
     }
 
-    "be 1 if CloudFront invalidation fails"in new SiteDirectory with MockAWS {
+    "be 1 if CloudFront is unreachable or broken"in new SiteDirectory with MockAWS {
       setCloudFrontAsInternallyBroken()
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
@@ -429,11 +439,11 @@ class S3WebsiteSpec extends Specification {
   
   trait MockAWS extends MockS3 with MockCloudFront with Scope
   
-  trait MockCloudFront {
+  trait MockCloudFront extends MockAWSHelper {
     val amazonCloudFrontClient = mock(classOf[AmazonCloudFront])
     implicit val cfSettings: CloudFrontSettings = CloudFrontSettings(
       cfClient = _ => amazonCloudFrontClient,
-      cloudFrontSleepTimeUnit = MICROSECONDS
+      retryTimeUnit = MICROSECONDS
     )
 
     def sentInvalidationRequests: Seq[CreateInvalidationRequest] = {
@@ -449,6 +459,12 @@ class S3WebsiteSpec extends Specification {
       true // Mockito is based on exceptions
     }
 
+    def invalidationsFailAndThenSucceed(implicit howManyFailures: Int, callCount: AtomicInteger = new AtomicInteger(0)) {
+      doAnswer(temporaryFailure(classOf[CreateInvalidationResult]))
+        .when(amazonCloudFrontClient)
+        .createInvalidation(Matchers.anyObject())
+    }
+
     def setTooManyInvalidationsInProgress(attemptWhenInvalidationSucceeds: Int) {
       var callCount = 0
       doAnswer(new Answer[CreateInvalidationResult] {
@@ -462,16 +478,18 @@ class S3WebsiteSpec extends Specification {
       }).when(amazonCloudFrontClient).createInvalidation(Matchers.anyObject())
     }
 
+
+
     def setCloudFrontAsInternallyBroken() {
       when(amazonCloudFrontClient.createInvalidation(Matchers.anyObject())).thenThrow(new AmazonServiceException("CloudFront is down"))
     }
   }
   
-  trait MockS3 {
+  trait MockS3 extends MockAWSHelper {
     val amazonS3Client = mock(classOf[AmazonS3])
     implicit val s3Settings: S3Settings = S3Settings(
       s3Client = _ => amazonS3Client,
-      retrySleepTimeUnit = MICROSECONDS
+      retryTimeUnit = MICROSECONDS
     )
     val s3ObjectListing = new ObjectListing
     when(amazonS3Client.listObjects(Matchers.any(classOf[ListObjectsRequest]))).thenReturn(s3ObjectListing)
@@ -505,16 +523,6 @@ class S3WebsiteSpec extends Specification {
       doAnswer(temporaryFailure(classOf[ObjectListing]))
         .when(amazonS3Client)
         .listObjects(Matchers.any(classOf[ListObjectsRequest]))
-    }
-
-    def temporaryFailure[T](clazz: Class[T])(implicit callCount: AtomicInteger, howManyFailures: Int) = new Answer[T] {
-      def answer(invocation: InvocationOnMock) = {
-        callCount.incrementAndGet()
-        if (callCount.get() <= howManyFailures)
-          throw new AmazonServiceException("AWS is temporarily down")
-        else
-          mock(clazz)
-      }
     }
 
     def asSeenByS3Client(upload: Upload)(implicit config: Config): PutObjectRequest = {
@@ -552,7 +560,19 @@ class S3WebsiteSpec extends Specification {
 
     type S3Key = String 
   }
-  
+
+  trait MockAWSHelper {
+    def temporaryFailure[T](clazz: Class[T])(implicit callCount: AtomicInteger, howManyFailures: Int) = new Answer[T] {
+      def answer(invocation: InvocationOnMock) = {
+        callCount.incrementAndGet()
+        if (callCount.get() <= howManyFailures)
+          throw new AmazonServiceException("AWS is temporarily down")
+        else
+          mock(clazz)
+      }
+    }
+  }
+
   trait SiteDirectory extends After {
     val siteDir = new File(FileUtils.getTempDirectory, "site" + Random.nextLong())
     siteDir.mkdir()

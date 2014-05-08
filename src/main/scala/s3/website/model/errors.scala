@@ -9,7 +9,7 @@ object Error {
     error.isInstanceOf[AmazonServiceException] && error.asInstanceOf[AmazonServiceException].getErrorType == Client
 }
 
-case class UserError(reportMessage: String) extends ErrorReport
+case class ClientError(reportMessage: String) extends ErrorReport
 
 case class IOError(exception: Throwable) extends ErrorReport {
   def reportMessage = exception.getMessage
