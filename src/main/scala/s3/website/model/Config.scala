@@ -140,7 +140,7 @@ object Config {
     }
 
   def erbEval(erbString: String): Try[String] = Try {
-    val erbStringWithoutComments = erbString.replaceAll("#.*", "")
+    val erbStringWithoutComments = erbString.replaceAll("^\\s*#.*", "")
     rubyRuntime.evalScriptlet(
       s"""
         require 'erb'
