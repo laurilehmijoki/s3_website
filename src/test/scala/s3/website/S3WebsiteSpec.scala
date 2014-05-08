@@ -85,7 +85,7 @@ class S3WebsiteSpec extends Specification {
     }
 
     "create a file if does not exist on S3" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      implicit val site = siteWithFiles(localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
@@ -98,14 +98,14 @@ class S3WebsiteSpec extends Specification {
     }
 
     "try again if the upload fails" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      implicit val site = siteWithFiles(localFiles = "index.html" :: Nil)
       uploadFailsAndThenSucceeds(howManyFailures = 5)
       Push.pushSite
       verify(amazonS3Client, times(6)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
     "not try again if the upload fails on because of invalid credentials" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFilesAndContent(localFilesWithContent = ("index.html", "<h1>hello</h1>") :: Nil)
+      implicit val site = siteWithFiles(localFiles = "index.html" :: Nil)
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow {
         val e = new AmazonServiceException("your credentials are incorrect")
         e.setStatusCode(403)
