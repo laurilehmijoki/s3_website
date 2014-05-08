@@ -39,7 +39,7 @@ object Push {
     val utils: Utils = new Utils
 
     val redirects = Redirect.resolveRedirects
-    val redirectResults = redirects.map(new S3() upload)
+    val redirectResults = redirects.map(new S3() upload(_))
 
     val errorsOrReports = for {
       s3Files    <- Await.result(resolveS3Files(), 1 minutes).right
@@ -49,7 +49,7 @@ object Push {
         .map { s3File => new S3() delete s3File.s3Key }
         .map { Right(_) } // To make delete reports type-compatible with upload reports
       val uploadReports: PushReports = utils toParSeq resolveUploads(localFiles, s3Files)
-        .map { _.right.map(new S3() upload) }
+        .map { _.right.map(new S3() upload(_)) }
       uploadReports ++ deleteReports ++ redirectResults.map(Right(_))
     }
     val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {

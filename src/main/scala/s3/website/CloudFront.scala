@@ -16,32 +16,32 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config) {
   val cloudFront = cloudFrontSettings.cfClient(config)
 
-  def invalidate(invalidationBatch: InvalidationBatch, distributionId: String)
-                (implicit attempt: Attempt = 1, ec: ExecutionContextExecutor): InvalidationResult =
+  def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
+                (implicit ec: ExecutionContextExecutor): InvalidationResult =
     Future {
       val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
       cloudFront.createInvalidation(invalidationReq)
       val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
       info(result)
       Right(result)
-    } recoverWith (tooManyInvalidationsRetry(invalidationBatch, distributionId) orElse retry (
+    } recoverWith (tooManyInvalidationsRetry(invalidationBatch, distributionId, attempt) orElse retry(attempt)(
       createFailureReport = error => FailedInvalidation(error),
-      retryAction = nextAttempt => invalidate(invalidationBatch, distributionId)(nextAttempt, ec)
-    ))    
+      retryAction = nextAttempt => invalidate(invalidationBatch, distributionId, nextAttempt)
+    ))
 
-  def tooManyInvalidationsRetry(invalidationBatch: InvalidationBatch, distributionId: String)
-                          (implicit attempt: Attempt, ec: ExecutionContextExecutor): PartialFunction[Throwable, InvalidationResult] = {
+  def tooManyInvalidationsRetry(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt)
+                          (implicit ec: ExecutionContextExecutor): PartialFunction[Throwable, InvalidationResult] = {
     case e: TooManyInvalidationsInProgressException =>
-      implicit val duration: Duration = Duration(
+      val duration: Duration = Duration(
         (fibs drop attempt).head min 15, /* CloudFront invalidations complete within 15 minutes */
         cloudFrontSettings.retryTimeUnit
       )
-      pending(maxInvalidationsExceededInfo)
+      pending(maxInvalidationsExceededInfo(duration, attempt))
       Thread.sleep(duration.toMillis)
-      invalidate(invalidationBatch, distributionId)(attempt + 1, ec)
+      invalidate(invalidationBatch, distributionId, attempt + 1)
   }
 
-  def maxInvalidationsExceededInfo(implicit sleepDuration: Duration, attempt: Int) = {
+  def maxInvalidationsExceededInfo(sleepDuration: Duration, attempt: Int) = {
     val basicInfo = s"The maximum amount of CloudFront invalidations has exceeded. Trying again in $sleepDuration, please wait."
     val extendedInfo =
       s"""|$basicInfo
