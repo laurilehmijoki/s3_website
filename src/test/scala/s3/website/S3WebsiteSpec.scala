@@ -340,13 +340,13 @@ class S3WebsiteSpec extends Specification {
     "respect the more specific glob" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         defaultConfig.copy(max_age = Some(Right(Map(
-          "**" -> 150,
-          "assets/**" -> 86400
+          "assets/*" -> 150,
+          "assets/*.gif" -> 86400
         )))),
-        localFiles = "index.html" :: "assets/picture.gif" :: Nil
+        localFiles = "assets/jquery.js" :: "assets/picture.gif" :: Nil
       )
       Push.pushSite
-      sentPutObjectRequests.find(_.getKey == "index.html").get.getMetadata.getCacheControl must equalTo("max-age=150")
+      sentPutObjectRequests.find(_.getKey == "assets/jquery.js").get.getMetadata.getCacheControl must equalTo("max-age=150")
       sentPutObjectRequests.find(_.getKey == "assets/picture.gif").get.getMetadata.getCacheControl must equalTo("max-age=86400")
     }
   }
