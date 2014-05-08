@@ -74,20 +74,8 @@ object CloudFront {
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] =
     pushSuccessReports
       .filter(needsInvalidation) // Assume that redirect objects are never cached.
-      .map(report =>
-        new URI(
-          "http",
-          "cloudfront", // We want to use the encoder in the URI class. These must be passed in.
-          "/" + report.s3Key,  // CloudFront keys have the slash in front
-          null
-        ).toURL.getPath // The URL class encodes the unsafe characters
-      )
-      .map { path =>
-        if (config.cloudfront_invalidate_root.exists(_ == true))
-          path.replaceFirst("/index.html$", "/")
-        else
-          path
-      }
+      .map(toInvalidationPath)
+      .map (applyInvalidateRootSetting)
       .grouped(1000) // CloudFront supports max 1000 invalidations in one request (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html#InvalidationLimits)
       .map { batchKeys =>
         new InvalidationBatch() withPaths
@@ -95,6 +83,20 @@ object CloudFront {
             s"s3_website gem ${System.currentTimeMillis()}"
       }
       .toSeq
+
+  def applyInvalidateRootSetting(path: String)(implicit config: Config) =
+    if (config.cloudfront_invalidate_root.exists(_ == true))
+      path.replaceFirst("/index.html$", "/")
+    else
+      path
+
+  def toInvalidationPath(report: PushSuccessReport) =
+    new URI(
+      "http",
+      "cloudfront", // We want to use the encoder in the URI class. These must be passed in.
+      "/" + report.s3Key,  // CloudFront keys have the slash in front
+      null
+    ).toURL.getPath // The URL class encodes the unsafe characters
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
     case SuccessfulUpload(upload) => upload.uploadType match {
