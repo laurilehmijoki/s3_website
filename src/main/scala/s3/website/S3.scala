@@ -150,7 +150,7 @@ object S3 {
       upload.uploadType match {
         case NewFile  => s"Created ${upload.s3Key} ($metadataReport)"
         case Update   => s"Updated ${upload.s3Key} ($metadataReport)"
-        case Redirect => s"Redirecting ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
+        case Redirect => s"Redirected ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
       }
 
     def s3Key = upload.s3Key
