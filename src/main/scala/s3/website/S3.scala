@@ -65,7 +65,14 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
         md setContentLength uploadBody.contentLength
         md setContentType uploadBody.contentType
         uploadBody.contentEncoding foreach md.setContentEncoding
-        uploadBody.maxAge foreach (seconds => md.setCacheControl(s"max-age=$seconds"))
+        uploadBody.maxAge foreach { seconds =>
+          md.setCacheControl(
+            if (seconds == 0)
+              s"no-cache; max-age=$seconds"
+            else
+              s"max-age=$seconds"
+          )
+        }
         val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, uploadBody.openInputStream(), md)
         config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
         req

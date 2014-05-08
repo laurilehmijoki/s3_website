@@ -328,6 +328,12 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
+
+    "be used to disable caching" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(0))), localFiles = "index.html" :: Nil)
+      Push.pushSite
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache; max-age=0")
+    }
   }
 
   "s3_reduced_redundancy: true in config" should {
