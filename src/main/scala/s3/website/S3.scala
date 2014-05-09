@@ -23,7 +23,7 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
     Future {
       val putObjectRequest = toPutObjectRequest(upload)
       s3Settings.s3Client(config) putObject putObjectRequest
-      val report = SuccessfulUpload(upload, putObjectRequest.getMetadata)
+      val report = SuccessfulUpload(upload, putObjectRequest)
       info(report)
       Right(report)
     } recoverWith retry(a)(
@@ -137,9 +137,10 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, metadata: ObjectMetadata) extends PushSuccessReport {
+  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest) extends PushSuccessReport {
+    val metadata = putObjectRequest.getMetadata
     def metadataReport =
-      (metadata.getCacheControl :: metadata.getContentType :: metadata.getContentEncoding :: Nil)
+      (metadata.getCacheControl :: metadata.getContentType :: metadata.getContentEncoding :: putObjectRequest.getStorageClass :: Nil)
         .map(Option(_))
         .collect {
           case Some(metadatum) => metadatum
