@@ -5,9 +5,15 @@ require File.expand_path(File.dirname(__FILE__)+ '/../lib/s3_website')
 class Cfg < Thor
   desc 'create', 'Create a config file with placeholder values'
   def create
-    S3Website::Tasks.config_create Dir.pwd
-  rescue Exception => e
-    puts S3Website.error_report e
+    config_file_src = File.dirname(__FILE__) + '/../resources/configuration_file_template.yml'
+    config_file = Dir.pwd + '/s3_website.yml'
+    unless File.exists? config_file
+      require 'fileutils'
+      FileUtils.cp config_file_src, config_file
+      puts "Created the config file s3_website.yml. Go fill it with your settings."
+    end
+  rescue Exception => error
+    puts "#{error.message} (#{error.class})"
     exit 1
   end
 
@@ -27,8 +33,8 @@ class Cfg < Thor
     ConfigureS3Website::Runner.run({
       :config_source => config_source
     })
-  rescue Exception => e
-    puts S3Website.error_report e
+  rescue Exception => error
+    puts "#{error.message} (#{error.class})"
     exit 1
   end
 end
