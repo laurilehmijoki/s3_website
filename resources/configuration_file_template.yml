@@ -52,5 +52,3 @@ s3_bucket: your.blog.bucket.com
 #       host_name: blog.example.com
 #       replace_key_prefix_with: some_new_path/
 #       http_redirect_code: 301
-
-# extensionless_mime_type: text/html
