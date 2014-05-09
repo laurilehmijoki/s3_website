@@ -136,11 +136,11 @@ class S3WebsiteSpec extends Specification {
     "invalidate the updated CloudFront items" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
-        localFiles = "test.css" :: "articles/index.html" :: Nil
+        localFiles = "css/test.css" :: "articles/index.html" :: Nil
       )
-      setOutdatedS3Keys("test.css", "articles/index.html")
+      setOutdatedS3Keys("css/test.css", "articles/index.html")
       Push.pushSite
-      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/test.css" :: "/articles/index.html" :: Nil).sorted)
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/css/test.css" :: "/articles/index.html" :: Nil).sorted)
     }
 
     "not send CloudFront invalidation requests on new objects"  in new SiteDirectory with MockAWS {
@@ -191,23 +191,37 @@ class S3WebsiteSpec extends Specification {
       Push.pushSite
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
     }
+
+    /*
+     * Because CloudFront supports Default Root Objects (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html),
+     * we have to guess
+     */
+    "invalidate the root object '/' if a top-level object is updated or deleted" in new SiteDirectory with MockAWS {
+      implicit val site = siteWithFiles(
+        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        localFiles = "maybe-index.html" :: Nil
+      )
+      setOutdatedS3Keys("maybe-index.html")
+      Push.pushSite
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/maybe-index.html" :: Nil).sorted)
+    }
   }
 
   "cloudfront_invalidate_root: true" should {
     "convert CloudFront invalidation paths with the '/index.html' suffix into '/'"  in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z"), cloudfront_invalidate_root = Some(true)),
-        localFiles = "index.html" :: "articles/index.html" :: Nil
+        localFiles = "articles/index.html" :: Nil
       )
-      setOutdatedS3Keys("index.html", "articles/index.html")
+      setOutdatedS3Keys("articles/index.html")
       Push.pushSite
-      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/articles/" :: Nil).sorted)
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/" :: Nil).sorted)
     }
   }
 
   "a site with over 1000 items" should {
     "split the CloudFront invalidation requests into batches of 1000 items" in new SiteDirectory with MockAWS {
-      val files = (1 to 1002).map { i => s"file-$i"}
+      val files = (1 to 1002).map { i => s"lots-of-files/file-$i"}
       implicit val site = siteWithFiles(
         config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
         localFiles = files

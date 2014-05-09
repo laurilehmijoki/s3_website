@@ -71,18 +71,36 @@ object CloudFront {
   def awsCloudFrontClient(config: Config) =
     new AmazonCloudFrontClient(new BasicAWSCredentials(config.s3_id, config.s3_secret))
   
-  def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] =
-    pushSuccessReports
-      .filter(needsInvalidation) // Assume that redirect objects are never cached.
-      .map(toInvalidationPath)
-      .map (applyInvalidateRootSetting)
+  def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
+    val invalidationPaths: Seq[String] = {
+      def withDefaultPathIfNeeded(paths: Seq[String]) = {
+        // This is how we support the Default Root Object @ CloudFront (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html)
+        // We do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
+        // and reading the Default Root Object from there.
+        val containsPotentialDefaultRootObject = paths
+          .exists(
+            _
+              .replaceFirst("^/", "") // S3 keys do not begin with a slash
+              .contains("/") == false // See if the S3 key is a top-level key (i.e., it is not within a directory)
+          )
+        if (containsPotentialDefaultRootObject) paths :+ "/" else paths
+      }
+      val paths = pushSuccessReports
+        .filter(needsInvalidation) // Assume that redirect objects are never cached.
+        .map(toInvalidationPath)
+        .map (applyInvalidateRootSetting)
+      withDefaultPathIfNeeded(paths)
+    }
+
+    invalidationPaths
       .grouped(1000) // CloudFront supports max 1000 invalidations in one request (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html#InvalidationLimits)
       .map { batchKeys =>
         new InvalidationBatch() withPaths
           (new Paths() withItems batchKeys withQuantity batchKeys.size) withCallerReference
-            s"s3_website gem ${System.currentTimeMillis()}"
+          s"s3_website gem ${System.currentTimeMillis()}"
       }
       .toSeq
+  }
 
   def applyInvalidateRootSetting(path: String)(implicit config: Config) =
     if (config.cloudfront_invalidate_root.exists(_ == true))
