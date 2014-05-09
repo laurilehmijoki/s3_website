@@ -32,7 +32,8 @@ module S3Website
         if site_path
           site_path
         else
-          raise NoPredefinedWebsiteDirectoryFound
+          puts "Could not find a website directory. Specify one with the --site parameter."
+          exit
         end
     end
   end
