@@ -59,28 +59,74 @@ class Cli < Thor
   LONGDESC
   def push
     call_dir = Dir.pwd
-    Dir.chdir(File.dirname(__FILE__)+ '/..') {
-      # Compile Scala if needed
-      jar_file = File.dirname(__FILE__) + '/../target/scala-2.11/s3_website.jar'
-      unless File.exists? jar_file
-        puts "Compiling the s3_website.jar. This happens only once. Please wait up to a few minutes..."
-        assembly_succeeded = system "./sbt assembly"
-        unless assembly_succeeded
-          puts "Failed to create the s3_website.jar. Please file a bug report."
-          exit 1
-        end
-      end
-
+    project_root = File.expand_path(File.dirname(__FILE__)+ '/..')
+    Dir.chdir(project_root) {
+      jar_file = resolve_jar project_root
       # Then run it
-      site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
-      config_dir = File.expand_path options[:config_dir]
-      args = "--site=#{site_path} --config-dir=#{config_dir}"
-      exit system("java -cp #{jar_file} s3.website.Push #{args}")
+      run_s3_website_jar(jar_file, call_dir)
     }
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
   subcommand 'cfg', Cfg
+end
+
+def run_s3_website_jar(jar_file, call_dir)
+  site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
+  config_dir = File.expand_path options[:config_dir]
+  args = "--site=#{site_path} --config-dir=#{config_dir}"
+  puts "[debg] Using #{jar_file}"
+  if system("java -cp #{jar_file} s3.website.Push #{args}")
+    exit 0
+  else
+    exit 1
+  end
+end
+
+def resolve_jar(project_root)
+  development_jar_path =
+    project_root + '/target/scala-2.11/s3_website.jar'
+  released_jar_lookup_paths = [
+    project_root + "/s3_website-#{S3Website::VERSION}.jar",
+    ENV['TMPDIR'] + "/s3_website-#{S3Website::VERSION}.jar"
+  ]
+  found_jar = ([development_jar_path] + released_jar_lookup_paths)
+  .select { |jar_path|
+    File.exists? jar_path
+  }
+  .first
+  jar_file =
+    if found_jar
+      found_jar
+    else
+      is_development = File.exists?(project_root + '/.git')
+      if is_development
+        system "./sbt assembly"
+        puts development_jar_path
+        development_jar_path
+      else
+        download_jar(released_jar_lookup_paths)
+      end
+    end
+end
+
+def download_jar(released_jar_lookup_paths)
+  tag_name = "v#{S3Website::VERSION}"
+  downloaded_jar = released_jar_lookup_paths.select { |jar_path|
+    File.writable? File.dirname(jar_path)
+  }.first
+  unless downloaded_jar
+    puts "[error] Neither #{released_jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
+    puts "[error] Set either directory as writable to the current user and try again."
+    exit 1
+  end
+  download_url = "https://github.com/laurilehmijoki/s3_website/releases/download/#{tag_name}/s3_website.jar"
+  puts "[info] Downloading #{download_url} into #{downloaded_jar}"
+  require 'open-uri'
+  open(downloaded_jar, 'wb') do |file|
+    file << open(download_url).read
+  end
+  downloaded_jar
 end
 
 Cli.start(ARGV)

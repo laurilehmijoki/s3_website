@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
-$:.push File.expand_path("../lib", __FILE__)
+require File.join([File.dirname(__FILE__),'lib','s3_website','version.rb'])
 
 Gem::Specification.new do |s|
   s.name        = "s3_website_monadic"
-  s.version     = "0.0.19"
+  s.version     = S3Website::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
@@ -21,9 +21,10 @@ Gem::Specification.new do |s|
   s.add_dependency 'configure-s3-website', '= 1.5.5'
 
   s.add_development_dependency 'rake', '10.1.1'
+  s.add_development_dependency 'octokit', '3.1.0'
 
-  s.files         = `git ls-files`.split("\n")
-  s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
+  s.files         = `git ls-files`.split("\n").reject { |f| f.match('sbt-launch.jar') }
+  s.test_files    = `git ls-files -- src/test/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 end
