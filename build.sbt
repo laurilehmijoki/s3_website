@@ -10,6 +10,8 @@ scalacOptions += "-feature"
 
 scalacOptions += "-language:implicitConversions"
 
+scalacOptions += "-language:postfixOps"
+
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.13"
 
 libraryDependencies += "org.jruby" % "jruby" % "1.7.11"
