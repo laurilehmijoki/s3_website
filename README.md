@@ -326,32 +326,6 @@ For more information on configuring redirects, see the documentation of the
 gem, which comes as a transitive dependency of the `s3_website` gem. (The
 command `s3_website_monadic cfg apply` internally calls the `configure-s3-website` gem.)
 
-### Using `s3_website` as a library
-
-By nature, `s3_website` is a command-line interface tool. You can, however, use
-it programmatically by calling the same API as the executable `s3_website` does:
-
-````ruby
-require 's3_website'
-is_headless = true
-S3Website::Tasks.push('/website/root', '/path/to/your/website/_site/', is_headless)
-````
-
-You can also use a basic `Hash` instead of a `s3_website.yml` file:
-
-```ruby
-config = {
-  "s3_id"     => YOUR_AWS_S3_ACCESS_KEY_ID,
-  "s3_secret" => YOUR_AWS_S3_SECRET_ACCESS_KEY,
-  "s3_bucket" => "your.blog.bucket.com"
-}
-in_headless = true
-S3Website::Uploader.run('/path/to/your/website/_site/', config, in_headless)
-```
-
-The code above will assume that you have the `s3_website.yml` in the directory
-`/path/to/your/website`.
-
 ### Specifying custom concurrency level
 
 By default, `s3_website` does 3 operations in parallel. An operation can be an

@@ -23,6 +23,8 @@ for more info.
     s3_website always deletes the files that are on the S3 bucket but not on the local file system.
     Use the settings `ignore_on_server` and `exclude_from_upload` to control the retained files.
 
+* You can no longer use this gem as a Ruby library
+
 ## 1.7.6
 
 * Remove a test setting from *Gemfile*
