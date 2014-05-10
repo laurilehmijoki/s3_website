@@ -15,7 +15,7 @@
 
 ## Install
 
-    gem install s3_website
+    gem install s3_website_monadic
 
 `s3_website` requires Ruby and Java. Here is documentation on installing Ruby:
 <http://www.ruby-lang.org/en/downloads/>. and here is documentation for Java:
@@ -28,11 +28,11 @@ Here's how you can get started:
 * Create API credentials that have sufficient permissions to S3. More info
   [here](https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/setting-up-aws-credentials.md).
 * Go to your website directory
-* Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
+* Run `s3_website_monadic cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
-* Run `s3_website cfg apply`. This will configure your bucket to function as an
+* Run `s3_website_monadic cfg apply`. This will configure your bucket to function as an
   S3 website. If the bucket does not exist, the command will create it for you.
-* Run `s3_website push` to push your website to S3. Congratulations! You are live.
+* Run `s3_website_monadic push` to push your website to S3. Congratulations! You are live.
 
 **Important security note:** if the source code of your website is publicly
 available, ensure that the `s3_website.yml` file is in the list of ignored files.
@@ -52,11 +52,11 @@ S3_website will automatically discover your website in the *public/output* direc
 It's a good idea to store the `s3_website.yml` file in your project's root.
 Let's say the contents you wish to upload to your S3 website bucket are in
 *my_website_output*. You can upload the contents of that directory with
-`s3_website push --site my_website_output`.
+`s3_website_monadic push --site my_website_output`.
 
 If you want to store the `s3_website.yml` file in a directory other than
 the project's root you can specify the directory.
-`s3_website push --config_dir config`.
+`s3_website_monadic push --config_dir config`.
 
 ### Using environment variables
 
@@ -223,7 +223,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 #### Creating a new CloudFront distribution
 
-When you run the command `s3_website cfg apply`, it will ask you whether you
+When you run the command `s3_website_monadic cfg apply`, it will ask you whether you
 want to deliver your website via CloudFront. If you answer yes, the command will
 create a CloudFront distribution for you.
 
@@ -234,7 +234,7 @@ S3 bucket, just add the following line into the file `s3_website.yml`:
 
     cloudfront_distribution_id: your-dist-id
 
-Next time you run `s3_website push`, it will invalidate the items on CloudFront and
+Next time you run `s3_website_monadic push`, it will invalidate the items on CloudFront and
 thus force the CDN system to reload the changes from your website S3 bucket.
 
 #### Specifying custom settings for your CloudFront distribution
@@ -254,11 +254,11 @@ cloudfront_distribution_config:
 ```
 
 Once you've saved the configuration into `s3_website.yml`, you can apply them by
-running `s3_website cfg apply`.
+running `s3_website_monadic cfg apply`.
 
 #### Invalidating root resources instead of index.htmls
 
-By default, `s3_website push` calls the CloudFront invalidation API with the
+By default, `s3_website_monadic push` calls the CloudFront invalidation API with the
 file-name-as-it-is. This means that if your file is *article/index.html*, the
 push command will call the invalidation API on the resource
 *article/index.html*.
@@ -318,13 +318,13 @@ routing_rules:
       http_redirect_code: 301
 ```
 
-After adding the configuration, run the command `s3_website cfg apply` on your
+After adding the configuration, run the command `s3_website_monadic cfg apply` on your
 command-line interface. This will apply the routing rules on your S3 bucket.
 
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
 gem, which comes as a transitive dependency of the `s3_website` gem. (The
-command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
+command `s3_website_monadic cfg apply` internally calls the `configure-s3-website` gem.)
 
 ### Using `s3_website` as a library
 
