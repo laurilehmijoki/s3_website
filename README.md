@@ -18,7 +18,7 @@
     gem install s3_website_monadic
 
 `s3_website` requires Ruby and Java. Here is documentation on installing Ruby:
-<http://www.ruby-lang.org/en/downloads/>. and here is documentation for Java:
+<http://www.ruby-lang.org/en/downloads/>, and here is documentation for Java:
 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>.
 
 ## Usage
