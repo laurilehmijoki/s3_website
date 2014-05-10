@@ -148,18 +148,6 @@ from the zopfli algorithm, which is 100% compatible with the traditional gzip
 algorithm. A zopfli compression takes longer but results in about 5% smaller
 files.
 
-### Specifying a MIME type for files without extensions
-
-`s3_website` will look up the MIME type of each file it uploads, and infer the Content-Type from it automatically. By default, files without an extension will have a blank Content-Type.
-
-You can specify a default MIME type for files without an extension using a line like this in `s3_website.yml`:
-
-```yaml
-extensionless_mime_type: text/html
-```
-
-This is useful when you are uploading HTML files for which you want 'clean' URLs, e.g. `www.domain.com/info`.
-
 ### Using non-standard AWS regions
 
 By default, `s3_website` uses the US Standard Region. You can upload your
