@@ -186,19 +186,23 @@ object Push {
 
   def main(args: Array[String]) {
     val cliArgs = CliFactory.parseArguments(classOf[CliArgs], args:_*)
-    val errorOrPushStatus = loadSite(cliArgs.configDir + "/s3_website.yml", cliArgs.site)
+    implicit val s3Settings = S3Settings()
+    implicit val cloudFrontSettings = CloudFrontSettings()
+    val errorOrPushStatus = push(siteInDirectory = cliArgs.site, withConfigDirectory = cliArgs.configDir)
+    errorOrPushStatus.left foreach (err => fail(s"Could not load the site: ${err.reportMessage}"))
+    System exit errorOrPushStatus.fold(_ => 1, pushStatus => pushStatus)
+  }
+
+  def push(siteInDirectory: String, withConfigDirectory: String)
+          (implicit s3Settings: S3Settings, cloudFrontSettings: CloudFrontSettings) =
+    loadSite(withConfigDirectory + "/s3_website.yml", siteInDirectory)
       .right
       .map {
       implicit site =>
         val threadPool = newFixedThreadPool(site.config.concurrency_level)
         implicit val executor = fromExecutor(threadPool)
-        implicit val s3Settings = S3Settings()
-        implicit val cloudFrontSettings = CloudFrontSettings()
         val pushStatus = pushSite
         threadPool.shutdownNow()
         pushStatus
     }
-    errorOrPushStatus.left foreach (err => fail(s"Could not load the site: ${err.reportMessage}"))
-    System.exit(errorOrPushStatus.fold(_ => 1, pushStatus => pushStatus))
-  }
 }

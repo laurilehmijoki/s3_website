@@ -28,13 +28,14 @@ import org.mockito.invocation.InvocationOnMock
 import com.amazonaws.AmazonServiceException.ErrorType
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.immutable.IndexedSeq
+import org.apache.commons.io.FileUtils.write
 
 class S3WebsiteSpec extends Specification {
 
   "gzip: true" should {
     "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(
-        config = defaultConfig.copy(gzip = Some(Left(true))),
+        "gzip: true",
         localFilesWithContent = ("styles.css", "<h1>hi again</h1>") :: Nil
       )
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
@@ -44,7 +45,7 @@ class S3WebsiteSpec extends Specification {
 
     "not update a gzipped S3 object if the contents has not changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(
-        config = defaultConfig.copy(gzip = Some(Left(true))),
+        "gzip: true",
         localFilesWithContent = ("styles.css", "<h1>hi</h1>") :: Nil
       )
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
@@ -59,7 +60,10 @@ class S3WebsiteSpec extends Specification {
   """ should {
     "update a gzipped S3 object if the contents has changed" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFilesAndContent(
-        config = defaultConfig.copy(gzip = Some(Right(".xml" :: Nil))),
+        """
+          |gzip:
+          |  - .xml
+        """.stripMargin,
         localFilesWithContent = ("file.xml", "<h1>hi again</h1>") :: Nil
       )
       setS3Files(S3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
@@ -67,7 +71,6 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getKey must equalTo("file.xml")
     }
   }
-
 
   "push" should {
     "not upload a file if it has not changed" in new SiteDirectory with MockAWS {
@@ -135,7 +138,7 @@ class S3WebsiteSpec extends Specification {
   "push with CloudFront" should {
     "invalidate the updated CloudFront items" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "css/test.css" :: "articles/index.html" :: Nil
       )
       setOutdatedS3Keys("css/test.css", "articles/index.html")
@@ -145,7 +148,7 @@ class S3WebsiteSpec extends Specification {
 
     "not send CloudFront invalidation requests on new objects"  in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "newfile.js" :: Nil
       )
       Push.pushSite
@@ -154,7 +157,11 @@ class S3WebsiteSpec extends Specification {
 
     "not send CloudFront invalidation requests on redirect objects" in new SiteDirectory with MockAWS {
       implicit val site = buildSite(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z"), redirects = Some(Map("/index.php" -> "index.html")))
+        """
+          |cloudfront_distribution_id: EGM1J2JJX9Z
+          |redirects:
+          |  /index.php: index.html
+        """.stripMargin
       )
       Push.pushSite
       noInvalidationsOccurred must beTrue
@@ -163,7 +170,7 @@ class S3WebsiteSpec extends Specification {
     "retry CloudFront responds with TooManyInvalidationsInProgressException" in new SiteDirectory with MockAWS {
       setTooManyInvalidationsInProgress(4)
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "test.css" :: Nil
       )
       setOutdatedS3Keys("test.css")
@@ -174,7 +181,7 @@ class S3WebsiteSpec extends Specification {
     "retry if CloudFront is temporarily unreachable" in new SiteDirectory with MockAWS {
       invalidationsFailAndThenSucceed(5)
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "test.css" :: Nil
       )
       setOutdatedS3Keys("test.css")
@@ -184,7 +191,7 @@ class S3WebsiteSpec extends Specification {
 
     "encode unsafe characters in the keys" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "articles/arnold's file.html" :: Nil
       )
       setOutdatedS3Keys("articles/arnold's file.html")
@@ -198,7 +205,7 @@ class S3WebsiteSpec extends Specification {
      */
     "invalidate the root object '/' if a top-level object is updated or deleted" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "maybe-index.html" :: Nil
       )
       setOutdatedS3Keys("maybe-index.html")
@@ -210,7 +217,10 @@ class S3WebsiteSpec extends Specification {
   "cloudfront_invalidate_root: true" should {
     "convert CloudFront invalidation paths with the '/index.html' suffix into '/'"  in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z"), cloudfront_invalidate_root = Some(true)),
+        """
+          |cloudfront_distribution_id: EGM1J2JJX9Z
+          |cloudfront_invalidate_root: true
+        """.stripMargin,
         localFiles = "articles/index.html" :: Nil
       )
       setOutdatedS3Keys("articles/index.html")
@@ -223,7 +233,7 @@ class S3WebsiteSpec extends Specification {
     "split the CloudFront invalidation requests into batches of 1000 items" in new SiteDirectory with MockAWS {
       val files = (1 to 1002).map { i => s"lots-of-files/file-$i"}
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = files
       )
       setOutdatedS3Keys(files:_*)
@@ -247,14 +257,18 @@ class S3WebsiteSpec extends Specification {
     }
 
     "be 1 if any of the redirects fails" in new SiteDirectory with MockAWS {
-      implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
+      implicit val site = buildSite(
+        """
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin)
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
       Push.pushSite must equalTo(1)
     }
 
     "be 0 if CloudFront invalidations and uploads succeed"in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "test.css" :: "articles/index.html" :: Nil
       )
       Push.pushSite must equalTo(0)
@@ -263,7 +277,7 @@ class S3WebsiteSpec extends Specification {
     "be 1 if CloudFront is unreachable or broken"in new SiteDirectory with MockAWS {
       setCloudFrontAsInternallyBroken()
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(cloudfront_distribution_id = Some("EGM1J2JJX9Z")),
+        "cloudfront_distribution_id: EGM1J2JJX9Z",
         localFiles = "test.css" :: Nil
       )
       setOutdatedS3Keys("test.css")
@@ -301,7 +315,7 @@ class S3WebsiteSpec extends Specification {
   "exclude_from_upload: string" should {
     "result in matching files not being uploaded" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(exclude_from_upload = Some(Left(".DS_.*?"))),
+        "exclude_from_upload: .DS_.*?",
         localFiles = ".DS_Store" :: Nil
       )
       Push.pushSite
@@ -316,7 +330,11 @@ class S3WebsiteSpec extends Specification {
   """ should {
     "result in matching files not being uploaded" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        config = defaultConfig.copy(exclude_from_upload = Some(Right(".DS_.*?" :: "logs" :: Nil))),
+        """
+          |exclude_from_upload:
+          |  - .DS_.*?
+          |  - logs
+        """.stripMargin,
         localFiles = ".DS_Store" :: "logs/test.log" :: Nil
       )
       Push.pushSite
@@ -326,7 +344,7 @@ class S3WebsiteSpec extends Specification {
 
   "ignore_on_server: value" should {
     "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockAWS {
-      implicit val site = buildSite(config = defaultConfig.copy(ignore_on_server = Some(Left("logs"))))
+      implicit val site = buildSite("ignore_on_server: logs")
       setS3Files(S3File("logs/log.txt", ""))
       Push.pushSite
       noDeletesOccurred must beTrue
@@ -339,7 +357,11 @@ class S3WebsiteSpec extends Specification {
        - another_ignore
   """ should {
     "not delete the S3 objects that match the ignore value" in new SiteDirectory with MockAWS {
-      implicit val site = buildSite(config = defaultConfig.copy(ignore_on_server = Some(Right(".*txt" :: Nil))))
+      implicit val site = buildSite(
+        """
+          |ignore_on_server:
+          |  - .*txt
+        """.stripMargin)
       setS3Files(S3File("logs/log.txt", ""))
       Push.pushSite
       noDeletesOccurred must beTrue
@@ -348,31 +370,48 @@ class S3WebsiteSpec extends Specification {
 
   "max-age in config" can {
     "be applied to all files" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(60))), localFiles = "index.html" :: Nil)
+      implicit val site = siteWithFiles(
+        "max_age: 60",
+        localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
     "be applied to files that match the glob" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.html" -> 90)))), localFiles = "index.html" :: Nil)
+      implicit val site = siteWithFiles(
+        """
+          |max_age:
+          |  "*.html": 90
+        """.stripMargin,
+        localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
     "be applied to directories that match the glob" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("assets/**/*.js" -> 90)))), localFiles = "assets/lib/jquery.js" :: Nil)
+      implicit val site = siteWithFiles(
+        """
+          |max_age:
+          |  "assets/**/*.js": 90
+        """.stripMargin,
+        localFiles = "assets/lib/jquery.js" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
     "not be applied if the glob doesn't match" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Right(Map("*.js" -> 90)))), localFiles = "index.html" :: Nil)
+      implicit val site = siteWithFiles(
+        """
+          |max_age:
+          |  "*.js": 90
+        """.stripMargin,
+        localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
 
     "be used to disable caching" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(max_age = Some(Left(0))), localFiles = "index.html" :: Nil)
+      implicit val site = siteWithFiles("max_age: 0", localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache; max-age=0")
     }
@@ -381,10 +420,11 @@ class S3WebsiteSpec extends Specification {
   "max-age in config" should {
     "respect the more specific glob" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        defaultConfig.copy(max_age = Some(Right(Map(
-          "assets/*" -> 150,
-          "assets/*.gif" -> 86400
-        )))),
+        """
+          |max_age:
+          |  "assets/*": 150
+          |  "assets/*.gif": 86400
+        """.stripMargin,
         localFiles = "assets/jquery.js" :: "assets/picture.gif" :: Nil
       )
       Push.pushSite
@@ -395,7 +435,7 @@ class S3WebsiteSpec extends Specification {
 
   "s3_reduced_redundancy: true in config" should {
     "result in uploads being marked with reduced redundancy" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(true)), localFiles = "index.html" :: Nil)
+      implicit val site = siteWithFiles("s3_reduced_redundancy: true", localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getStorageClass must equalTo("REDUCED_REDUNDANCY")
     }
@@ -403,7 +443,7 @@ class S3WebsiteSpec extends Specification {
 
   "s3_reduced_redundancy: false in config" should {
     "result in uploads being marked with the default storage class" in new SiteDirectory with MockAWS {
-      implicit val site = siteWithFiles(defaultConfig.copy(s3_reduced_redundancy = Some(false)), localFiles = "index.html" :: Nil)
+      implicit val site = siteWithFiles("s3_reduced_redundancy: false", localFiles = "index.html" :: Nil)
       Push.pushSite
       sentPutObjectRequest.getStorageClass must beNull
     }
@@ -411,13 +451,21 @@ class S3WebsiteSpec extends Specification {
 
   "redirect in config" should {
     "result in a redirect instruction that is sent to AWS" in new SiteDirectory with MockAWS {
-      implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
+      implicit val site = buildSite(
+        """
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin)
       Push.pushSite
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
 
     "result in max-age=0 Cache-Control header on the object" in new SiteDirectory with MockAWS {
-      implicit val site = buildSite(defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html"))))
+      implicit val site = buildSite(
+        """
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin)
       Push.pushSite
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=0, no-cache")
     }
@@ -426,8 +474,11 @@ class S3WebsiteSpec extends Specification {
   "redirect in config and an object on the S3 bucket" should {
     "not result in the S3 object being deleted" in new SiteDirectory with MockAWS {
       implicit val site = siteWithFiles(
-        localFiles = "index.html" :: Nil,
-        config = defaultConfig.copy(redirects = Some(Map("index.php" -> "/index.html")))
+        """
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin,
+        localFiles = "index.html" :: Nil
       )
       setS3Files(S3File("index.php", "md5"))
       Push.pushSite
@@ -621,20 +672,39 @@ class S3WebsiteSpec extends Specification {
       FileUtils.forceDelete(siteDir)
     }
 
-    def buildSite(config: Config = defaultConfig): Site = Site(siteDir.getAbsolutePath, config)
+    def buildSite(
+                    config: String = "",
+                    baseConfig: String =
+                      """
+                        |s3_id: foo
+                        |s3_secret: bar
+                        |s3_bucket: bucket
+                      """.stripMargin
+                    ): Site = {
+      val configFile = new File(siteDir, "s3_website.yml")
+      write(configFile,
+        s"""
+          |$baseConfig
+          |$config
+        """.stripMargin
+      )
+      val errorOrSite: Either[ErrorReport, Site] = Site.loadSite(configFile.getAbsolutePath, siteDir.getAbsolutePath)
+      errorOrSite.left.foreach (error => throw new RuntimeException(error.reportMessage))
+      errorOrSite.right.get
+    }
 
-    def siteWithFilesAndContent(config: Config = defaultConfig, localFilesWithContent: Seq[(String, String)]): Site = {
+    def siteWithFilesAndContent(config: String = "", localFilesWithContent: Seq[(String, String)]): Site = {
       localFilesWithContent.foreach {
         case (filePath, content) =>
           val file = new File(siteDir, filePath)
           FileUtils.forceMkdir(file.getParentFile)
           file.createNewFile()
-          FileUtils.write(file, content)
+          write(file, content)
       }
       buildSite(config)
     }
 
-    def siteWithFiles(config: Config = defaultConfig, localFiles: Seq[String]): Site =
+    def siteWithFiles(config: String = "", localFiles: Seq[String]): Site =
       siteWithFilesAndContent(config, localFilesWithContent = localFiles.map((_, "file contents")))
   }
 
