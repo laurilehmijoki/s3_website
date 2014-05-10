@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/laurilehmijoki/s3_website.png?branch=master)](https://travis-ci.org/laurilehmijoki/s3_website)
 [![Gem Version](https://fury-badge.herokuapp.com/rb/s3_website.png)](http://badge.fury.io/rb/s3_website)
 
-## What `s3_website` can do for you
+## What `s3_website_monadic` can do for you
 
 * Create and configure an S3 website for you
 * Upload your static website to AWS S3
@@ -17,7 +17,7 @@
 
     gem install s3_website_monadic
 
-`s3_website` requires Ruby and Java. Here is documentation on installing Ruby:
+`s3_website_monadic` requires Ruby and Java. Here is documentation on installing Ruby:
 <http://www.ruby-lang.org/en/downloads/>, and here is documentation for Java:
 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>.
 
@@ -87,8 +87,8 @@ you can omit the `s3_id` and `s3_secret` keys in the config file.)
 * Be as fast as possible. Do in parallel all that can be done in parallel.
 * Maintain 90% backward compatibility with the jekyll-s3 gem
 
-`s3_website` attempts to be a command-line interface tool that is easy to
-understand and use. For example, `s3_website --help` should print you all the
+`s3_website_monadic` attempts to be a command-line interface tool that is easy to
+understand and use. For example, `s3_website_monadic --help` should print you all the
 things it can perform. Please create an issue if you think the tool is
 incomprehensible or inconsistent.
 
@@ -150,7 +150,7 @@ files.
 
 ### Using non-standard AWS regions
 
-By default, `s3_website` uses the US Standard Region. You can upload your
+By default, `s3_website_monadic` uses the US Standard Region. You can upload your
 website to other regions by adding the setting `s3_endpoint` into the
 `s3_website.yml` file.
 
@@ -183,7 +183,7 @@ ignore_on_server:
 
 ### Excluding files from upload
 
-You can instruct `s3_website` not to push certain files:
+You can instruct `s3_website_monadic` not to push certain files:
 
 ```yaml
 exclude_from_upload: test
@@ -227,7 +227,7 @@ thus force the CDN system to reload the changes from your website S3 bucket.
 
 #### Specifying custom settings for your CloudFront distribution
 
-`s3_website` lets you define custom settings for your CloudFront distribution.
+`s3_website_monadic` lets you define custom settings for your CloudFront distribution.
 
 For example, like this you can define a your own TTL and CNAME:
 
@@ -276,7 +276,7 @@ Redirects method. Otherwise, use the Routing Rules method.
 
 #### Simple Redirects
 
-For simple redirects `s3_website` uses Amazon S3's
+For simple redirects `s3_website_monadic` uses Amazon S3's
 [`x-amz-website-redirect-location`](http://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html)
 metadata. It will create zero-byte objects for each path you want
 redirected with the appropriate `x-amz-website-redirect-location` value.
@@ -311,12 +311,12 @@ command-line interface. This will apply the routing rules on your S3 bucket.
 
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
-gem, which comes as a transitive dependency of the `s3_website` gem. (The
+gem, which comes as a transitive dependency of the `s3_website_monadic` gem. (The
 command `s3_website_monadic cfg apply` internally calls the `configure-s3-website` gem.)
 
 ### Specifying custom concurrency level
 
-By default, `s3_website` does 3 operations in parallel. An operation can be an
+By default, `s3_website_monadic` does 3 operations in parallel. An operation can be an
 HTTP PUT operation against the S3 API, for example.
 
 You can increase the concurrency level by adding the following setting into the
@@ -348,10 +348,10 @@ Please create an issue and send a pull request if you spot any.
 
 ### Versioning
 
-s3_website uses [Semantic Versioning](http://semver.org).
+s3_website_monadic uses [Semantic Versioning](http://semver.org).
 
 In the spirit of semantic versioning, here is the definition of public API for
-s3_website: Within a major version, s3_website will not break
+s3_website: Within a major version, s3_website_monadic will not break
 backwards-compatibility of anything that is mentioned in this README file.
 
 ### Tests
