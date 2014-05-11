@@ -141,10 +141,7 @@ object S3 {
     val metadata = putObjectRequest.getMetadata
     def metadataReport =
       (metadata.getCacheControl :: metadata.getContentType :: metadata.getContentEncoding :: putObjectRequest.getStorageClass :: Nil)
-        .map(Option(_))
-        .collect {
-          case Some(metadatum) => metadatum
-        }
+        .filterNot(_ == null)
         .mkString(" | ")
 
     def reportMessage =
