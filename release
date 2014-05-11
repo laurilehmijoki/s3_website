@@ -19,6 +19,7 @@ run "./sbt assembly"
 
 tag_name = "v#{version}"
 run "git tag #{tag_name} && git push origin #{tag_name}"
+run "git push"
 
 run "rake build"
 
