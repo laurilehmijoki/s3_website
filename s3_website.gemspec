@@ -19,6 +19,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'thor', '= 0.18.1'
   s.add_dependency 'configure-s3-website', '= 1.5.5'
+  s.add_dependency 'colored', '1.2'
 
   s.add_development_dependency 'rake', '10.1.1'
   s.add_development_dependency 'octokit', '3.1.0'

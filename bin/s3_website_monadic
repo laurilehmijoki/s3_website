@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__)+ '/../lib/s3_website')
+require 'colored'
 
 class Cfg < Thor
   desc 'create', 'Create a config file with placeholder values'
@@ -75,7 +76,7 @@ def run_s3_website_jar(jar_file, call_dir)
   site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
   config_dir = File.expand_path options[:config_dir]
   args = "--site=#{site_path} --config-dir=#{config_dir}"
-  puts "[debg] Using #{jar_file}"
+  debug_msg "Using #{jar_file}"
   if system("java -cp #{jar_file} s3.website.Push #{args}")
     exit 0
   else
@@ -116,17 +117,33 @@ def download_jar(released_jar_lookup_paths)
     File.writable? File.dirname(jar_path)
   }.first
   unless downloaded_jar
-    puts "[error] Neither #{released_jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
-    puts "[error] Set either directory as writable to the current user and try again."
+    fail_msg "Neither #{released_jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
+    fail_msg "Set either directory as writable to the current user and try again."
     exit 1
   end
   download_url = "https://github.com/laurilehmijoki/s3_website/releases/download/#{tag_name}/s3_website.jar"
-  puts "[info] Downloading #{download_url} into #{downloaded_jar}"
+  info_msg "Downloading #{download_url} into #{downloaded_jar}"
   require 'open-uri'
   open(downloaded_jar, 'wb') do |file|
     file << open(download_url).read
   end
   downloaded_jar
+end
+
+def debug_msg(msg)
+  print_msg 'debg'.cyan, msg
+end
+
+def info_msg(msg)
+  print_msg 'info'.blue, msg
+end
+
+def fail_msg(msg)
+  print_msg 'fail'.red, msg
+end
+
+def print_msg(prefix, msg)
+  puts "[#{prefix}] #{msg}"
 end
 
 Cli.start(ARGV)
