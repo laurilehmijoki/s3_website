@@ -472,6 +472,18 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
     }
   }
+
+  "ERB in config file" should {
+    "be evaluated"  in new EmptySite with MockAWS {
+      config = """
+        |redirects:
+        |<%= ('a'..'f').to_a.map do |t| '  '+t+ ': /'+t+'.html' end.join('\n')%>
+      """.stripMargin
+      Push.pushSite
+      sentPutObjectRequests.length must equalTo(6)
+      sentPutObjectRequests.forall(_.getRedirectLocation != null) must beTrue
+    }
+  }
   
   trait MockAWS extends MockS3 with MockCloudFront with Scope
   
