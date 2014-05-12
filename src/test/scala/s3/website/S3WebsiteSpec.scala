@@ -175,10 +175,6 @@ class S3WebsiteSpec extends Specification {
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
     }
 
-    /*
-     * Because CloudFront supports Default Root Objects (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html),
-     * we have to guess
-     */
     "invalidate the root object '/' if a top-level object is updated or deleted" in new EmptySite with VerboseLogger with MockAWS {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("maybe-index.html")
