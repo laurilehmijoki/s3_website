@@ -586,8 +586,6 @@ class S3WebsiteSpec extends Specification {
       }
     }
 
-    val s3 = new S3()
-
     def uploadFailsAndThenSucceeds(implicit howManyFailures: Int, callCount: AtomicInteger = new AtomicInteger(0)) {
       doAnswer(temporaryFailure(classOf[PutObjectResult]))
         .when(amazonS3Client)
@@ -607,7 +605,6 @@ class S3WebsiteSpec extends Specification {
     }
 
     def asSeenByS3Client(upload: Upload)(implicit config: Config, logger: Logger): PutObjectRequest = {
-      Await.ready(s3.upload(upload withUploadType NewFile), Duration("1 s"))
       val req = ArgumentCaptor.forClass(classOf[PutObjectRequest])
       verify(amazonS3Client).putObject(req.capture())
       req.getValue
