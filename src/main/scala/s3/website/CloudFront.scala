@@ -21,6 +21,7 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config
       val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
       cloudFront.createInvalidation(invalidationReq)
       val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
+      logger.debug(invalidationBatch.getPaths.getItems.map(item => s"Invalidated $item") mkString "\n")
       logger.info(result)
       Right(result)
     } recoverWith (tooManyInvalidationsRetry(invalidationBatch, distributionId, attempt) orElse retry(attempt)(
