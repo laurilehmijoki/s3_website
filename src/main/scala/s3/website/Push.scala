@@ -105,10 +105,8 @@ object Push {
 
   def afterPushFinished(errorsOrFinishedUploads: Either[ErrorReport, FinishedPushOperations], invalidationSucceeded: Option[Boolean])
                        (implicit config: Config, logger: Logger, pushMode: PushMode): ExitCode = {
-    errorsOrFinishedUploads.right.foreach { finishedUploads =>
-      val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
-      logger.info(s"Summary: $pushCounts")
-    }
+    val pushCountsOption = errorsOrFinishedUploads.right.map(resolvePushCounts(_)).right.toOption
+    pushCountsOption.map(pushCountsToString).foreach(pushCounts => logger.info(s"Summary: $pushCounts"))
     errorsOrFinishedUploads.left foreach (err => logger.fail(s"Encountered an error: ${err.reportMessage}"))
     val exitCode = errorsOrFinishedUploads.fold(
       _ => 1,
@@ -124,7 +122,7 @@ object Push {
     )
 
     exitCode match {
-      case 0 if !pushMode.dryRun =>
+      case 0 if !pushMode.dryRun && pushCountsOption.exists(_.thereWasSomethingToPush) =>
         logger.info(s"Successfully pushed the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
       case 1 =>
         logger.fail(s"Failed to push the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
@@ -176,7 +174,9 @@ object Push {
                          failures: Int = 0, 
                          redirects: Int = 0, 
                          deletes: Int = 0
-                         )
+                         ) {
+    val thereWasSomethingToPush = updates + newFiles + redirects + deletes > 0
+  }
   type FinishedPushOperations = ParSeq[Either[ErrorReport, PushErrorOrSuccess]]
   type PushReports = ParSeq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
