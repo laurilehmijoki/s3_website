@@ -45,7 +45,7 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config
     val basicInfo = s"The maximum amount of CloudFront invalidations has exceeded. Trying again in $sleepDuration, please wait."
     val extendedInfo =
       s"""|$basicInfo
-          |  For more information, see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html#InvalidationLimits"""
+          |For more information, see http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html#InvalidationLimits"""
         .stripMargin
     if (attempt == 1)
       extendedInfo
