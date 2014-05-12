@@ -97,12 +97,12 @@ object S3 {
       req
     })
     val summaryIndex = objects.getObjectSummaries.map { summary => (summary.getETag, summary.getKey) }.toSet // Index to avoid O(n^2) lookups 
-    def isUpdate(lf: LocalFile) =
+    def shouldUpdate(lf: LocalFile) =
       summaryIndex.exists((md5AndS3Key) => 
         md5AndS3Key._1 != lf.md5 && md5AndS3Key._2 == lf.s3Key
       )
     val updateFutures: UpdateFutures = localFiles.collect {
-      case lf: LocalFile if isUpdate(lf) =>
+      case lf: LocalFile if shouldUpdate(lf) =>
         val errorOrUpdate = LocalFile
           .toUpload(lf)
           .right
