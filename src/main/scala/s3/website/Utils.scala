@@ -18,14 +18,39 @@ object Utils {
 
 class Logger(verboseOutput: Boolean, logMessage: (String) => Unit = println) {
   import Rainbow._
-  def debug(msg: String) = if (verboseOutput) logMessage(s"[${"debg".cyan}] $msg")
-  def info(msg: String) = logMessage(s"[${"info".blue}] $msg")
-  def fail(msg: String) = logMessage(s"[${"fail".red}] $msg")
+  def debug(msg: String) = if (verboseOutput) log(Debug, msg)
+  def info(msg: String) = log(Info, msg)
+  def fail(msg: String) = log(Failure, msg)
 
-  def info(report: SuccessReport) = logMessage(s"[${"succ".green}] ${report.reportMessage}")
+  def info(report: SuccessReport) = log(Success, report.reportMessage)
   def info(report: FailureReport) = fail(report.reportMessage)
 
-  def pending(msg: String) = logMessage(s"[${"wait".yellow}] $msg")
+  def pending(msg: String) = log(Wait, msg)
+
+  private def log(logType: LogType, msgRaw: String) {
+    val msg = msgRaw.replaceAll("\\n", "\n       ") // Indent new lines, so that they arrange nicely with other log lines
+    logMessage(s"[$logType] $msg")
+  }
+
+  sealed trait LogType {
+    val prefix: String
+    override def toString = prefix
+  }
+  case object Debug extends LogType {
+    val prefix = "debg".cyan
+  }
+  case object Info extends LogType {
+    val prefix = "info".blue
+  }
+  case object Success extends LogType {
+    val prefix = "succ".green
+  }
+  case object Failure extends LogType {
+    val prefix = "fail".red
+  }
+  case object Wait extends LogType {
+    val prefix = "wait".yellow
+  }
 }
 
 /**
