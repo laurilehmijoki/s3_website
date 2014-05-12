@@ -1,6 +1,6 @@
 package s3.website
 
-import s3.website.model.{Update, Redirect, Config}
+import s3.website.model.{Update, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
 import s3.website.CloudFront.{CloudFrontSetting, SuccessfulInvalidation, FailedInvalidation}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
