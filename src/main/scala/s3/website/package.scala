@@ -1,12 +1,11 @@
 package s3
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import s3.website.Logger._
 import scala.concurrent.duration.{TimeUnit, Duration}
 import s3.website.Utils._
 import s3.website.S3.{PushSuccessReport, PushFailureReport}
-import com.amazonaws.services.s3.model.AmazonS3Exception
 import com.amazonaws.AmazonServiceException
+import s3.website.model.{Config, Site}
 
 package object website {
   trait Report {
@@ -28,16 +27,16 @@ package object website {
 
   def retry[L <: Report, R](attempt: Attempt)
                            (createFailureReport: (Throwable) => L, retryAction: (Attempt) => Future[Either[L, R]])
-                           (implicit retrySettings: RetrySettings, ec: ExecutionContextExecutor):
+                           (implicit retrySettings: RetrySettings, ec: ExecutionContextExecutor, logger: Logger):
   PartialFunction[Throwable, Future[Either[L, R]]] = {
     case error: Throwable if attempt == 6 || isIrrecoverable(error) =>
       val failureReport = createFailureReport(error)
-      fail(failureReport.reportMessage)
+      logger.fail(failureReport.reportMessage)
       Future(Left(failureReport))
     case error: Throwable =>
       val failureReport = createFailureReport(error)
       val sleepDuration = Duration(fibs.drop(attempt + 1).head, retrySettings.retryTimeUnit)
-      pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
+      logger.pending(s"${failureReport.reportMessage}. Trying again in $sleepDuration.")
       Thread.sleep(sleepDuration.toMillis)
       retryAction(attempt + 1)
   }
@@ -59,4 +58,6 @@ package object website {
       s"$count ${if (count > 1) plural else singular}"
     }
   }
+
+  implicit def site2Config(implicit site: Site): Config = site.config
 }

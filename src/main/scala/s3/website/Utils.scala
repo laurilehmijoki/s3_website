@@ -16,16 +16,16 @@ object Utils {
   lazy val fibs: Stream[Int] = 0 #:: 1 #:: fibs.zip(fibs.tail).map { n => n._1 + n._2 }
 }
 
-object Logger {
+class Logger(verboseOutput: Boolean, logMessage: (String) => Unit = println) {
   import Rainbow._
-  def debug(msg: String) = println(s"[${"debg".cyan}] $msg")
-  def info(msg: String) = println(s"[${"info".blue}] $msg")
-  def fail(msg: String) = println(s"[${"fail".red}] $msg")
+  def debug(msg: String) = if (verboseOutput) logMessage(s"[${"debg".cyan}] $msg")
+  def info(msg: String) = logMessage(s"[${"info".blue}] $msg")
+  def fail(msg: String) = logMessage(s"[${"fail".red}] $msg")
 
-  def info(report: SuccessReport) = println(s"[${"succ".green}] ${report.reportMessage}")
+  def info(report: SuccessReport) = logMessage(s"[${"succ".green}] ${report.reportMessage}")
   def info(report: FailureReport) = fail(report.reportMessage)
 
-  def pending(msg: String) = println(s"[${"wait".yellow}] $msg")
+  def pending(msg: String) = logMessage(s"[${"wait".yellow}] $msg")
 }
 
 /**

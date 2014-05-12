@@ -53,6 +53,12 @@ class Cli < Thor
     :default => Dir.pwd,
     :desc => "The directory where your config file is. When not defined, s3_website will look in the current working directory."
   )
+  option(
+    :verbose,
+    :type => :boolean,
+    :default => false,
+    :desc => "Print verbose output"
+  )
   desc 'push', 'Push local files with the S3 website'
   long_desc <<-LONGDESC
     `s3_website push` will upload new and changes files to S3. It will
@@ -61,10 +67,11 @@ class Cli < Thor
   def push
     call_dir = Dir.pwd
     project_root = File.expand_path(File.dirname(__FILE__)+ '/..')
+    logger = Logger.new(options[:verbose])
     Dir.chdir(project_root) {
-      jar_file = resolve_jar project_root
+      jar_file = resolve_jar project_root, logger
       # Then run it
-      run_s3_website_jar(jar_file, call_dir)
+      run_s3_website_jar(jar_file, call_dir, logger)
     }
   end
 
@@ -72,11 +79,11 @@ class Cli < Thor
   subcommand 'cfg', Cfg
 end
 
-def run_s3_website_jar(jar_file, call_dir)
+def run_s3_website_jar(jar_file, call_dir, logger)
   site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
   config_dir = File.expand_path options[:config_dir]
-  args = "--site=#{site_path} --config-dir=#{config_dir}"
-  debug_msg "Using #{jar_file}"
+  args = "--site=#{site_path} --config-dir=#{config_dir} #{'--verbose' if options[:verbose]}"
+  logger.debug_msg "Using #{jar_file}"
   if system("java -cp #{jar_file} s3.website.Push #{args}")
     exit 0
   else
@@ -84,7 +91,7 @@ def run_s3_website_jar(jar_file, call_dir)
   end
 end
 
-def resolve_jar(project_root)
+def resolve_jar(project_root, logger)
   development_jar_path =
     project_root + '/target/scala-2.11/s3_website.jar'
   released_jar_lookup_paths = [
@@ -103,26 +110,25 @@ def resolve_jar(project_root)
       is_development = File.exists?(project_root + '/.git')
       if is_development
         system "./sbt assembly"
-        puts development_jar_path
         development_jar_path
       else
-        download_jar(released_jar_lookup_paths)
+        download_jar(released_jar_lookup_paths, logger)
       end
     end
 end
 
-def download_jar(released_jar_lookup_paths)
+def download_jar(released_jar_lookup_paths, logger)
   tag_name = "v#{S3Website::VERSION}"
   downloaded_jar = released_jar_lookup_paths.select { |jar_path|
     File.writable? File.dirname(jar_path)
   }.first
   unless downloaded_jar
-    fail_msg "Neither #{released_jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
-    fail_msg "Set either directory as writable to the current user and try again."
+    logger.fail_msg "Neither #{released_jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
+    logger.fail_msg "Set either directory as writable to the current user and try again."
     exit 1
   end
   download_url = "https://github.com/laurilehmijoki/s3_website/releases/download/#{tag_name}/s3_website.jar"
-  info_msg "Downloading #{download_url} into #{downloaded_jar}"
+  logger.info_msg "Downloading #{download_url} into #{downloaded_jar}"
   require 'open-uri'
   open(downloaded_jar, 'wb') do |file|
     file << open(download_url).read
@@ -130,20 +136,31 @@ def download_jar(released_jar_lookup_paths)
   downloaded_jar
 end
 
-def debug_msg(msg)
-  print_msg 'debg'.cyan, msg
-end
+class Logger
+  attr_reader :verbose
+  def initialize(verbose)
+    @verbose = verbose
+  end
 
-def info_msg(msg)
-  print_msg 'info'.blue, msg
-end
+  def debug_msg(msg)
+    if verbose
+      print_msg 'debg'.cyan, msg
+    end
+  end
 
-def fail_msg(msg)
-  print_msg 'fail'.red, msg
-end
+  def info_msg(msg)
+    print_msg 'info'.blue, msg
+  end
 
-def print_msg(prefix, msg)
-  puts "[#{prefix}] #{msg}"
+  def fail_msg(msg)
+    print_msg 'fail'.red, msg
+  end
+
+  private
+
+  def print_msg(prefix, msg)
+    puts "[#{prefix}] #{msg}"
+  end
 end
 
 Cli.start(ARGV)

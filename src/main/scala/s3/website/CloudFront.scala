@@ -8,12 +8,11 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import s3.website.S3.{SuccessfulDelete, PushSuccessReport, SuccessfulUpload}
 import com.amazonaws.auth.BasicAWSCredentials
-import s3.website.Logger._
 import java.net.URI
 import Utils._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config) {
+class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config, logger: Logger) {
   val cloudFront = cloudFrontSettings.cfClient(config)
 
   def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
@@ -22,7 +21,7 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config
       val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
       cloudFront.createInvalidation(invalidationReq)
       val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
-      info(result)
+      logger.info(result)
       Right(result)
     } recoverWith (tooManyInvalidationsRetry(invalidationBatch, distributionId, attempt) orElse retry(attempt)(
       createFailureReport = error => FailedInvalidation(error),
@@ -30,13 +29,13 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config
     ))
 
   def tooManyInvalidationsRetry(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt)
-                          (implicit ec: ExecutionContextExecutor): PartialFunction[Throwable, InvalidationResult] = {
+                          (implicit ec: ExecutionContextExecutor, logger: Logger): PartialFunction[Throwable, InvalidationResult] = {
     case e: TooManyInvalidationsInProgressException =>
       val duration: Duration = Duration(
         (fibs drop attempt).head min 15, /* CloudFront invalidations complete within 15 minutes */
         cloudFrontSettings.retryTimeUnit
       )
-      pending(maxInvalidationsExceededInfo(duration, attempt))
+      logger.pending(maxInvalidationsExceededInfo(duration, attempt))
       Thread.sleep(duration.toMillis)
       invalidate(invalidationBatch, distributionId, attempt + 1)
   }

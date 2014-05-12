@@ -6,7 +6,7 @@ import org.yaml.snakeyaml.Yaml
 import s3.website.model.Config._
 import scala.io.Source.fromFile
 import scala.language.postfixOps
-import s3.website.Logger._
+import s3.website.Logger
 import scala.util.Failure
 import s3.website.model.Config.UnsafeYaml
 import scala.util.Success
@@ -17,7 +17,8 @@ case class Site(rootDirectory: String, config: Config) {
 }
 
 object Site {
-  def loadSite(yamlConfigPath: String, siteRootDirectory: String): Either[ErrorReport, Site] = {
+  def loadSite(yamlConfigPath: String, siteRootDirectory: String)
+              (implicit logger: Logger): Either[ErrorReport, Site] = {
     val yamlObjectTry = for {
       yamlString <- Try(fromFile(new File(yamlConfigPath)).mkString)
       yamlWithErbEvaluated <- erbEval(yamlString, yamlConfigPath)
@@ -43,8 +44,8 @@ object Site {
           concurrency_level <- loadOptionalInt("concurrency_level").right
           redirects <- loadRedirects.right
         } yield {
-          gzip_zopfli.foreach(_ => info("zopfli is not currently supported"))
-          extensionless_mime_type.foreach(_ => info(
+          gzip_zopfli.foreach(_ => logger.info("zopfli is not currently supported"))
+          extensionless_mime_type.foreach(_ => logger.info(
             s"Ignoring the extensionless_mime_type setting in $yamlConfigPath. Counting on Apache Tika to infer correct mime types.")
           )
           Config(

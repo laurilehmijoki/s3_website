@@ -7,7 +7,6 @@ import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
-import s3.website.Logger._
 import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload
@@ -19,23 +18,25 @@ import s3.website.S3.S3Settings
 
 class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
 
-  def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)(implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
+  def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)
+            (implicit config: Config, logger: Logger): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(upload)
       s3Settings.s3Client(config) putObject putObjectRequest
       val report = SuccessfulUpload(upload, putObjectRequest)
-      info(report)
+      logger.info(report)
       Right(report)
     } recoverWith retry(a)(
       createFailureReport = error => FailedUpload(upload.s3Key, error),
       retryAction  = newAttempt => this.upload(upload, newAttempt)
     )
 
-  def delete(s3Key: String,  a: Attempt = 1)(implicit config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
+  def delete(s3Key: String,  a: Attempt = 1)
+            (implicit config: Config, logger: Logger): Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
       s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
-      info(report)
+      logger.info(report)
       Right(report)
     } recoverWith retry(a)(
       createFailureReport = error => FailedDelete(s3Key, error),
@@ -83,9 +84,9 @@ object S3 {
 
   def resolveS3FilesAndUpdates(localFiles: Seq[LocalFile])
                               (nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1, onFlightUpdateFutures: UpdateFutures = Nil)
-                              (implicit config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor):
+                              (implicit config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor, logger: Logger):
   ErrorOrS3FilesAndUpdates = Future {
-    debug(nextMarker.fold
+    logger.debug(nextMarker.fold
       ("Querying S3 files")
       {m => s"Querying more S3 files (starting from $m)"}
     )
