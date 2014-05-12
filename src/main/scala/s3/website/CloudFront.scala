@@ -2,7 +2,7 @@ package s3.website
 
 import s3.website.model.{Update, Redirect, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
-import s3.website.CloudFront.{CloudFrontSettings, SuccessfulInvalidation, FailedInvalidation}
+import s3.website.CloudFront.{CloudFrontSetting, SuccessfulInvalidation, FailedInvalidation}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -12,16 +12,15 @@ import java.net.URI
 import Utils._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class CloudFront(implicit cloudFrontSettings: CloudFrontSettings, config: Config, logger: Logger) {
+class CloudFront(implicit cloudFrontSettings: CloudFrontSetting, config: Config, logger: Logger, pushMode: PushMode) {
   val cloudFront = cloudFrontSettings.cfClient(config)
 
   def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
                 (implicit ec: ExecutionContextExecutor): InvalidationResult =
     Future {
-      val invalidationReq = new CreateInvalidationRequest(distributionId, invalidationBatch)
-      cloudFront.createInvalidation(invalidationReq)
+      if (!pushMode.dryRun) cloudFront createInvalidation new CreateInvalidationRequest(distributionId, invalidationBatch)
       val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
-      logger.debug(invalidationBatch.getPaths.getItems.map(item => s"Invalidated $item") mkString "\n")
+      logger.debug(invalidationBatch.getPaths.getItems.map(item => s"${Invalidated.renderVerb} $item") mkString "\n")
       logger.info(result)
       Right(result)
     } recoverWith (tooManyInvalidationsRetry(invalidationBatch, distributionId, attempt) orElse retry(attempt)(
@@ -60,8 +59,8 @@ object CloudFront {
 
   type CloudFrontClientProvider = (Config) => AmazonCloudFront
 
-  case class SuccessfulInvalidation(invalidatedItemsCount: Int) extends SuccessReport {
-    def reportMessage = s"Invalidated ${invalidatedItemsCount ofType "item"} on CloudFront"
+  case class SuccessfulInvalidation(invalidatedItemsCount: Int)(implicit pushMode: PushMode) extends SuccessReport {
+    def reportMessage = s"${Invalidated.renderVerb} ${invalidatedItemsCount ofType "item"} on CloudFront"
   }
 
   case class FailedInvalidation(error: Throwable) extends FailureReport {
@@ -130,8 +129,8 @@ object CloudFront {
     case _ => false
   }
 
-  case class CloudFrontSettings(
+  case class CloudFrontSetting(
     cfClient: CloudFrontClientProvider = CloudFront.awsCloudFrontClient,
     retryTimeUnit: TimeUnit = MINUTES
-  ) extends RetrySettings
+  ) extends RetrySetting
 }

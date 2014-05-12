@@ -335,6 +335,16 @@ If you experience the "too many open files" error, either increase the amount of
 maximum open files (on Unix-like systems, see `man ulimit`) or decrease the
 `concurrency_level` setting.
 
+## Simulating deployments
+
+You can simulate the `s3_website_monadic push` operation by adding the
+`--dry-run` switch. The dry run mode will not apply any modifications on your S3
+bucket or CloudFront distribution. It will merely print out what the `push`
+operation would actually do if run without the dry run switch.
+
+You can use the dry run mode if you are unsure what kind of effects the `push`
+operation would cause to your live website. 
+
 ## Example configurations
 
 See

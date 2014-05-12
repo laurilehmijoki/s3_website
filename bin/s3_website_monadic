@@ -59,6 +59,12 @@ class Cli < Thor
     :default => false,
     :desc => "Print verbose output"
   )
+  option(
+    :dry_run,
+    :type => :boolean,
+    :default => false,
+    :desc => "Run the operation without actually making the modifications. When this switch is on, changes will not be applied on the S3 website. They will be only printed to the console."
+  )
   desc 'push', 'Push local files with the S3 website'
   long_desc <<-LONGDESC
     `s3_website push` will upload new and changes files to S3. It will
@@ -82,7 +88,13 @@ end
 def run_s3_website_jar(jar_file, call_dir, logger)
   site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
   config_dir = File.expand_path options[:config_dir]
-  args = "--site=#{site_path} --config-dir=#{config_dir} #{'--verbose' if options[:verbose]}"
+
+  args = [
+    "--site=#{site_path}",
+    "--config-dir=#{config_dir}",
+    "#{'--verbose' if options[:verbose]}",
+    "#{'--dry-run' if options[:dry_run]}"
+  ].join ' '
   logger.debug_msg "Using #{jar_file}"
   if system("java -cp #{jar_file} s3.website.Push #{args}")
     exit 0

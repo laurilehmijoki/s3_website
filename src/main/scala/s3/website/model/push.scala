@@ -166,9 +166,6 @@ object LocalFile {
   }
 }
 
-case class OverrideExisting()
-case class CreateNew()
-
 case class Redirect(key: String, redirectTarget: String)
 
 object Redirect extends UploadType {

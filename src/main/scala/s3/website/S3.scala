@@ -14,15 +14,15 @@ import s3.website.S3.SuccessfulDelete
 import s3.website.S3.FailedUpload
 import scala.Some
 import s3.website.S3.FailedDelete
-import s3.website.S3.S3Settings
+import s3.website.S3.S3Setting
 
-class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
+class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor) {
 
   def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)
             (implicit config: Config, logger: Logger): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(upload)
-      s3Settings.s3Client(config) putObject putObjectRequest
+      if (!pushMode.dryRun) s3Settings.s3Client(config) putObject putObjectRequest
       val report = SuccessfulUpload(upload, putObjectRequest)
       logger.info(report)
       Right(report)
@@ -34,7 +34,7 @@ class S3(implicit s3Settings: S3Settings, executor: ExecutionContextExecutor) {
   def delete(s3Key: String,  a: Attempt = 1)
             (implicit config: Config, logger: Logger): Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
-      s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
+      if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
       logger.info(report)
       Right(report)
@@ -84,7 +84,7 @@ object S3 {
 
   def resolveS3FilesAndUpdates(localFiles: Seq[LocalFile])
                               (nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1, onFlightUpdateFutures: UpdateFutures = Nil)
-                              (implicit config: Config, s3Settings: S3Settings, ec: ExecutionContextExecutor, logger: Logger):
+                              (implicit config: Config, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
   ErrorOrS3FilesAndUpdates = Future {
     logger.debug(nextMarker.fold
       ("Querying S3 files")
@@ -138,7 +138,8 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest) extends PushSuccessReport {
+  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest)
+                             (implicit pushMode: PushMode) extends PushSuccessReport {
     val metadata = putObjectRequest.getMetadata
     def metadataReport =
       (metadata.getCacheControl :: metadata.getContentType :: metadata.getContentEncoding :: putObjectRequest.getStorageClass :: Nil)
@@ -147,16 +148,16 @@ object S3 {
 
     def reportMessage =
       upload.uploadType match {
-        case NewFile  => s"Created ${upload.s3Key} ($metadataReport)"
-        case Update   => s"Updated ${upload.s3Key} ($metadataReport)"
-        case Redirect => s"Redirected ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
+        case NewFile  => s"${Created.renderVerb} ${upload.s3Key} ($metadataReport)"
+        case Update   => s"${Updated.renderVerb} ${upload.s3Key} ($metadataReport)"
+        case Redirect => s"${Redirected.renderVerb} ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
       }
 
     def s3Key = upload.s3Key
   }
 
-  case class SuccessfulDelete(s3Key: String) extends PushSuccessReport {
-    def reportMessage = s"Deleted $s3Key"
+  case class SuccessfulDelete(s3Key: String)(implicit pushMode: PushMode) extends PushSuccessReport {
+    def reportMessage = s"${Deleted.renderVerb} $s3Key"
   }
 
   case class FailedUpload(s3Key: String, error: Throwable) extends PushFailureReport {
@@ -169,8 +170,8 @@ object S3 {
 
   type S3ClientProvider = (Config) => AmazonS3
 
-  case class S3Settings(
+  case class S3Setting(
     s3Client: S3ClientProvider = S3.awsS3Client,
     retryTimeUnit: TimeUnit = SECONDS
-  ) extends RetrySettings
+  ) extends RetrySetting
 }

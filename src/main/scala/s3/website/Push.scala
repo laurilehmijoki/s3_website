@@ -20,21 +20,23 @@ import scala.collection.mutable.ArrayBuffer
 import s3.website.CloudFront._
 import s3.website.S3.SuccessfulDelete
 import s3.website.CloudFront.SuccessfulInvalidation
-import s3.website.S3.S3Settings
-import s3.website.CloudFront.CloudFrontSettings
+import s3.website.S3.S3Setting
+import s3.website.CloudFront.CloudFrontSetting
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
+import scala.Int
 
 object Push {
 
   def pushSite(
                 implicit site: Site,
                 executor: ExecutionContextExecutor,
-                s3Settings: S3Settings,
-                cloudFrontSettings: CloudFrontSettings,
-                logger: Logger
+                s3Settings: S3Setting,
+                cloudFrontSettings: CloudFrontSetting,
+                logger: Logger,
+                pushMode: PushMode
                 ): ExitCode = {
-    logger.info(s"Deploying ${site.rootDirectory}/* to ${site.config.s3_bucket}")
+    logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val utils = new Utils
 
     val redirects = Redirect.resolveRedirects
@@ -63,7 +65,8 @@ object Push {
   
   def invalidateCloudFrontItems
     (errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations])
-    (implicit config: Config, cloudFrontSettings: CloudFrontSettings, ec: ExecutionContextExecutor, logger: Logger): Option[InvalidationSucceeded] = {
+    (implicit config: Config, cloudFrontSettings: CloudFrontSetting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
+  Option[InvalidationSucceeded] = {
     config.cloudfront_distribution_id.map {
       distributionId =>
         val pushSuccessReports = errorsOrFinishedPushOps.fold(
@@ -101,7 +104,7 @@ object Push {
   type InvalidationSucceeded = Boolean
 
   def afterPushFinished(errorsOrFinishedUploads: Either[ErrorReport, FinishedPushOperations], invalidationSucceeded: Option[Boolean])
-                       (implicit config: Config, logger: Logger): ExitCode = {
+                       (implicit config: Config, logger: Logger, pushMode: PushMode): ExitCode = {
     errorsOrFinishedUploads.right.foreach { finishedUploads =>
       val pushCounts = pushCountsToString(resolvePushCounts(finishedUploads))
       logger.info(s"Summary: $pushCounts")
@@ -120,10 +123,13 @@ object Push {
       if (allInvalidationsSucceeded) 0 else 1
     )
 
-    if (exitCode == 0)
-      logger.info(s"Successfully pushed the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
-    else
-      logger.fail(s"Failed to push the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
+    exitCode match {
+      case 0 if !pushMode.dryRun =>
+        logger.info(s"Successfully pushed the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
+      case 1 =>
+        logger.fail(s"Failed to push the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
+      case _ =>
+    }
     exitCode
   }
 
@@ -149,18 +155,18 @@ object Push {
     )
   }
 
-  def pushCountsToString(pushCounts: PushCounts): String =
+  def pushCountsToString(pushCounts: PushCounts)(implicit pushMode: PushMode): String =
     pushCounts match {
       case PushCounts(updates, newFiles, failures, redirects, deletes)
         if updates == 0 && newFiles == 0 && failures == 0 && redirects == 0 && deletes == 0 =>
-          "There was nothing to push."
+          PushNothing.renderVerb
       case PushCounts(updates, newFiles, failures, redirects, deletes) =>
         val reportClauses: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
-        if (updates > 0)   reportClauses += s"Updated ${updates ofType "file"}."
-        if (newFiles > 0)  reportClauses += s"Created ${newFiles ofType "file"}."
+        if (updates > 0)   reportClauses += s"${Updated.renderVerb} ${updates ofType "file"}."
+        if (newFiles > 0)  reportClauses += s"${Created.renderVerb} ${newFiles ofType "file"}."
         if (failures > 0)  reportClauses += s"${failures ofType "operation"} failed." // This includes both failed uploads and deletes.
-        if (redirects > 0) reportClauses += s"Applied ${redirects ofType "redirect"}."
-        if (deletes > 0)   reportClauses += s"Deleted ${deletes ofType "file"}."
+        if (redirects > 0) reportClauses += s"${Applied.renderVerb} ${redirects ofType "redirect"}."
+        if (deletes > 0)   reportClauses += s"${Deleted.renderVerb} ${deletes ofType "file"}."
         reportClauses.mkString(" ")
     }
 
@@ -182,20 +188,24 @@ object Push {
     @Option def site: String
     @Option(longName = Array("config-dir")) def configDir: String
     @Option def verbose: Boolean
+    @Option(longName = Array("dry-run")) def dryRun: Boolean
   }
 
   def main(args: Array[String]) {
     val cliArgs = CliFactory.parseArguments(classOf[CliArgs], args:_*)
-    implicit val s3Settings = S3Settings()
-    implicit val cloudFrontSettings = CloudFrontSettings()
+    implicit val s3Settings = S3Setting()
+    implicit val cloudFrontSettings = CloudFrontSetting()
     implicit val logger: Logger = new Logger(cliArgs.verbose)
+    implicit val pushMode = new PushMode {
+      def dryRun = cliArgs.dryRun
+    }
     val errorOrPushStatus = push(siteInDirectory = cliArgs.site, withConfigDirectory = cliArgs.configDir)
     errorOrPushStatus.left foreach (err => logger.fail(s"Could not load the site: ${err.reportMessage}"))
     System exit errorOrPushStatus.fold(_ => 1, pushStatus => pushStatus)
   }
 
   def push(siteInDirectory: String, withConfigDirectory: String)
-          (implicit s3Settings: S3Settings, cloudFrontSettings: CloudFrontSettings, logger: Logger) =
+          (implicit s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, logger: Logger, pushMode: PushMode) =
     loadSite(withConfigDirectory + "/s3_website.yml", siteInDirectory)
       .right
       .map {
