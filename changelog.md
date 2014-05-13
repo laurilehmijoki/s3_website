@@ -10,6 +10,14 @@ This project uses [Semantic Versioning](http://semver.org).
 
 * Support CloudFront invalidations when the site contains over 3000 files
 
+* Display transferred bytes
+
+* `push --verbose` switch
+
+### Bug fixes
+
+* Fault tolerance – do not crash if one of the uploads fails
+
 ### Java is now required
 
 * The `push` command is now written in Scala. This means that you need Java 1.6
