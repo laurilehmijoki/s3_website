@@ -148,8 +148,8 @@ object S3 {
 
     def reportMessage =
       upload.uploadType match {
-        case NewFile  => s"${Created.renderVerb} ${upload.s3Key} ($metadataReport)"
-        case Update   => s"${Updated.renderVerb} ${upload.s3Key} ($metadataReport)"
+        case NewFile  => s"${Created.renderVerb} $s3Key ($metadataReport)"
+        case Update   => s"${Updated.renderVerb} $s3Key ($metadataReport)"
         case Redirect => s"${Redirected.renderVerb} ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
       }
 
