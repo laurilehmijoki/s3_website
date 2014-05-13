@@ -4,6 +4,10 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ## 2.0.0
 
+### New features
+
+* Simulate deployments with `push --dry-run`
+
 This release contains backward breaking changes. Please read the section below
 for more info.
 
