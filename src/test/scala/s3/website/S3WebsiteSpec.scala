@@ -774,21 +774,4 @@ class S3WebsiteSpec extends Specification {
       buildSite(config)
     }
   }
-
-  val defaultConfig = Config(
-    s3_id = "foo",
-    s3_secret = "bar",
-    s3_bucket = "bucket",
-    s3_endpoint = S3Endpoint.defaultEndpoint,
-    max_age = None,
-    gzip = None,
-    gzip_zopfli = None,
-    ignore_on_server = None,
-    exclude_from_upload = None,
-    s3_reduced_redundancy = None,
-    cloudfront_distribution_id = None,
-    cloudfront_invalidate_root = None,
-    redirects = None,
-    concurrency_level = 1
-  )
 }
