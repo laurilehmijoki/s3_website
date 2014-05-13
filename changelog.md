@@ -8,8 +8,7 @@ This project uses [Semantic Versioning](http://semver.org).
 
 * Simulate deployments with `push --dry-run`
 
-This release contains backward breaking changes. Please read the section below
-for more info.
+* Support CloudFront invalidations when the site contains over 3000 files
 
 ### Java is now required
 
