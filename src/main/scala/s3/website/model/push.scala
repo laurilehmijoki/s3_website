@@ -137,17 +137,19 @@ object LocalFile {
     }
   }
 
-  def resolveLocalFiles(implicit site: Site): Either[ErrorReport, Seq[LocalFile]] = Try {
+  def resolveLocalFiles(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[LocalFile]] = Try {
     val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory)
     files map { file =>
       val s3Key = site.resolveS3Key(file)
       LocalFile(s3Key, file, encodingOnS3(s3Key))
     } filterNot { file =>
-      site.config.exclude_from_upload exists { _.fold(
+      val excludeFile = site.config.exclude_from_upload exists { _.fold(
         // For backward compatibility, use Ruby regex matching
         (exclusionRegex: String) => rubyRegexMatches(file.s3Key, exclusionRegex),
         (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(file.s3Key, _))
       ) }
+      if (excludeFile) logger.debug(s"Excluded ${file.s3Key} from upload")
+      excludeFile
     } filterNot { _.originalFile.getName == "s3_website.yml" } // For security reasons, the s3_website.yml should never be pushed
   } match {
     case Success(localFiles) =>
