@@ -6,6 +6,7 @@ import s3.website.Utils._
 import s3.website.S3.{PushSuccessReport, PushFailureReport}
 import com.amazonaws.AmazonServiceException
 import s3.website.model.{Config, Site}
+import java.io.File
 
 package object website {
   trait Report {
@@ -94,4 +95,6 @@ package object website {
   }
 
   implicit def site2Config(implicit site: Site): Config = site.config
+
+  type ErrorOrFile = Either[ErrorReport, File]
 }

@@ -44,13 +44,11 @@ class Cli < Thor
   option(
     :site,
     :type => :string,
-    :default => 'infer automatically',
-    :desc => "The directory where your website files are. When not defined, s3_website will look for the site in #{S3Website::Paths.site_paths.join(' or ')}."
+    :desc => "The directory where your website files are. When not defined, s3_website will look for the site in either _site or public/output."
   )
   option(
     :config_dir,
     :type => :string,
-    :default => Dir.pwd,
     :desc => "The directory where your config file is. When not defined, s3_website will look in the current working directory."
   )
   option(
@@ -74,11 +72,10 @@ class Cli < Thor
     call_dir = Dir.pwd
     project_root = File.expand_path(File.dirname(__FILE__)+ '/..')
     logger = Logger.new(options[:verbose])
-    Dir.chdir(project_root) {
-      jar_file = resolve_jar project_root, logger
-      # Then run it
-      run_s3_website_jar(jar_file, call_dir, logger)
-    }
+    # Find the jar
+    jar_file = resolve_jar project_root, logger
+    # Then run it
+    run_s3_website_jar(jar_file, call_dir, logger)
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
@@ -86,15 +83,7 @@ class Cli < Thor
 end
 
 def run_s3_website_jar(jar_file, call_dir, logger)
-  site_path = File.expand_path(S3Website::Paths.infer_site_path options[:site], call_dir)
-  config_dir = File.expand_path options[:config_dir]
-
-  args = [
-    "--site=#{site_path}",
-    "--config-dir=#{config_dir}",
-    "#{'--verbose' if options[:verbose]}",
-    "#{'--dry-run' if options[:dry_run]}"
-  ].join ' '
+  args = ARGV.join(' ').sub('push', '')
   logger.debug_msg "Using #{jar_file}"
   if system("java -cp #{jar_file} s3.website.Push #{args}")
     exit 0
@@ -121,7 +110,9 @@ def resolve_jar(project_root, logger)
     else
       is_development = File.exists?(project_root + '/.git')
       if is_development
-        system "./sbt assembly"
+        Dir.chdir(project_root) {
+          system "./sbt assembly"
+        }
         development_jar_path
       else
         download_jar(released_jar_lookup_paths, logger)

@@ -25,6 +25,8 @@ import s3.website.CloudFront.CloudFrontSetting
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
 import scala.Int
+import java.io.File
+import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 
 object Push {
 
@@ -185,35 +187,44 @@ object Push {
   trait CliArgs {
     import com.lexicalscope.jewel.cli.Option
 
-    @Option def site: String
-    @Option(longName = Array("config-dir")) def configDir: String
+    @Option(defaultToNull = true) def site: String
+    @Option(longName = Array("config-dir"), defaultToNull = true) def configDir: String
     @Option def verbose: Boolean
     @Option(longName = Array("dry-run")) def dryRun: Boolean
   }
 
   def main(args: Array[String]) {
-    val cliArgs = CliFactory.parseArguments(classOf[CliArgs], args:_*)
+    implicit val cliArgs = parseArguments(classOf[CliArgs], args:_*)
     implicit val s3Settings = S3Setting()
     implicit val cloudFrontSettings = CloudFrontSetting()
+    implicit val workingDirectory = new File(System.getProperty("user.dir")).getAbsoluteFile
+    System exit push
+  }
+
+  def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File): ExitCode = {
     implicit val logger: Logger = new Logger(cliArgs.verbose)
     implicit val pushMode = new PushMode {
       def dryRun = cliArgs.dryRun
     }
-    val errorOrPushStatus = push(siteInDirectory = cliArgs.site, withConfigDirectory = cliArgs.configDir)
-    errorOrPushStatus.left foreach (err => logger.fail(s"Could not load the site: ${err.reportMessage}"))
-    System exit errorOrPushStatus.fold(_ => 1, pushStatus => pushStatus)
-  }
 
-  def push(siteInDirectory: String, withConfigDirectory: String)
-          (implicit s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, logger: Logger, pushMode: PushMode) =
-    loadSite(withConfigDirectory + "/s3_website.yml", siteInDirectory)
-      .right
-      .map {
-      implicit site =>
-        val threadPool = newFixedThreadPool(site.config.concurrency_level)
-        implicit val executor = fromExecutor(threadPool)
-        val pushStatus = pushSite
-        threadPool.shutdownNow()
-        pushStatus
+    val errorOrSiteDir: ErrorOrFile =
+      Option(cliArgs.site).fold(Ssg.findSiteDirectory(workingDirectory))(siteDirFromCli => Right(new File(siteDirFromCli)))
+    def errorOrSite(siteInDirectory: File): Either[ErrorReport, Site] =
+      loadSite(Option(cliArgs.configDir).getOrElse(workingDirectory.getPath) + "/s3_website.yml", siteInDirectory.getAbsolutePath)
+
+    val errorOrPushStatus = for {
+      siteInDirectory <- errorOrSiteDir.right
+      loadedSite <- errorOrSite(siteInDirectory).right
+    } yield {
+      implicit val site = loadedSite
+      val threadPool = newFixedThreadPool(site.config.concurrency_level)
+      implicit val executor = fromExecutor(threadPool)
+      val pushStatus = pushSite
+      threadPool.shutdownNow()
+      pushStatus
     }
+
+    errorOrPushStatus.left foreach (err => logger.fail(s"Could not load the site: ${err.reportMessage}"))
+    errorOrPushStatus fold((err: ErrorReport) => 1, pushStatus => pushStatus)
+  }
 }
