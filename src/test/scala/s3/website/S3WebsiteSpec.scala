@@ -23,7 +23,7 @@ import org.mockito.invocation.InvocationOnMock
 import java.util.concurrent.atomic.AtomicInteger
 import org.apache.commons.io.FileUtils.{forceDelete, forceMkdir, write}
 import scala.collection.mutable
-import s3.website.Push.CliArgs
+import s3.website.Push.{push, CliArgs}
 
 class S3WebsiteSpec extends Specification {
 
@@ -32,7 +32,7 @@ class S3WebsiteSpec extends Specification {
       config = "gzip: true"
       setLocalFileWithContent(("styles.css", "<h1>hi again</h1>"))
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
-      Push.push
+      push
       sentPutObjectRequest.getKey must equalTo("styles.css")
     }
 
@@ -40,7 +40,7 @@ class S3WebsiteSpec extends Specification {
       config = "gzip: true"
       setLocalFileWithContent(("styles.css", "<h1>hi</h1>"))
       setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
   }
@@ -56,7 +56,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFileWithContent(("file.xml", "<h1>hi again</h1>"))
       setS3Files(S3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
-      Push.push
+      push
       sentPutObjectRequest.getKey must equalTo("file.xml")
     }
   }
@@ -65,33 +65,33 @@ class S3WebsiteSpec extends Specification {
     "not upload a file if it has not changed" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFileWithContent(("index.html", "<div>hello</div>"))
       setS3Files(S3File("index.html", md5Hex("<div>hello</div>")))
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
 
     "update a file if it has changed" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFileWithContent(("index.html", "<h1>old text</h1>"))
       setS3Files(S3File("index.html", md5Hex("<h1>new text</h1>")))
-      Push.push
+      push
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
     "create a file if does not exist on S3" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
     "delete files that are on S3 but not on local file system" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
-      Push.push
+      push
       sentDelete must equalTo("old.html")
     }
 
     "try again if the upload fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
       uploadFailsAndThenSucceeds(howManyFailures = 5)
-      Push.push
+      push
       verify(amazonS3Client, times(6)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
@@ -102,21 +102,21 @@ class S3WebsiteSpec extends Specification {
         e.setStatusCode(403)
         e
       }
-      Push.push
+      push
       verify(amazonS3Client, times(1)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
     "try again if the delete fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
       deleteFailsAndThenSucceeds(howManyFailures = 5)
-      Push.push
+      push
       verify(amazonS3Client, times(6)).deleteObject(Matchers.anyString(), Matchers.anyString())
     }
 
     "try again if the object listing fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
       objectListingFailsAndThenSucceeds(howManyFailures = 5)
-      Push.push
+      push
       verify(amazonS3Client, times(6)).listObjects(Matchers.any(classOf[ListObjectsRequest]))
     }
   }
@@ -126,14 +126,14 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFiles("css/test.css", "articles/index.html")
       setOutdatedS3Keys("css/test.css", "articles/index.html")
-      Push.push
+      push
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/css/test.css" :: "/articles/index.html" :: Nil).sorted)
     }
 
     "not send CloudFront invalidation requests on new objects"  in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("newfile.js")
-      Push.push
+      push
       noInvalidationsOccurred must beTrue
     }
 
@@ -143,7 +143,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |  /index.php: index.html
       """.stripMargin
-      Push.push
+      push
       noInvalidationsOccurred must beTrue
     }
 
@@ -152,7 +152,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      Push.push must equalTo(0) // The retries should finally result in a success
+      push must equalTo(0) // The retries should finally result in a success
       sentInvalidationRequests.length must equalTo(4)
     }
 
@@ -161,7 +161,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      Push.push
+      push
       sentInvalidationRequests.length must equalTo(6)
     }
 
@@ -169,7 +169,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("articles/arnold's file.html")
       setOutdatedS3Keys("articles/arnold's file.html")
-      Push.push
+      push
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
     }
 
@@ -177,7 +177,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("maybe-index.html")
       setOutdatedS3Keys("maybe-index.html")
-      Push.push
+      push
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/maybe-index.html" :: Nil).sorted)
     }
   }
@@ -190,7 +190,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFile("articles/index.html")
       setOutdatedS3Keys("articles/index.html")
-      Push.push
+      push
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/" :: Nil).sorted)
     }
   }
@@ -201,7 +201,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFiles(files:_*)
       setOutdatedS3Keys(files:_*)
-      Push.push
+      push
       sentInvalidationRequests.length must equalTo(2)
       sentInvalidationRequests(0).getInvalidationBatch.getPaths.getItems.length must equalTo(1000)
       sentInvalidationRequests(1).getInvalidationBatch.getPaths.getItems.length must equalTo(2)
@@ -211,13 +211,13 @@ class S3WebsiteSpec extends Specification {
   "push exit status" should {
     "be 0 all uploads succeed" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFiles("file.txt")
-      Push.push must equalTo(0)
+      push must equalTo(0)
     }
 
     "be 1 if any of the uploads fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFiles("file.txt")
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
-      Push.push must equalTo(1)
+      push must equalTo(1)
     }
 
     "be 1 if any of the redirects fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
@@ -226,14 +226,14 @@ class S3WebsiteSpec extends Specification {
         |  index.php: /index.html
       """.stripMargin
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
-      Push.push must equalTo(1)
+      push must equalTo(1)
     }
 
     "be 0 if CloudFront invalidations and uploads succeed"in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      Push.push must equalTo(0)
+      push must equalTo(0)
     }
 
     "be 1 if CloudFront is unreachable or broken"in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
@@ -241,32 +241,32 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      Push.push must equalTo(1)
+      push must equalTo(1)
     }
 
     "be 0 if upload retry succeeds" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
       uploadFailsAndThenSucceeds(howManyFailures = 1)
-      Push.push must equalTo(0)
+      push must equalTo(0)
     }
 
     "be 1 if delete retry fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
       uploadFailsAndThenSucceeds(howManyFailures = 6)
-      Push.push must equalTo(1)
+      push must equalTo(1)
     }
 
     "be 1 if an object listing fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
       objectListingFailsAndThenSucceeds(howManyFailures = 6)
-      Push.push must equalTo(1)
+      push must equalTo(1)
     }
   }
 
   "s3_website.yml file" should {
     "never be uploaded" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("s3_website.yml")
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
   }
@@ -275,7 +275,7 @@ class S3WebsiteSpec extends Specification {
     "result in matching files not being uploaded" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "exclude_from_upload: .DS_.*?"
       setLocalFile(".DS_Store")
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
   }
@@ -292,7 +292,7 @@ class S3WebsiteSpec extends Specification {
         |  - logs
       """.stripMargin
       setLocalFiles(".DS_Store", "logs/test.log")
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
   }
@@ -301,7 +301,7 @@ class S3WebsiteSpec extends Specification {
     "not delete the S3 objects that match the ignore value" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "ignore_on_server: logs"
       setS3Files(S3File("logs/log.txt", ""))
-      Push.push
+      push
       noDeletesOccurred must beTrue
     }
   }
@@ -317,7 +317,7 @@ class S3WebsiteSpec extends Specification {
         |  - .*txt
       """.stripMargin
       setS3Files(S3File("logs/log.txt", ""))
-      Push.push
+      push
       noDeletesOccurred must beTrue
     }
   }
@@ -326,7 +326,7 @@ class S3WebsiteSpec extends Specification {
     "be applied to all files" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "max_age: 60"
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
@@ -336,7 +336,7 @@ class S3WebsiteSpec extends Specification {
         |  "*.html": 90
       """.stripMargin
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
@@ -346,7 +346,7 @@ class S3WebsiteSpec extends Specification {
         |  "assets/**/*.js": 90
       """.stripMargin
       setLocalFile("assets/lib/jquery.js")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
@@ -356,14 +356,14 @@ class S3WebsiteSpec extends Specification {
         |  "*.js": 90
       """.stripMargin
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
 
     "be used to disable caching" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "max_age: 0"
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache; max-age=0")
     }
   }
@@ -376,7 +376,7 @@ class S3WebsiteSpec extends Specification {
         |  "assets/*.gif": 86400
       """.stripMargin
       setLocalFiles("assets/jquery.js", "assets/picture.gif")
-      Push.push
+      push
       sentPutObjectRequests.find(_.getKey == "assets/jquery.js").get.getMetadata.getCacheControl must equalTo("max-age=150")
       sentPutObjectRequests.find(_.getKey == "assets/picture.gif").get.getMetadata.getCacheControl must equalTo("max-age=86400")
     }
@@ -386,7 +386,7 @@ class S3WebsiteSpec extends Specification {
     "result in uploads being marked with reduced redundancy" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "s3_reduced_redundancy: true"
       setLocalFile("file.exe")
-      Push.push
+      push
       sentPutObjectRequest.getStorageClass must equalTo("REDUCED_REDUNDANCY")
     }
   }
@@ -395,7 +395,7 @@ class S3WebsiteSpec extends Specification {
     "result in uploads being marked with the default storage class" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "s3_reduced_redundancy: false"
       setLocalFile("file.exe")
-      Push.push
+      push
       sentPutObjectRequest.getStorageClass must beNull
     }
   }
@@ -406,7 +406,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |  index.php: /index.html
       """.stripMargin
-      Push.push
+      push
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
 
@@ -415,7 +415,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |  index.php: /index.html
       """.stripMargin
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=0, no-cache")
     }
   }
@@ -428,7 +428,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFile("index.php")
       setS3Files(S3File("index.php", "md5"))
-      Push.push
+      push
       noDeletesOccurred must beTrue
     }
   }
@@ -436,7 +436,7 @@ class S3WebsiteSpec extends Specification {
   "dotfiles" should {
     "be included in the pushed files" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile(".vimrc")
-      Push.push
+      push
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
   }
@@ -444,25 +444,25 @@ class S3WebsiteSpec extends Specification {
   "content type inference" should {
     "add charset=utf-8 to all html documents" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
     }
 
     "add charset=utf-8 to all text documents" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.txt")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/plain; charset=utf-8")
     }
 
     "add charset=utf-8 to all json documents" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("data.json")
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getContentType must equalTo("application/json; charset=utf-8")
     }
 
     "resolve the content type from file contents" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFileWithContent(("index", "<html><body><h1>hi</h1></body></html>"))
-      Push.push
+      push
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
     }
   }
@@ -473,7 +473,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |<%= ('a'..'f').to_a.map do |t| '  '+t+ ': /'+t+'.html' end.join('\n')%>
       """.stripMargin
-      Push.push
+      push
       sentPutObjectRequests.length must equalTo(6)
       sentPutObjectRequests.forall(_.getRedirectLocation != null) must beTrue
     }
@@ -483,7 +483,7 @@ class S3WebsiteSpec extends Specification {
     "not push updates" in new AllInSameDirectory with EmptySite with MockAWS with DryRunMode {
       setLocalFileWithContent(("index.html", "<div>new</div>"))
       setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
 
@@ -493,26 +493,26 @@ class S3WebsiteSpec extends Specification {
           |redirects:
           |  index.php: /index.html
         """.stripMargin
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
 
     "not push deletes" in new AllInSameDirectory with EmptySite with MockAWS with DryRunMode {
       setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
 
     "not push new files" in new AllInSameDirectory with EmptySite with MockAWS with DryRunMode {
       setLocalFile("index.html")
-      Push.push
+      push
       noUploadsOccurred must beTrue
     }
     
     "not invalidate files" in new AllInSameDirectory with EmptySite with MockAWS with DryRunMode {
       config = "cloudfront_invalidation_id: AABBCC"
       setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
-      Push.push
+      push
       noInvalidationsOccurred must beTrue
     }
   }
@@ -520,7 +520,7 @@ class S3WebsiteSpec extends Specification {
   "Jekyll site" should {
     "be detected automatically" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequests.length must equalTo(1)
     }
   }
@@ -528,7 +528,7 @@ class S3WebsiteSpec extends Specification {
   "Nanoc site" should {
     "be detected automatically" in new NanocSite with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
-      Push.push
+      push
       sentPutObjectRequests.length must equalTo(1)
     }
   }
