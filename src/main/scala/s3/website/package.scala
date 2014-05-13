@@ -39,6 +39,7 @@ package object website {
   case object Updated     extends PushAction
   case object Redirected  extends PushAction
   case object Deleted     extends PushAction
+  case object Transferred extends PushAction
   case object Invalidated extends PushAction
   case object Applied     extends PushAction
   case object PushNothing extends PushAction {

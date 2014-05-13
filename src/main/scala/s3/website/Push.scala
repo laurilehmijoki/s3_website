@@ -27,6 +27,7 @@ import s3.website.CloudFront.FailedInvalidation
 import scala.Int
 import java.io.File
 import com.lexicalscope.jewel.cli.CliFactory.parseArguments
+import s3.website.ByteHelper.humanReadableByteCount
 
 object Push {
 
@@ -183,34 +184,36 @@ object Push {
     })
 
   def resolvePushCounts(implicit finishedOperations: FinishedPushOperations) = finishedOperations.foldLeft(PushCounts()) {
-    (counts: PushCounts, uploadReport) => uploadReport.fold(
-      (error: ErrorReport) => counts.copy(failures = counts.failures + 1),
-      failureOrSuccess => failureOrSuccess.fold(
-        (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
-        (successReport: PushSuccessReport) => successReport match {
-          case SuccessfulUpload(upload, _) => upload.uploadType match {
-            case NewFile  => counts.copy(newFiles = counts.newFiles + 1)
-            case Update   => counts.copy(updates = counts.updates + 1)
-            case Redirect => counts.copy(redirects = counts.redirects + 1)
+    (counts: PushCounts, uploadReport) =>
+      uploadReport.fold(
+        (error: ErrorReport) => counts.copy(failures = counts.failures + 1),
+        failureOrSuccess => failureOrSuccess.fold(
+          (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
+          (successReport: PushSuccessReport) => successReport match {
+            case succ: SuccessfulUpload => succ.upload.uploadType match {
+              case NewFile  => counts.copy(newFiles = counts.newFiles + 1).addUploadedBytes(succ.uploadSize) // TODO nasty repetition here
+              case Update   => counts.copy(updates = counts.updates + 1).addUploadedBytes(succ.uploadSize)
+              case Redirect => counts.copy(redirects = counts.redirects + 1).addUploadedBytes(succ.uploadSize)
+            }
+            case SuccessfulDelete(_) => counts.copy(deletes = counts.deletes + 1)
           }
-          case SuccessfulDelete(_) => counts.copy(deletes = counts.deletes + 1)
-        }
+        )
       )
-    )
   }
 
   def pushCountsToString(pushCounts: PushCounts)(implicit pushMode: PushMode): String =
     pushCounts match {
-      case PushCounts(updates, newFiles, failures, redirects, deletes)
+      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes)
         if updates == 0 && newFiles == 0 && failures == 0 && redirects == 0 && deletes == 0 =>
           PushNothing.renderVerb
-      case PushCounts(updates, newFiles, failures, redirects, deletes) =>
+      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes) =>
         val reportClauses: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
-        if (updates > 0)   reportClauses += s"${Updated.renderVerb} ${updates ofType "file"}."
-        if (newFiles > 0)  reportClauses += s"${Created.renderVerb} ${newFiles ofType "file"}."
-        if (failures > 0)  reportClauses += s"${failures ofType "operation"} failed." // This includes both failed uploads and deletes.
-        if (redirects > 0) reportClauses += s"${Applied.renderVerb} ${redirects ofType "redirect"}."
-        if (deletes > 0)   reportClauses += s"${Deleted.renderVerb} ${deletes ofType "file"}."
+        if (updates > 0)       reportClauses += s"${Updated.renderVerb} ${updates ofType "file"}."
+        if (newFiles > 0)      reportClauses += s"${Created.renderVerb} ${newFiles ofType "file"}."
+        if (failures > 0)      reportClauses += s"${failures ofType "operation"} failed." // This includes both failed uploads and deletes.
+        if (redirects > 0)     reportClauses += s"${Applied.renderVerb} ${redirects ofType "redirect"}."
+        if (deletes > 0)       reportClauses += s"${Deleted.renderVerb} ${deletes ofType "file"}."
+        if (uploadedBytes > 0) reportClauses += s"${Transferred.renderVerb} ${humanReadableByteCount(uploadedBytes)}."
         reportClauses.mkString(" ")
     }
 
@@ -219,9 +222,15 @@ object Push {
                          newFiles: Int = 0, 
                          failures: Int = 0, 
                          redirects: Int = 0, 
-                         deletes: Int = 0
+                         deletes: Int = 0,
+                         uploadedBytes: Long = 0
                          ) {
     val thereWasSomethingToPush = updates + newFiles + redirects + deletes > 0
+
+    def addUploadedBytes(addition: Option[Long]) =
+      copy(
+        uploadedBytes = uploadedBytes + addition.fold(0: Long)(accum => accum)
+      )
   }
   type FinishedPushOperations = ParSeq[Either[ErrorReport, PushErrorOrSuccess]]
   type PushReports = ParSeq[Either[ErrorReport, Future[PushErrorOrSuccess]]]

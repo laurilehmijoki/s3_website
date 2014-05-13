@@ -15,6 +15,8 @@ import s3.website.S3.FailedUpload
 import scala.Some
 import s3.website.S3.FailedDelete
 import s3.website.S3.S3Setting
+import org.apache.commons.io.FileUtils
+import s3.website.ByteHelper.humanReadableByteCount
 
 class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor) {
 
@@ -140,18 +142,31 @@ object S3 {
 
   case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest)
                              (implicit pushMode: PushMode) extends PushSuccessReport {
-    val metadata = putObjectRequest.getMetadata
-    def metadataReport =
-      (metadata.getCacheControl :: metadata.getContentType :: metadata.getContentEncoding :: putObjectRequest.getStorageClass :: Nil)
-        .filterNot(_ == null)
-        .mkString(" | ")
-
     def reportMessage =
       upload.uploadType match {
-        case NewFile  => s"${Created.renderVerb} $s3Key ($metadataReport)"
-        case Update   => s"${Updated.renderVerb} $s3Key ($metadataReport)"
+        case NewFile  => s"${Created.renderVerb} $s3Key ($reportDetails)"
+        case Update   => s"${Updated.renderVerb} $s3Key ($reportDetails)"
         case Redirect => s"${Redirected.renderVerb} ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
       }
+
+    def reportDetails = {
+      val metadata = putObjectRequest.getMetadata
+      val metadataToReport =
+        metadata.getCacheControl ::
+        metadata.getContentType ::
+        metadata.getContentEncoding ::
+        putObjectRequest.getStorageClass ::
+        Nil filterNot (_ == null) // AWS SDK may return nulls
+      uploadSizeForHumans.fold(metadataToReport)(metadataToReport :+ _).mkString(" | ")
+    }
+
+    def uploadSize: Option[Long] =
+      upload.essence.fold(
+        (redirect: Redirect) => None,
+        uploadBody           => Some(uploadBody.contentLength)
+      )
+
+    def uploadSizeForHumans: Option[String] = uploadSize map humanReadableByteCount
 
     def s3Key = upload.s3Key
   }
