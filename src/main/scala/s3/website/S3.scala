@@ -15,13 +15,12 @@ import s3.website.S3.FailedUpload
 import scala.Some
 import s3.website.S3.FailedDelete
 import s3.website.S3.S3Setting
-import org.apache.commons.io.FileUtils
 import s3.website.ByteHelper.humanReadableByteCount
 
-class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor) {
+class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) {
 
   def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)
-            (implicit config: Config, logger: Logger): Future[Either[FailedUpload, SuccessfulUpload]] =
+            (implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(upload)
       if (!pushMode.dryRun) s3Settings.s3Client(config) putObject putObjectRequest
@@ -34,7 +33,7 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
     )
 
   def delete(s3Key: String,  a: Attempt = 1)
-            (implicit config: Config, logger: Logger): Future[Either[FailedDelete, SuccessfulDelete]] =
+            (implicit config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
       if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
