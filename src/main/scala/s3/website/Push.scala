@@ -30,6 +30,50 @@ import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 
 object Push {
 
+  def main(args: Array[String]) {
+    implicit val cliArgs = parseArguments(classOf[CliArgs], args:_*)
+    implicit val s3Settings = S3Setting()
+    implicit val cloudFrontSettings = CloudFrontSetting()
+    implicit val workingDirectory = new File(System.getProperty("user.dir")).getAbsoluteFile
+    System exit push
+  }
+
+  trait CliArgs {
+    import com.lexicalscope.jewel.cli.Option
+
+    @Option(defaultToNull = true) def site: String
+    @Option(longName = Array("config-dir"), defaultToNull = true) def configDir: String
+    @Option def verbose: Boolean
+    @Option(longName = Array("dry-run")) def dryRun: Boolean
+  }
+
+  def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File): ExitCode = {
+    implicit val logger: Logger = new Logger(cliArgs.verbose)
+    implicit val pushMode = new PushMode {
+      def dryRun = cliArgs.dryRun
+    }
+
+    val errorOrSiteDir: ErrorOrFile =
+      Option(cliArgs.site).fold(Ssg.findSiteDirectory(workingDirectory))(siteDirFromCli => Right(new File(siteDirFromCli)))
+    def errorOrSite(siteInDirectory: File): Either[ErrorReport, Site] =
+      loadSite(Option(cliArgs.configDir).getOrElse(workingDirectory.getPath) + "/s3_website.yml", siteInDirectory.getAbsolutePath)
+
+    val errorOrPushStatus = for {
+      siteInDirectory <- errorOrSiteDir.right
+      loadedSite <- errorOrSite(siteInDirectory).right
+    } yield {
+      implicit val site = loadedSite
+      val threadPool = newFixedThreadPool(site.config.concurrency_level)
+      implicit val executor = fromExecutor(threadPool)
+      val pushStatus = pushSite
+      threadPool.shutdownNow()
+      pushStatus
+    }
+
+    errorOrPushStatus.left foreach (err => logger.fail(s"Could not load the site: ${err.reportMessage}"))
+    errorOrPushStatus fold((err: ErrorReport) => 1, pushStatus => pushStatus)
+  }
+
   def pushSite(
                 implicit site: Site,
                 executor: ExecutionContextExecutor,
@@ -183,48 +227,4 @@ object Push {
   type PushReports = ParSeq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
   type ExitCode = Int
-
-  trait CliArgs {
-    import com.lexicalscope.jewel.cli.Option
-
-    @Option(defaultToNull = true) def site: String
-    @Option(longName = Array("config-dir"), defaultToNull = true) def configDir: String
-    @Option def verbose: Boolean
-    @Option(longName = Array("dry-run")) def dryRun: Boolean
-  }
-
-  def main(args: Array[String]) {
-    implicit val cliArgs = parseArguments(classOf[CliArgs], args:_*)
-    implicit val s3Settings = S3Setting()
-    implicit val cloudFrontSettings = CloudFrontSetting()
-    implicit val workingDirectory = new File(System.getProperty("user.dir")).getAbsoluteFile
-    System exit push
-  }
-
-  def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File): ExitCode = {
-    implicit val logger: Logger = new Logger(cliArgs.verbose)
-    implicit val pushMode = new PushMode {
-      def dryRun = cliArgs.dryRun
-    }
-
-    val errorOrSiteDir: ErrorOrFile =
-      Option(cliArgs.site).fold(Ssg.findSiteDirectory(workingDirectory))(siteDirFromCli => Right(new File(siteDirFromCli)))
-    def errorOrSite(siteInDirectory: File): Either[ErrorReport, Site] =
-      loadSite(Option(cliArgs.configDir).getOrElse(workingDirectory.getPath) + "/s3_website.yml", siteInDirectory.getAbsolutePath)
-
-    val errorOrPushStatus = for {
-      siteInDirectory <- errorOrSiteDir.right
-      loadedSite <- errorOrSite(siteInDirectory).right
-    } yield {
-      implicit val site = loadedSite
-      val threadPool = newFixedThreadPool(site.config.concurrency_level)
-      implicit val executor = fromExecutor(threadPool)
-      val pushStatus = pushSite
-      threadPool.shutdownNow()
-      pushStatus
-    }
-
-    errorOrPushStatus.left foreach (err => logger.fail(s"Could not load the site: ${err.reportMessage}"))
-    errorOrPushStatus fold((err: ErrorReport) => 1, pushStatus => pushStatus)
-  }
 }
