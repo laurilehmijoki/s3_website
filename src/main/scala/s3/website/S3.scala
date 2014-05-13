@@ -140,7 +140,7 @@ object S3 {
   }
 
   case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest)
-                             (implicit pushMode: PushMode) extends PushSuccessReport {
+                             (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
     def reportMessage =
       upload.uploadType match {
         case NewFile  => s"${Created.renderVerb} $s3Key ($reportDetails)"
@@ -165,7 +165,7 @@ object S3 {
         uploadBody           => Some(uploadBody.contentLength)
       )
 
-    def uploadSizeForHumans: Option[String] = uploadSize map humanReadableByteCount
+    def uploadSizeForHumans: Option[String] = uploadSize map humanReadableByteCount filter (_ => logger.verboseOutput)
 
     def s3Key = upload.s3Key
   }

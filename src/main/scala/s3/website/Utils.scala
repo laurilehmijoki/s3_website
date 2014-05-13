@@ -16,7 +16,7 @@ object Utils {
   lazy val fibs: Stream[Int] = 0 #:: 1 #:: fibs.zip(fibs.tail).map { n => n._1 + n._2 }
 }
 
-class Logger(verboseOutput: Boolean, logMessage: (String) => Unit = println) {
+class Logger(val verboseOutput: Boolean, logMessage: (String) => Unit = println) {
   import Rainbow._
   def debug(msg: String) = if (verboseOutput) log(Debug, msg)
   def info(msg: String) = log(Info, msg)
