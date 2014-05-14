@@ -3,7 +3,6 @@ package s3.website
 import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
-import com.lexicalscope.jewel.cli.CliFactory
 import scala.language.postfixOps
 import s3.website.Diff.{resolveNewFiles, resolveDeletes}
 import s3.website.S3._
@@ -191,9 +190,9 @@ object Push {
           (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
           (successReport: PushSuccessReport) => successReport match {
             case succ: SuccessfulUpload => succ.upload.uploadType match {
-              case NewFile  => counts.copy(newFiles = counts.newFiles + 1).addUploadedBytes(succ.uploadSize) // TODO nasty repetition here
-              case Update   => counts.copy(updates = counts.updates + 1).addUploadedBytes(succ.uploadSize)
-              case Redirect => counts.copy(redirects = counts.redirects + 1).addUploadedBytes(succ.uploadSize)
+              case NewFile => counts.copy(newFiles = counts.newFiles + 1).addTransferStats(succ) // TODO nasty repetition here
+              case Update => counts.copy(updates = counts.updates + 1).addTransferStats(succ)
+              case Redirect => counts.copy(redirects = counts.redirects + 1).addTransferStats(succ)
             }
             case SuccessfulDelete(_) => counts.copy(deletes = counts.deletes + 1)
           }
@@ -203,17 +202,27 @@ object Push {
 
   def pushCountsToString(pushCounts: PushCounts)(implicit pushMode: PushMode): String =
     pushCounts match {
-      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes)
+      case PushCounts(updates, newFiles, failures, redirects, deletes, _, _)
         if updates == 0 && newFiles == 0 && failures == 0 && redirects == 0 && deletes == 0 =>
           PushNothing.renderVerb
-      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes) =>
+      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes, uploadDurationAndFrequency) =>
         val reportClauses: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
         if (updates > 0)       reportClauses += s"${Updated.renderVerb} ${updates ofType "file"}."
         if (newFiles > 0)      reportClauses += s"${Created.renderVerb} ${newFiles ofType "file"}."
         if (failures > 0)      reportClauses += s"${failures ofType "operation"} failed." // This includes both failed uploads and deletes.
         if (redirects > 0)     reportClauses += s"${Applied.renderVerb} ${redirects ofType "redirect"}."
         if (deletes > 0)       reportClauses += s"${Deleted.renderVerb} ${deletes ofType "file"}."
-        if (uploadedBytes > 0) reportClauses += s"${Transferred.renderVerb} ${humanReadableByteCount(uploadedBytes)}."
+        if (uploadedBytes > 0) {
+          val transferSuffix =
+            if (uploadDurationAndFrequency._1.getStandardSeconds > 0)
+              s", ${humanReadableByteCount(
+                (uploadedBytes / uploadDurationAndFrequency._1.getMillis * 1000) * uploadDurationAndFrequency._2
+              )}/s."
+            else
+              "."
+
+          reportClauses += s"${Transferred.renderVerb} ${humanReadableByteCount(uploadedBytes)}$transferSuffix"
+        }
         reportClauses.mkString(" ")
     }
 
@@ -223,15 +232,21 @@ object Push {
                          failures: Int = 0, 
                          redirects: Int = 0, 
                          deletes: Int = 0,
-                         uploadedBytes: Long = 0
+                         uploadedBytes: Long = 0,
+                         uploadDurationAndFrequency: (org.joda.time.Duration, Int) = (new org.joda.time.Duration(0), 0)
                          ) {
     val thereWasSomethingToPush = updates + newFiles + redirects + deletes > 0
 
-    def addUploadedBytes(addition: Option[Long]) =
+    def addTransferStats(successfulUpload: SuccessfulUpload): PushCounts = {
       copy(
-        uploadedBytes = uploadedBytes + addition.fold(0: Long)(accum => accum)
+        uploadedBytes = uploadedBytes + (successfulUpload.uploadSize getOrElse 0L),
+        uploadDurationAndFrequency = successfulUpload.uploadDuration.fold(uploadDurationAndFrequency)(
+          dur => (uploadDurationAndFrequency._1.plus(dur), uploadDurationAndFrequency._2 + 1)
+        )
       )
+    }
   }
+
   type FinishedPushOperations = ParSeq[Either[ErrorReport, PushErrorOrSuccess]]
   type PushReports = ParSeq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)

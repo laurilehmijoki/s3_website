@@ -12,6 +12,8 @@ This project uses [Semantic Versioning](http://semver.org).
 
 * Display transferred bytes
 
+* Display upload speed
+
 * `push --verbose` switch
 
 ### Bug fixes

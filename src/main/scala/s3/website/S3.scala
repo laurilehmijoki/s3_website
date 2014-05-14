@@ -7,8 +7,6 @@ import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
-import scala.concurrent.duration.TimeUnit
-import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload
 import s3.website.S3.SuccessfulDelete
 import s3.website.S3.FailedUpload
@@ -16,6 +14,11 @@ import scala.Some
 import s3.website.S3.FailedDelete
 import s3.website.S3.S3Setting
 import s3.website.ByteHelper.humanReadableByteCount
+import org.joda.time.{Seconds, Duration, Interval}
+import scala.concurrent.duration.TimeUnit
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration.TimeUnit
+import java.util.concurrent.TimeUnit.SECONDS
 
 class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) {
 
@@ -23,8 +26,10 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
             (implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(upload)
-      if (!pushMode.dryRun) s3Settings.s3Client(config) putObject putObjectRequest
-      val report = SuccessfulUpload(upload, putObjectRequest)
+      val uploadDuration =
+        if (pushMode.dryRun) None
+        else recordUploadDuration(putObjectRequest, s3Settings.s3Client(config) putObject putObjectRequest)
+      val report = SuccessfulUpload(upload, putObjectRequest, uploadDuration)
       logger.info(report)
       Right(report)
     } recoverWith retry(a)(
@@ -43,7 +48,7 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
       createFailureReport = error => FailedDelete(s3Key, error),
       retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
-      
+
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
     upload.essence.fold(
       redirect => {
@@ -78,6 +83,15 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
         req
       }
     )
+
+  def recordUploadDuration(putObjectRequest: PutObjectRequest, f: => Unit): Option[Duration] = {
+    val start = System.currentTimeMillis()
+    f
+    if (putObjectRequest.getMetadata.getContentLength > 0)
+      Some(new Duration(start, System.currentTimeMillis))
+    else
+      None // We are not interested in tracking durations of PUT requests that don't contain data. Redirect is an example of such request.
+  }
 }
 
 object S3 {
@@ -139,7 +153,7 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest)
+  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest, uploadDuration: Option[Duration])
                              (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
     def reportMessage =
       upload.uploadType match {
@@ -149,23 +163,36 @@ object S3 {
       }
 
     def reportDetails = {
-      val metadata = putObjectRequest.getMetadata
-      val metadataToReport =
-        metadata.getCacheControl ::
-        metadata.getContentType ::
-        metadata.getContentEncoding ::
-        putObjectRequest.getStorageClass ::
-        Nil filterNot (_ == null) // AWS SDK may return nulls
-      uploadSizeForHumans.fold(metadataToReport)(metadataToReport :+ _).mkString(" | ")
+      val md = putObjectRequest.getMetadata
+      val detailFragments: Seq[Option[String]] =
+        (
+          md.getCacheControl ::
+          md.getContentType ::
+          md.getContentEncoding ::
+          putObjectRequest.getStorageClass ::
+          Nil map (Option(_)) // AWS SDK may return nulls
+        ) :+ uploadSizeForHumans :+ uploadSpeedForHumans
+      detailFragments.collect {
+        case Some(detailFragment) => detailFragment
+      }.mkString(" | ")
     }
 
-    def uploadSize: Option[Long] =
+    lazy val uploadSize: Option[Long] =
       upload.essence.fold(
         (redirect: Redirect) => None,
         uploadBody           => Some(uploadBody.contentLength)
       )
 
-    def uploadSizeForHumans: Option[String] = uploadSize map humanReadableByteCount filter (_ => logger.verboseOutput)
+    lazy val uploadSizeForHumans: Option[String] = uploadSize filter (_ => logger.verboseOutput) map humanReadableByteCount
+
+    lazy val uploadSpeed: Option[Long] = for {
+      dataSize <- uploadSize
+      duration <- uploadDuration
+    } yield (dataSize / (duration.getMillis max 1)) * 1000 // Precision tweaking and avoidance of divide-by-zero
+
+    lazy val uploadSpeedForHumans: Option[String] = uploadSpeed filter (_ => logger.verboseOutput) map {
+      bytesPerSecond => s"${humanReadableByteCount(bytesPerSecond)}/s"
+    }
 
     def s3Key = upload.s3Key
   }

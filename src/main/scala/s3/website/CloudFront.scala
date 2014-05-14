@@ -121,7 +121,7 @@ object CloudFront {
 
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
-    case SuccessfulUpload(upload, _) => upload.uploadType match {
+    case SuccessfulUpload(upload, _, _) => upload.uploadType match {
       case Update => true
       case _ => false
     }
