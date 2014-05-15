@@ -27,6 +27,7 @@ import scala.Int
 import java.io.File
 import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 import s3.website.ByteHelper.humanReadableByteCount
+import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 
 object Push {
 
@@ -205,7 +206,7 @@ object Push {
       case PushCounts(updates, newFiles, failures, redirects, deletes, _, _)
         if updates == 0 && newFiles == 0 && failures == 0 && redirects == 0 && deletes == 0 =>
           PushNothing.renderVerb
-      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes, uploadDurationAndFrequency) =>
+      case PushCounts(updates, newFiles, failures, redirects, deletes, uploadedBytes, uploadDurations) =>
         val reportClauses: scala.collection.mutable.ArrayBuffer[String] = ArrayBuffer()
         if (updates > 0)       reportClauses += s"${Updated.renderVerb} ${updates ofType "file"}."
         if (newFiles > 0)      reportClauses += s"${Created.renderVerb} ${newFiles ofType "file"}."
@@ -213,14 +214,7 @@ object Push {
         if (redirects > 0)     reportClauses += s"${Applied.renderVerb} ${redirects ofType "redirect"}."
         if (deletes > 0)       reportClauses += s"${Deleted.renderVerb} ${deletes ofType "file"}."
         if (uploadedBytes > 0) {
-          val transferSuffix =
-            if (uploadDurationAndFrequency._1.getStandardSeconds > 0)
-              s", ${humanReadableByteCount(
-                (uploadedBytes / uploadDurationAndFrequency._1.getMillis * 1000) * uploadDurationAndFrequency._2
-              )}/s."
-            else
-              "."
-
+          val transferSuffix = humanizeUploadSpeed(uploadedBytes, uploadDurations: _*).fold(".")(speed => s", $speed.")
           reportClauses += s"${Transferred.renderVerb} ${humanReadableByteCount(uploadedBytes)}$transferSuffix"
         }
         reportClauses.mkString(" ")
@@ -233,16 +227,14 @@ object Push {
                          redirects: Int = 0, 
                          deletes: Int = 0,
                          uploadedBytes: Long = 0,
-                         uploadDurationAndFrequency: (org.joda.time.Duration, Int) = (new org.joda.time.Duration(0), 0)
+                         uploadDurations: Seq[org.joda.time.Duration] = Nil
                          ) {
     val thereWasSomethingToPush = updates + newFiles + redirects + deletes > 0
 
     def addTransferStats(successfulUpload: SuccessfulUpload): PushCounts = {
       copy(
         uploadedBytes = uploadedBytes + (successfulUpload.uploadSize getOrElse 0L),
-        uploadDurationAndFrequency = successfulUpload.uploadDuration.fold(uploadDurationAndFrequency)(
-          dur => (uploadDurationAndFrequency._1.plus(dur), uploadDurationAndFrequency._2 + 1)
-        )
+        uploadDurations = uploadDurations ++ successfulUpload.uploadDuration
       )
     }
   }

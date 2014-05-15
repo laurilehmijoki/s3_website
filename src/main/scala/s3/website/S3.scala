@@ -19,6 +19,7 @@ import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
+import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 
 class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) {
 
@@ -185,16 +186,30 @@ object S3 {
 
     lazy val uploadSizeForHumans: Option[String] = uploadSize filter (_ => logger.verboseOutput) map humanReadableByteCount
 
-    lazy val uploadSpeed: Option[Long] = for {
-      dataSize <- uploadSize
-      duration <- uploadDuration
-    } yield (dataSize / (duration.getMillis max 1)) * 1000 // Precision tweaking and avoidance of divide-by-zero
-
-    lazy val uploadSpeedForHumans: Option[String] = uploadSpeed filter (_ => logger.verboseOutput) map {
-      bytesPerSecond => s"${humanReadableByteCount(bytesPerSecond)}/s"
-    }
+    lazy val uploadSpeedForHumans: Option[String] =
+      (for {
+        dataSize <- uploadSize
+        duration <- uploadDuration
+      } yield {
+        humanizeUploadSpeed(dataSize, duration)
+      }) flatMap identity filter (_ => logger.verboseOutput)
 
     def s3Key = upload.s3Key
+  }
+  
+  object SuccessfulUpload {
+    def humanizeUploadSpeed(uploadedBytes: Long, uploadDurations: Duration*): Option[String] = {
+      val totalDurationMillis = uploadDurations.foldLeft(new org.joda.time.Duration(0)){ (memo, duration) =>
+        memo.plus(duration)
+      }.getMillis // retain precision by using milliseconds
+      if (totalDurationMillis > 0) {
+        val bytesPerMillisecond = uploadedBytes / totalDurationMillis
+        val bytesPerSecond = bytesPerMillisecond * 1000 * uploadDurations.length
+        Some(humanReadableByteCount(bytesPerSecond) + "/s")  
+      } else {
+        None
+      }
+    }
   }
 
   case class SuccessfulDelete(s3Key: String)(implicit pushMode: PushMode) extends PushSuccessReport {
