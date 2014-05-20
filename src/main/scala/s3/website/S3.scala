@@ -139,7 +139,7 @@ object S3 {
         resolveS3FilesAndUpdates(localFiles)(Some(nextMarker), s3Files, attempt = attempt, updateFutures)
       }
   } recoverWith retry(attempt)(
-    createFailureReport = error => ClientError(s"Failed to fetch an object listing (${error.getMessage})"),
+    createFailureReport = error => ErrorReport(s"Failed to fetch an object listing (${error.getMessage})"),
     retryAction = nextAttempt => resolveS3FilesAndUpdates(localFiles)(nextMarker, alreadyResolved, nextAttempt, onFlightUpdateFutures)
   )
 

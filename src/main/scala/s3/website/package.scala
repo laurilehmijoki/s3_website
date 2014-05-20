@@ -23,6 +23,10 @@ package object website {
     def apply(t: Throwable) = new ErrorReport {
       override def reportMessage = t.getMessage
     }
+
+    def apply(msg: String) = new ErrorReport {
+      override def reportMessage = msg
+    }
   }
 
   trait RetrySetting {

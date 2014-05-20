@@ -124,7 +124,7 @@ object LocalFile {
     )
   } match {
     case Success(upload) => Right(upload)
-    case Failure(error) => Left(IOError(error))
+    case Failure(error) => Left(ErrorReport(error))
   }
 
   lazy val tika = new Tika()
