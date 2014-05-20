@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'thor', '= 0.18.1'
   s.add_dependency 'configure-s3-website', '= 1.5.5'
   s.add_dependency 'zopfli', '~> 0.0.3'
+  s.add_dependency 'dotenv', '~> 0.11.1'
 
   s.add_development_dependency 'rspec', '2.14.0'
   s.add_development_dependency 'rspec-expectations', '2.14.4'

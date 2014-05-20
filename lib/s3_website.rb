@@ -6,6 +6,9 @@ require 'simple-cloudfront-invalidator'
 require 'filey-diff'
 require 'mime/types'
 require 'thor'
+require 'dotenv'
+
+Dotenv.load
 
 module S3Website
   DEFAULT_GZIP_EXTENSIONS = %w(.html .css .js .svg .txt)
