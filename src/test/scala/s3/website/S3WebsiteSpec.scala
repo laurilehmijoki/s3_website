@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 import s3.website.S3.S3Setting
 import scala.collection.JavaConversions._
 import com.amazonaws.AmazonServiceException
-import org.apache.commons.codec.digest.DigestUtils.md5Hex
+import org.apache.commons.codec.digest.DigestUtils._
 import s3.website.CloudFront.CloudFrontSetting
 import com.amazonaws.services.cloudfront.AmazonCloudFront
 import com.amazonaws.services.cloudfront.model.{CreateInvalidationResult, CreateInvalidationRequest, TooManyInvalidationsInProgressException}
@@ -24,6 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.apache.commons.io.FileUtils.{forceDelete, forceMkdir, write}
 import scala.collection.mutable
 import s3.website.Push.{push, CliArgs}
+import s3.website.CloudFront.CloudFrontSetting
+import s3.website.S3.S3Setting
+import org.apache.commons.codec.digest.DigestUtils
 
 class S3WebsiteSpec extends Specification {
 
@@ -688,6 +691,7 @@ class S3WebsiteSpec extends Specification {
     implicit final val workingDirectory: File = new File(FileUtils.getTempDirectory, "s3_website_dir" + Random.nextLong())
     val siteDirectory: File // Represents the --site=X option
     val configDirectory: File = workingDirectory // Represents the --config-dir=X option
+    lazy val localDatabase: File = new File(FileUtils.getTempDirectory, "s3_website_local_db_" + sha256Hex(siteDirectory.getPath))
 
     lazy val allDirectories = workingDirectory :: siteDirectory :: configDirectory :: Nil
 
@@ -699,6 +703,9 @@ class S3WebsiteSpec extends Specification {
       allDirectories foreach { dir =>
         if (dir.exists) forceDelete(dir)
       }
+
+      localDatabase.ensuring(_.exists(), "The local database file must exist for all sites")
+      forceDelete(localDatabase)
     }
   }
 

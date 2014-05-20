@@ -7,6 +7,7 @@ import s3.website.S3.{PushSuccessReport, PushFailureReport}
 import com.amazonaws.AmazonServiceException
 import s3.website.model.{Config, Site}
 import java.io.File
+import scala.util.{Failure, Success, Try}
 
 package object website {
   trait Report {
@@ -17,6 +18,12 @@ package object website {
   trait FailureReport extends Report
 
   trait ErrorReport extends Report
+
+  object ErrorReport {
+    def apply(t: Throwable) = new ErrorReport {
+      override def reportMessage = t.getMessage
+    }
+  }
 
   trait RetrySetting {
     def retryTimeUnit: TimeUnit
