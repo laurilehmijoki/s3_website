@@ -193,7 +193,7 @@ class LocalFileDatabase(implicit site: Site) {
                               contentType: String) extends LocalFile
 
   val database: Either[ErrorReport, MutableFileCache] = Try {
-    // record format: "s3Key(file.path)|lenght(file)|mtime(file)|md5(file)|contentType(file)"
+    // record format: "s3Key(file.path)|length(file)|mtime(file)|md5(file)|contentType(file)"
     val RecordRegex = "(.*?)\\|(\\d+)\\|(\\d+)\\|(.*?)\\|(.*)".r
     Source
       .fromFile(databaseFile, "utf-8")
