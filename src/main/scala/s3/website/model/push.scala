@@ -104,7 +104,7 @@ case class LocalFileFromDisk(
 
 object LocalFileFromDisk {
   def apply(dbKeyAndFile: (LocalDbKey, File))(implicit config: Config): LocalFileFromDisk =
-    LocalFileFromDisk(dbKeyAndFile._1.s3Key, dbKeyAndFile._2, encodingOnS3(dbKeyAndFile._1.s3Key))
+    LocalFileFromDisk(dbKeyAndFile._1.s3Key, originalFile = dbKeyAndFile._2, encodingOnS3(dbKeyAndFile._1.s3Key))
 }
 
 object LocalFile {
@@ -157,7 +157,7 @@ object LocalFile {
   }
 
   def resolveLocalFiles(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[LocalFile]] =
-    new LocalFileDatabase().resolveLocalFiles.right map { localFiles =>
+    LocalFileDatabase.resolveLocalFiles.right map { localFiles =>
       localFiles filterNot { file =>
         val excludeFile = site.config.exclude_from_upload exists { _.fold(
           // For backward compatibility, use Ruby regex matching
@@ -175,16 +175,44 @@ object LocalFile {
   }
 }
 
-// Not thread safe
-class LocalFileDatabase(implicit site: Site) {
+object LocalFileDatabase {
 
-  lazy val databaseFile = {
-    val dbFile = new File(getTempDirectory, "s3_website_local_db_" + sha256Hex(site.rootDirectory))
-    dbFile.createNewFile()
-    dbFile
-  }
+  def resolveLocalFiles(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[LocalFile]] =
+    (for {
+      dbFile <- databaseFile
+      database <- loadDbFromFile(dbFile)
+    } yield {
+      val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory) // TODO go reactive
+      logger.debug(s"Discovered ${files.length} files on the site")
+      val allRecords = files.foldLeft(Map(): Map[LocalDbKey, LocalFile]) { (map, file) =>
+        val key = LocalDbKey(file)
+        val unchangedRecord = database.get(key) // If the file has not changed, the map.get(key) operation will return Some(record)
+        val localFile = unchangedRecord
+          .fold(
+            LocalFileFromDisk(key -> file): LocalFile // The file has changed. Put into the db a local file that reflects the state on disk.
+          )(
+            identity // The file has not changed. Leave the local file entry as it is.
+          )
+        map + (key -> localFile)
+      }
+      allRecords
+    }) flatMap { allRecords =>
+      persistDbRecords(allRecords)
+    } map { allRecords =>
+      allRecords.values.toSeq
+    } match {
+      case Success(localFiles) => Right(localFiles)
+      case Failure(error) => Left(ErrorReport(error))
+    }
 
-  case class LocalFileFromDb(
+  private def databaseFile(implicit site: Site, logger: Logger) =
+    Try {
+      val dbFile = new File(getTempDirectory, "s3_website_local_db_" + sha256Hex(site.rootDirectory))
+      dbFile.createNewFile()
+      dbFile
+    }
+
+  private case class LocalFileFromDb(
                               s3Key: String,
                               uploadFile: File,
                               md5: MD5,
@@ -192,51 +220,32 @@ class LocalFileDatabase(implicit site: Site) {
                               length: Long,
                               contentType: String) extends LocalFile
 
-  val database: Either[ErrorReport, MutableFileCache] = Try {
-    // record format: "s3Key(file.path)|length(file)|mtime(file)|md5(file)|contentType(file)"
-    val RecordRegex = "(.*?)\\|(\\d+)\\|(\\d+)\\|(.*?)\\|(.*)".r
-    Source
-      .fromFile(databaseFile, "utf-8")
-      .getLines()
-      .map {
-        case RecordRegex(s3Key, fileLength, modified, md5, contentType) =>
-          val length: Long = fileLength.toLong
-          val mtime: Long = modified.toLong
-          LocalDbKey(s3Key, length, mtime) -> LocalFileFromDb(s3Key, new File(site.rootDirectory + s"/$s3Key"), md5, encodingOnS3(s3Key), length, contentType)
-      }.toMap
-
-  } match {
-    case Success(v) => Right(scala.collection.mutable.Map(v.toSeq: _*))
-    case Failure(f) => Left(ErrorReport(f))
-  }
+  private def loadDbFromFile(databaseFile: File)(implicit site: Site, logger: Logger): Try[Map[LocalDbKey, LocalFile]] =
+    Try {
+      // record format: "s3Key(file.path)|length(file)|mtime(file)|md5(file)|contentType(file)"
+      val RecordRegex = "(.*?)\\|(\\d+)\\|(\\d+)\\|(.*?)\\|(.*)".r
+      Source
+        .fromFile(databaseFile, "utf-8")
+        .getLines()
+        .map {
+          case RecordRegex(s3Key, fileLength, modified, md5, contentType) =>
+            val length: Long = fileLength.toLong
+            val mtime: Long = modified.toLong
+            LocalDbKey(s3Key, length, mtime) -> LocalFileFromDb(s3Key, new File(site.rootDirectory + s"/$s3Key"), md5, encodingOnS3(s3Key), length, contentType)
+        }.toMap
+    }
   
-  type MutableFileCache = scala.collection.mutable.Map[LocalDbKey, LocalFile] 
-
-  def addToDb(newOrChangedRecords: Map[LocalDbKey, LocalFileFromDisk]): Either[ErrorReport, Unit] = database.right.flatMap { db =>
-    db ++= newOrChangedRecords
-    val dbFileContents = db.map { record =>
-      val localFile: LocalFile = record._2
-      (localFile.s3Key :: localFile.uploadFile.length :: localFile.uploadFile.lastModified :: localFile.md5 :: localFile.contentType :: Nil).mkString("|")
-    }.mkString("\n")
-    write(databaseFile, dbFileContents)
-    Right(())
-  }
-
-  def resolveLocalFiles: Either[ErrorReport, Seq[LocalFile]] =
-    database.right flatMap { db =>
+  private def persistDbRecords(allRecords: Map[LocalDbKey, LocalFile])(implicit site: Site, logger: Logger) =
+    databaseFile flatMap { dbFile =>
       Try {
-        val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory) // TODO go reactive
-        val newOrChangedFiles =
-          files.foldLeft(Map(): Map[LocalDbKey, LocalFileFromDisk]) { (map, file) =>
-            val key = LocalDbKey(file)
-            map + (key -> LocalFileFromDisk(key -> file))
-          } filterNot (entry => db.contains(entry._1))
-        addToDb(newOrChangedFiles)
-        db.values.toSeq
-      } match {
-        case Success(localFiles) => Right(localFiles)
-        case Failure(error) => Left(ErrorReport(error))
+        val dbFileContents = allRecords.map { record =>
+          val localFile: LocalFile = record._2
+          (localFile.s3Key :: localFile.uploadFile.length :: localFile.uploadFile.lastModified :: localFile.md5 :: localFile.contentType :: Nil).mkString("|")
+        }.mkString("\n")
+        write(dbFile, dbFileContents)
       }
+    } map { _ =>
+      allRecords
     }
 }
 
