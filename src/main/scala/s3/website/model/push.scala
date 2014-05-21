@@ -17,7 +17,9 @@ import s3.website.model.Encoding.Zopfli
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import org.apache.commons.io.FileUtils.{write, getTempDirectory}
 import scala.io.Source
-import s3.website.model.LocalFile.recursiveListFiles
+import s3.website.model.LocalFileDatabase.ChangedFile
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 object Encoding {
 
@@ -56,20 +58,26 @@ sealed trait UploadType // Sealed, so that we can avoid inexhaustive pattern mat
 case object NewFile extends UploadType
 case object Update extends UploadType
 
-trait LocalFile extends S3KeyProvider {
+trait LocalFile extends S3KeyProvider { // TODO remove as obsolete
   val s3Key: String
-  val length: Long
-  val encodingOnS3: Option[Either[Gzip, Zopfli]]
-  def contentType: String
+}
+
+trait Uploadable {
   def uploadFile: File
+  def contentType: String
   def md5: MD5
+  val encodingOnS3: Option[Either[Gzip, Zopfli]]
 }
 
 case class LocalFileFromDisk(
-  s3Key: String,
   originalFile: File,
-  encodingOnS3: Option[Either[Gzip, Zopfli]]
-) extends LocalFile {
+  uploadType: UploadType
+)(implicit site: Site) extends LocalFile with Uploadable with UploadTypeResolved {
+  lazy val s3Key = site.resolveS3Key(originalFile)
+
+  lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
+
+  lazy val lastModified = originalFile.lastModified
 
   // May throw an exception, so remember to call this in a Try or Future monad
   lazy val length = uploadFile.length()
@@ -102,20 +110,16 @@ case class LocalFileFromDisk(
   private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
 }
 
-object LocalFileFromDisk {
-  def apply(dbKeyAndFile: (LocalDbKey, File))(implicit config: Config): LocalFileFromDisk =
-    LocalFileFromDisk(dbKeyAndFile._1.s3Key, originalFile = dbKeyAndFile._2, encodingOnS3(dbKeyAndFile._1.s3Key))
-}
-
 object LocalFile {
-  def toUpload(localFile: LocalFile)(implicit config: Config): Either[ErrorReport, Upload] = Try {
+  def toUpload(localFile: LocalFile with Uploadable with UploadTypeResolved)(implicit config: Config, logger: Logger): Either[ErrorReport, Upload] = Try {
     Upload(
       s3Key = localFile.s3Key,
+      uploadType = localFile.uploadType,
       essence = Right(
         UploadBody(
           md5 = localFile.md5,
           contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
-          contentLength = localFile.length,
+          contentLength = localFile.uploadFile.length(),
           maxAge = resolveMaxAge(localFile),
           contentType = localFile.contentType,
           openInputStream = () => new FileInputStream(localFile.uploadFile)
@@ -156,109 +160,155 @@ object LocalFile {
     }
   }
 
-  def resolveLocalFiles(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[LocalFile]] =
-    LocalFileDatabase.resolveLocalFiles.right map { localFiles =>
-      localFiles filterNot { file =>
-        val excludeFile = site.config.exclude_from_upload exists { _.fold(
-          // For backward compatibility, use Ruby regex matching
-          (exclusionRegex: String) => rubyRegexMatches(file.s3Key, exclusionRegex),
-          (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(file.s3Key, _))
-        ) }
-        if (excludeFile) logger.debug(s"Excluded ${file.s3Key} from upload")
-        excludeFile
-      } filterNot { _.s3Key == "s3_website.yml" } // For security reasons, the s3_website.yml should never be pushed
-    }
+  def resolveDiff(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]]) // Todo move to Diff.scala
+                  (implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] = 
+    if (LocalFileDatabase.hasRecords)
+      LocalFileDatabase.resolveDiffWithLocalDb
+    else
+      // Local file database does not exist. Use the Get Bucket Response for checking the new or changed files. 
+      // Then persist the local files into the db.
+      Await.result(s3FilesFuture, 5 minutes).right flatMap { s3Files =>
+        Try {
+          val s3KeyIndex = s3Files.map(_.s3Key).toSet
+          val s3Md5Index = s3Files.map(_.md5).toSet
+          val siteFiles = listSiteFiles
+          val nameExistsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
+          val newFiles = siteFiles
+            .filterNot(nameExistsOnS3)
+            .map { f => LocalFileFromDisk(f, uploadType = NewFile)}
+          val changedFiles =
+            siteFiles
+              .filter(nameExistsOnS3)
+              .map(f => LocalFileFromDisk(f, uploadType = Update))
+              .filterNot(localFile => s3Md5Index contains localFile.md5)
+          val unchangedFiles = {
+            val newOrChangedFiles = (changedFiles ++ newFiles).map(_.originalFile).toSet
+            siteFiles.filterNot(f => newOrChangedFiles contains f)
+          }
+          val allFiles: Seq[Either[DbRecord, ChangedFile]] = unchangedFiles.map {
+            f => Left(DbRecord(f))
+          } ++ (changedFiles ++ newFiles).map {
+            Right(_)
+          }
+          LocalFileDatabase persist allFiles
+          allFiles
+        } match {
+          case Success(allFiles) => Right(allFiles)
+          case Failure(err) => Left(ErrorReport(err))
+        }
+      }
 
   def recursiveListFiles(f: File): Seq[File] = {
     val these = f.listFiles
     these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
   }
+
+  def listSiteFiles(implicit site: Site, logger: Logger) = {
+    def excludeFromUpload(s3Key: String) = {
+      val excludeByConfig = site.config.exclude_from_upload exists {
+        _.fold(
+          // For backward compatibility, use Ruby regex matching
+          (exclusionRegex: String) => rubyRegexMatches(s3Key, exclusionRegex),
+          (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(s3Key, _))
+        )
+      }
+      val doNotUpload = excludeByConfig || s3Key == "s3_website.yml"
+      if (doNotUpload) logger.debug(s"Excluded $s3Key from upload")
+      doNotUpload
+    }
+    recursiveListFiles(new File(site.rootDirectory))
+      .filterNot(_.isDirectory)
+      .filterNot(f => excludeFromUpload(site.resolveS3Key(f)))
+  }
 }
 
 object LocalFileDatabase {
+  type ChangedFile = LocalFileFromDisk
+  
+  def hasRecords(implicit site: Site, logger: Logger) = 
+    (for {
+      dbFile <- databaseFile
+      database <- loadDbFromFile(dbFile)
+    } yield database.headOption.isDefined) getOrElse false
 
-  def resolveLocalFiles(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[LocalFile]] =
+  def resolveDiffWithLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
     (for {
       dbFile <- databaseFile
       database <- loadDbFromFile(dbFile)
     } yield {
-      val files = recursiveListFiles(new File(site.rootDirectory)).filterNot(_.isDirectory) // TODO go reactive
-      logger.debug(s"Discovered ${files.length} files on the site")
-      val allRecords = files.foldLeft(Map(): Map[LocalDbKey, LocalFile]) { (map, file) =>
-        val key = LocalDbKey(file)
-        val unchangedRecord = database.get(key) // If the file has not changed, the map.get(key) operation will return Some(record)
-        val localFile = unchangedRecord
-          .fold(
-            LocalFileFromDisk(key -> file): LocalFile // The file has changed. Put into the db a local file that reflects the state on disk.
-          )(
-            identity // The file has not changed. Leave the local file entry as it is.
-          )
-        map + (key -> localFile)
+      val siteFiles = LocalFile.listSiteFiles 
+      val recordsOrChangedFiles = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, ChangedFile]]) { (localFiles, file) =>
+        val key = DbRecord(file)
+        val fileIsUnchanged = database.exists(_ == key)
+        if (fileIsUnchanged)
+          localFiles :+ Left(key)
+        else {
+          val uploadType =
+            if (database.exists(_.s3Key == key.s3Key))
+              Update
+            else
+              NewFile
+          localFiles :+ Right(LocalFileFromDisk(file, uploadType))
+        }
       }
-      allRecords
-    }) flatMap { allRecords =>
-      persistDbRecords(allRecords)
-    } map { allRecords =>
-      allRecords.values.toSeq
+      logger.debug(s"Discovered ${siteFiles.length} files on the site, of which ${recordsOrChangedFiles count (_.isRight)} have changed")
+      recordsOrChangedFiles
+    }) flatMap { recordsOrChangedFiles =>
+      persist(recordsOrChangedFiles)
     } match {
-      case Success(localFiles) => Right(localFiles)
+      case Success(changedFiles) => Right(changedFiles)
       case Failure(error) => Left(ErrorReport(error))
     }
 
   private def databaseFile(implicit site: Site, logger: Logger) =
     Try {
       val dbFile = new File(getTempDirectory, "s3_website_local_db_" + sha256Hex(site.rootDirectory))
+      if (!dbFile.exists()) logger.debug("Creating a new database in " + dbFile.getName)
       dbFile.createNewFile()
       dbFile
     }
 
-  private case class LocalFileFromDb(
-                              s3Key: String,
-                              uploadFile: File,
-                              md5: MD5,
-                              encodingOnS3: Option[Either[Gzip, Zopfli]],
-                              length: Long,
-                              contentType: String) extends LocalFile
-
-  private def loadDbFromFile(databaseFile: File)(implicit site: Site, logger: Logger): Try[Map[LocalDbKey, LocalFile]] =
+  private def loadDbFromFile(databaseFile: File)(implicit site: Site, logger: Logger): Try[Stream[DbRecord]] =
     Try {
-      // record format: "s3Key(file.path)|length(file)|mtime(file)|md5(file)|contentType(file)"
-      val RecordRegex = "(.*?)\\|(\\d+)\\|(\\d+)\\|(.*?)\\|(.*)".r
+      // record format: "s3Key(file.path)|length(file)|mtime(file)"
+      val RecordRegex = "(.*?)\\|(\\d+)\\|(\\d+)".r
       Source
         .fromFile(databaseFile, "utf-8")
         .getLines()
+        .toStream
         .map {
-          case RecordRegex(s3Key, fileLength, modified, md5, contentType) =>
-            val length: Long = fileLength.toLong
-            val mtime: Long = modified.toLong
-            LocalDbKey(s3Key, length, mtime) -> LocalFileFromDb(s3Key, new File(site.rootDirectory + s"/$s3Key"), md5, encodingOnS3(s3Key), length, contentType)
-        }.toMap
+          case RecordRegex(s3Key, fileLength, fileModified) =>
+            DbRecord(s3Key, fileLength.toLong, fileModified.toLong)
+        }
     }
   
-  private def persistDbRecords(allRecords: Map[LocalDbKey, LocalFile])(implicit site: Site, logger: Logger) =
+  def persist(recordsOrChangedFiles: Seq[Either[DbRecord, ChangedFile]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, ChangedFile]]] =
     databaseFile flatMap { dbFile =>
       Try {
-        val dbFileContents = allRecords.map { record =>
-          val localFile: LocalFile = record._2
-          (localFile.s3Key :: localFile.uploadFile.length :: localFile.uploadFile.lastModified :: localFile.md5 :: localFile.contentType :: Nil).mkString("|")
-        }.mkString("\n")
+        val dbFileContents = recordsOrChangedFiles.map { recordOrChangedFile =>
+          val record: DbRecord = recordOrChangedFile fold(
+            record => record,
+            changedFile => DbRecord(changedFile.s3Key, changedFile.originalFile.length, changedFile.originalFile.lastModified)
+            )
+          record.s3Key :: record.fileLength :: record.fileModified :: Nil mkString "|"
+        } mkString "\n"
+
         write(dbFile, dbFileContents)
+        recordsOrChangedFiles
       }
-    } map { _ =>
-      allRecords
     }
 }
 
-case class LocalDbKey(s3Key: String, fileLength: Long, modified: Long)
+case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long) extends S3KeyProvider
 
-object LocalDbKey {
-  def apply(file: File)(implicit site: Site): LocalDbKey = LocalDbKey(site resolveS3Key file, file.length, file.lastModified)
+object DbRecord {
+  def apply(file: File)(implicit site: Site): DbRecord = DbRecord(site resolveS3Key file, file.length, file.lastModified)
 }
 
-case class Redirect(key: String, redirectTarget: String)
+case class Redirect(s3Key: String, redirectTarget: String) extends S3KeyProvider
 
 object Redirect extends UploadType {
-  def resolveRedirects(implicit config: Config): Seq[Upload with UploadTypeResolved] = {
+  def resolveRedirects(implicit config: Config): Seq[Upload] = {
     val redirects = config.redirects.fold(Nil: Seq[Redirect]) {
       sourcesToTargets =>
         sourcesToTargets.foldLeft(Seq(): Seq[Redirect]) {
@@ -267,27 +317,16 @@ object Redirect extends UploadType {
         }
     }
     redirects.map { redirect =>
-      Upload.apply(redirect)
+      Upload(redirect.s3Key, Redirect, Left(redirect))
     }
   }
 }
 
 case class Upload(
   s3Key: String,
+  uploadType: UploadType,
   essence: Either[Redirect, UploadBody]
-) extends S3KeyProvider {
-
-  def withUploadType(ut: UploadType) =
-    new Upload(s3Key, essence) with UploadTypeResolved {
-      def uploadType = ut
-    }
-}
-
-object Upload {
-  def apply(redirect: Redirect): Upload with UploadTypeResolved = new Upload(redirect.key, Left(redirect)) with UploadTypeResolved {
-    def uploadType = Redirect
-  }
-}
+) extends S3KeyProvider
 
 /**
  * Represents a bunch of data that should be stored into an S3 objects body.

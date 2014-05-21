@@ -23,7 +23,7 @@ import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 
 class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) {
 
-  def upload(upload: Upload with UploadTypeResolved, a: Attempt = 1)
+  def upload(upload: Upload, a: Attempt = 1)
             (implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(upload)
@@ -38,16 +38,16 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
       retryAction  = newAttempt => this.upload(upload, newAttempt)
     )
 
-  def delete(s3Key: String,  a: Attempt = 1)
+  def delete(s3File: S3File,  a: Attempt = 1)
             (implicit config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
-      if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
-      val report = SuccessfulDelete(s3Key)
+      if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3File.s3Key)
+      val report = SuccessfulDelete(s3File.s3Key)
       logger.info(report)
       Right(report)
     } recoverWith retry(a)(
-      createFailureReport = error => FailedDelete(s3Key, error),
-      retryAction  = newAttempt => this.delete(s3Key, newAttempt)
+      createFailureReport = error => FailedDelete(s3File.s3Key, error),
+      retryAction  = newAttempt => this.delete(s3File, newAttempt)
     )
 
   def toPutObjectRequest(upload: Upload)(implicit config: Config) =
@@ -98,10 +98,9 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
 object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
-  def resolveS3FilesAndUpdates(localFiles: Seq[LocalFile])
-                              (nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1, onFlightUpdateFutures: UpdateFutures = Nil)
+  def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
                               (implicit config: Config, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
-  ErrorOrS3FilesAndUpdates = Future {
+  Future[Either[ErrorReport, Seq[S3File]]] = Future {
     logger.debug(nextMarker.fold
       ("Querying S3 files")
       {m => s"Querying more S3 files (starting from $m)"}
@@ -112,35 +111,17 @@ object S3 {
       nextMarker.foreach(req.setMarker)
       req
     })
-    val summaryIndex = objects.getObjectSummaries.map { summary => (summary.getETag, summary.getKey) }.toSet // Index to avoid O(n^2) lookups 
-    def shouldUpdate(lf: LocalFileFromDisk) =
-      summaryIndex.exists((md5AndS3Key) => 
-        md5AndS3Key._1 != lf.md5 && md5AndS3Key._2 == lf.s3Key
-      )
-    val updateFutures: UpdateFutures = localFiles.collect {
-      case lf: LocalFileFromDisk if shouldUpdate(lf) =>
-        val errorOrUpdate = LocalFile
-          .toUpload(lf)
-          .right
-          .map { (upload: Upload) =>
-            upload.withUploadType(Update)
-          }
-        errorOrUpdate.right.map(update => new S3 upload update)
-    }
-
-    (objects, onFlightUpdateFutures ++ updateFutures)
-  } flatMap { (objectsAndUpdateFutures) =>
-    val objects: ObjectListing = objectsAndUpdateFutures._1
-    val updateFutures: UpdateFutures = objectsAndUpdateFutures._2
+    objects
+  } flatMap { (objects: ObjectListing) =>
     val s3Files = alreadyResolved ++ (objects.getObjectSummaries.toIndexedSeq.toSeq map (S3File(_)))
     Option(objects.getNextMarker)
-      .fold(Future(Right((Right(s3Files), updateFutures))): ErrorOrS3FilesAndUpdates) // We've received all the S3 keys from the bucket
+      .fold(Future(Right(s3Files)): Future[Either[ErrorReport, Seq[S3File]]]) // We've received all the S3 keys from the bucket
       { nextMarker => // There are more S3 keys on the bucket. Fetch them.
-        resolveS3FilesAndUpdates(localFiles)(Some(nextMarker), s3Files, attempt = attempt, updateFutures)
+        resolveS3Files(Some(nextMarker), s3Files, attempt = attempt)
       }
   } recoverWith retry(attempt)(
     createFailureReport = error => ErrorReport(s"Failed to fetch an object listing (${error.getMessage})"),
-    retryAction = nextAttempt => resolveS3FilesAndUpdates(localFiles)(nextMarker, alreadyResolved, nextAttempt, onFlightUpdateFutures)
+    retryAction = nextAttempt => resolveS3Files(nextMarker, alreadyResolved, nextAttempt)
   )
 
   type S3FilesAndUpdates = (ErrorOrS3Files, UpdateFutures)
@@ -154,13 +135,13 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(upload: Upload with UploadTypeResolved, putObjectRequest: PutObjectRequest, uploadDuration: Option[Duration])
+  case class SuccessfulUpload(upload: Upload, putObjectRequest: PutObjectRequest, uploadDuration: Option[Duration])
                              (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
     def reportMessage =
       upload.uploadType match {
         case NewFile  => s"${Created.renderVerb} $s3Key ($reportDetails)"
         case Update   => s"${Updated.renderVerb} $s3Key ($reportDetails)"
-        case Redirect => s"${Redirected.renderVerb} ${upload.essence.left.get.key} to ${upload.essence.left.get.redirectTarget}"
+        case Redirect => s"${Redirected.renderVerb} ${upload.essence.left.get.s3Key} to ${upload.essence.left.get.redirectTarget}"
       }
 
     def reportDetails = {

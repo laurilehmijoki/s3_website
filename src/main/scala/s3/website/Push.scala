@@ -4,12 +4,11 @@ import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import s3.website.Diff.{resolveNewFiles, resolveDeletes}
+import s3.website.Diff.{resolveDeletes}
 import s3.website.S3._
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
-import s3.website.model.LocalFile.resolveLocalFiles
-import scala.collection.parallel.ParSeq
+import s3.website.model.LocalFile.resolveDiff
 import java.util.concurrent.ExecutorService
 import s3.website.model._
 import s3.website.model.Update
@@ -28,6 +27,7 @@ import java.io.File
 import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 import s3.website.ByteHelper.humanReadableByteCount
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
+import s3.website.model.LocalFileDatabase.ChangedFile
 
 object Push {
 
@@ -84,23 +84,28 @@ object Push {
                 pushMode: PushMode
                 ): ExitCode = {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
-    val utils = new Utils
-
     val redirects = Redirect.resolveRedirects
-    val redirectResults = redirects.map(new S3() upload(_))
+    val s3FilesFuture = resolveS3Files()
+    val redirectResults = redirects.map { new S3() upload (_) }
 
-    val errorsOrReports = for {
-      localFiles        <- resolveLocalFiles.right
-      errorOrS3FilesAndUpdateFutures <- Await.result(resolveS3FilesAndUpdates(localFiles)(), 7 days).right
-      s3Files <- errorOrS3FilesAndUpdateFutures._1.right
+    val errorsOrReports: Either[ErrorReport, PushReports] = for {
+      files <- resolveDiff(s3FilesFuture).right
     } yield {
-      val updateReports: PushReports = errorOrS3FilesAndUpdateFutures._2.par
-      val deleteReports: PushReports = utils toParSeq resolveDeletes(localFiles, s3Files, redirects)
-        .map { s3File => new S3() delete s3File.s3Key }
-        .map { Right(_) } // To make delete reports type-compatible with upload reports
-      val uploadReports: PushReports = utils toParSeq resolveNewFiles(localFiles, s3Files)
-        .map { _.right.map(new S3() upload(_)) }
-      uploadReports ++ deleteReports ++ updateReports ++ redirectResults.map(Right(_))
+      val newOrChangedFiles = files.foldLeft(Nil: Seq[ChangedFile])( (memo, dbRecordOrChanged) =>
+        dbRecordOrChanged fold(_ => memo, changedFile => memo :+ changedFile)
+      )
+      val newOrChangedReports: PushReports = newOrChangedFiles.map { newOrChangedFile =>
+        LocalFile.toUpload(newOrChangedFile).right.map(new S3() upload (_))
+      }
+      val deleteReports =
+        Await.result(s3FilesFuture, 7 days).fold(
+          err => Left(err) :: Nil,
+          s3Files =>
+            resolveDeletes(files.map(_.fold(_.s3Key, _.s3Key)), s3Files, redirects).map {
+              new S3() delete (_)
+            } map(Right(_))
+        )
+      newOrChangedReports ++ deleteReports ++ redirectResults.map(Right(_))
     }
     val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {
       uploadReports => awaitForUploads(uploadReports)
@@ -239,8 +244,8 @@ object Push {
     }
   }
 
-  type FinishedPushOperations = ParSeq[Either[ErrorReport, PushErrorOrSuccess]]
-  type PushReports = ParSeq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
+  type FinishedPushOperations = Seq[Either[ErrorReport, PushErrorOrSuccess]]
+  type PushReports = Seq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
   case class PushResult(threadPool: ExecutorService, uploadReports: PushReports)
   type ExitCode = Int
 }
