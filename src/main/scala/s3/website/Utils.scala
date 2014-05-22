@@ -5,7 +5,6 @@ object Utils {
 }
 
 class Logger(val verboseOutput: Boolean, logMessage: (String) => Unit = println) {
-  import Rainbow._
   def debug(msg: String) = if (verboseOutput) log(Debug, msg)
   def info(msg: String) = log(Info, msg)
   def fail(msg: String) = log(Failure, msg)
@@ -39,13 +38,11 @@ class Logger(val verboseOutput: Boolean, logMessage: (String) => Unit = println)
   case object Wait extends LogType {
     val prefix = "wait".yellow
   }
-}
 
-/**
- * Idea copied from https://github.com/ktoso/scala-rainbow.
- */
-object Rainbow {
-  implicit class RainbowString(val s: String) extends AnyVal {
+  /**
+   * Idea copied from https://github.com/ktoso/scala-rainbow.
+   */
+  implicit class RainbowString(val s: String) {
     import Console._
 
     /** Colorize the given string foreground to ANSI black */
@@ -64,33 +61,5 @@ object Rainbow {
     def cyan = CYAN + s + RESET
     /** Colorize the given string foreground to ANSI red */
     def white = WHITE + s + RESET
-
-    /** Colorize the given string background to ANSI red */
-    def onBlack = BLACK_B + s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onRed = RED_B+ s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onGreen = GREEN_B+ s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onYellow = YELLOW_B + s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onBlue = BLUE_B+ s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onMagenta = MAGENTA_B + s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onCyan = CYAN_B+ s + RESET
-    /** Colorize the given string background to ANSI red */
-    def onWhite = WHITE_B+ s + RESET
-
-    /** Make the given string bold */
-    def bold = BOLD + s + RESET
-    /** Underline the given string */
-    def underlined = UNDERLINED + s + RESET
-    /** Make the given string blink (some terminals may turn this off) */
-    def blink = BLINK + s + RESET
-    /** Reverse the ANSI colors of the given string */
-    def reversed = REVERSED + s + RESET
-    /** Make the given string invisible using ANSI color codes */
-    def invisible = INVISIBLE + s + RESET
   }
 }
