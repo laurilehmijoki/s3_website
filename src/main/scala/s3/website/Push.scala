@@ -117,40 +117,37 @@ object Push {
   def invalidateCloudFrontItems
     (errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations])
     (implicit config: Config, cloudFrontSettings: CloudFrontSetting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
-  Option[InvalidationSucceeded] = {
-    config.cloudfront_distribution_id.map {
-      distributionId =>
-        val pushSuccessReports = errorsOrFinishedPushOps.fold(
-          errors => Nil,
-          finishedPushOps => {
-            finishedPushOps.map {
-              ops =>
-                for {
-                  failedOrSucceededPushes <- ops.right
-                  successfulPush <- failedOrSucceededPushes.right
-                } yield successfulPush
-            }.foldLeft(Seq(): Seq[PushSuccessReport]) {
-              (reports, failOrSucc) =>
-                failOrSucc.fold(
-                  _ => reports,
-                  (pushSuccessReport: PushSuccessReport) => reports :+ pushSuccessReport
-                )
-            }
+  Option[InvalidationSucceeded] =
+    config.cloudfront_distribution_id.map { distributionId =>
+      val pushSuccessReports = errorsOrFinishedPushOps.fold(
+        errors => Nil,
+        finishedPushOps =>
+          finishedPushOps.map {
+            ops =>
+              for {
+                failedOrSucceededPushes <- ops.right
+                successfulPush <- failedOrSucceededPushes.right
+              } yield successfulPush
+          }.foldLeft(Seq(): Seq[PushSuccessReport]) {
+            (reports, failOrSucc) =>
+              failOrSucc.fold(
+                _ => reports,
+                (pushSuccessReport: PushSuccessReport) => reports :+ pushSuccessReport
+              )
           }
-        )
-        val invalidationResults: Seq[Either[FailedInvalidation, SuccessfulInvalidation]] =
-          toInvalidationBatches(pushSuccessReports) map { invalidationBatch =>
-            Await.result(
-              new CloudFront().invalidate(invalidationBatch, distributionId),
-              atMost = 1 day
-            )
-          }
-        if (invalidationResults.exists(_.isLeft))
-          false // If one of the invalidations failed, mark the whole process as failed
-        else
-          true
+      )
+      val invalidationResults: Seq[Either[FailedInvalidation, SuccessfulInvalidation]] =
+        toInvalidationBatches(pushSuccessReports) map { invalidationBatch =>
+          Await.result(
+            new CloudFront().invalidate(invalidationBatch, distributionId),
+            atMost = 1 day
+          )
+        }
+      if (invalidationResults.exists(_.isLeft))
+        false // If one of the invalidations failed, mark the whole process as failed
+      else
+        true
     }
-  }
 
   type InvalidationSucceeded = Boolean
 
