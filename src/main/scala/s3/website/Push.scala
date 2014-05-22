@@ -86,7 +86,7 @@ object Push {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val redirects = Redirect.resolveRedirects
     val s3FilesFuture = resolveS3Files()
-    val redirectResults = redirects.map { new S3() upload _ }
+    val redirectReports = redirects.map { new S3() upload _ }
 
     val errorsOrReports: Either[ErrorReport, PushReports] = for {
       files <- resolveDiff(s3FilesFuture).right
@@ -105,7 +105,7 @@ object Push {
               new S3() delete _
             } map(Right(_))
         )
-      newOrChangedReports ++ deleteReports ++ redirectResults.map(Right(_))
+      newOrChangedReports ++ deleteReports ++ redirectReports.map(Right(_))
     }
     val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {
       uploadReports => awaitForUploads(uploadReports)
