@@ -84,23 +84,19 @@ object Push {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val redirects = Redirect.resolveRedirects
     val s3FilesFuture = resolveS3Files()
-    val redirectReports = redirects.map { S3 uploadRedirect _ }
+    val redirectReports: PushReports = redirects.map(S3 uploadRedirect _) map (Right(_))
 
     val errorsOrReports: Either[ErrorReport, PushReports] = for {
       diff <- resolveDiff(s3FilesFuture).right
     } yield {
-      val newOrChangedReports: PushReports = diff.uploads.map { newOrChangedFile =>
-        Right(S3 uploadFile newOrChangedFile)
-      }
-      val deleteReports =
+      val newOrChangedReports: PushReports = diff.uploads.map(S3 uploadFile _) map (Right(_))
+      val deleteReports: PushReports =
         Await.result(s3FilesFuture, 7 days).fold(
           err => Left(err) :: Nil,
           s3Files =>
-            resolveDeletes(diff, s3Files, redirects).map {
-              S3 delete _
-            } map(Right(_))
+            resolveDeletes(diff, s3Files, redirects).map(S3 delete _) map (Right(_))
         )
-      newOrChangedReports ++ deleteReports ++ redirectReports.map(Right(_))
+      newOrChangedReports ++ deleteReports ++ redirectReports
     }
     val errorsOrFinishedPushOps = errorsOrReports.right map awaitForResults
     val invalidationSucceeded = invalidateCloudFrontItems(errorsOrFinishedPushOps)
