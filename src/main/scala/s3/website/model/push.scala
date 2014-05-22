@@ -227,7 +227,7 @@ object LocalFileDatabase {
           localFiles :+ Right(LocalFileFromDisk(file, uploadType))
         }
       }
-      logger.debug(s"Discovered ${siteFiles.length} files on the site, of which ${recordsOrChangedFiles count (_.isRight)} have changed")
+      logger.debug(s"Discovered ${siteFiles.length} files on the site, of which ${recordsOrChangedFiles count (_.isRight)} are new or changed")
       recordsOrChangedFiles
     }) flatMap { recordsOrChangedFiles =>
       persist(recordsOrChangedFiles)
