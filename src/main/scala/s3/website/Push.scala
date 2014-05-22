@@ -102,9 +102,7 @@ object Push {
         )
       newOrChangedReports ++ deleteReports ++ redirectReports.map(Right(_))
     }
-    val errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations] = errorsOrReports.right map {
-      uploadReports => awaitForUploads(uploadReports)
-    }
+    val errorsOrFinishedPushOps = errorsOrReports.right map awaitForResults
     val invalidationSucceeded = invalidateCloudFrontItems(errorsOrFinishedPushOps)
     
     afterPushFinished(errorsOrFinishedPushOps, invalidationSucceeded)
@@ -175,7 +173,7 @@ object Push {
     exitCode
   }
 
-  def awaitForUploads(uploadReports: PushReports)(implicit executor: ExecutionContextExecutor): FinishedPushOperations =
+  def awaitForResults(uploadReports: PushReports)(implicit executor: ExecutionContextExecutor): FinishedPushOperations =
     uploadReports map (_.right.map {
       rep => Await.result(rep, 1 day)
     })
