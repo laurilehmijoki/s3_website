@@ -26,7 +26,6 @@ import java.io.File
 import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 import s3.website.ByteHelper.humanReadableByteCount
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
-import s3.website.Diff.LocalFileDatabase.ChangedFile
 
 object Push {
 
@@ -88,19 +87,16 @@ object Push {
     val redirectReports = redirects.map { S3 upload Right(_) }
 
     val errorsOrReports: Either[ErrorReport, PushReports] = for {
-      files <- resolveDiff(s3FilesFuture).right
+      diff <- resolveDiff(s3FilesFuture).right
     } yield {
-      val newOrChangedFiles = files.foldLeft(Nil: Seq[ChangedFile])( (memo, dbRecordOrChanged) =>
-        dbRecordOrChanged fold(_ => memo, changedFile => memo :+ changedFile)
-      )
-      val newOrChangedReports: PushReports = newOrChangedFiles.map { newOrChangedFile =>
+      val newOrChangedReports: PushReports = diff.uploads.map { newOrChangedFile =>
         Right(S3 upload Left(newOrChangedFile))
       }
       val deleteReports =
         Await.result(s3FilesFuture, 7 days).fold(
           err => Left(err) :: Nil,
           s3Files =>
-            resolveDeletes(files.map(_.fold(_.s3Key, _.s3Key)), s3Files, redirects).map {
+            resolveDeletes(diff, s3Files, redirects).map {
               S3 delete _
             } map(Right(_))
         )

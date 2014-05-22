@@ -8,22 +8,38 @@ import java.io.File
 import scala.concurrent.duration._
 import org.apache.commons.io.FileUtils._
 import org.apache.commons.codec.digest.DigestUtils._
-import scala.util.Failure
-import scala.util.Success
 import scala.io.Source
-import s3.website.Diff.LocalFileDatabase.{resolveDiffAgainstLocalDb, ChangedFile}
+import s3.website.Diff.LocalFileDatabase.{resolveDiffAgainstLocalDb}
 import scala.util.Failure
 import scala.util.Success
+
+case class Diff(
+  unchanged: Seq[S3Key],
+  uploads: Seq[LocalFileFromDisk]
+)
 
 object Diff {
 
   def resolveDiff(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
-                 (implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
-    if (LocalFileDatabase.hasRecords) resolveDiffAgainstLocalDb
-    else resolveDiffAgainstGetBucketResponse(s3FilesFuture)
+                 (implicit site: Site, logger: Logger): Either[ErrorReport, Diff] = {
+    val allFiles =
+      if (LocalFileDatabase.hasRecords) resolveDiffAgainstLocalDb
+      else resolveDiffAgainstGetBucketResponse(s3FilesFuture)
+    allFiles.right map Diff.apply
+  }
+
+  private def apply(allFiles: Seq[Either[DbRecord, LocalFileFromDisk]]): Diff =
+    Diff(
+      unchanged = allFiles.seq.collect {
+        case Left(dbRecord) => dbRecord.s3Key
+      },
+      uploads = allFiles.seq.collect {
+        case Right(f) => f
+      }
+    )
 
   private def resolveDiffAgainstGetBucketResponse(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
-                                                 (implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
+                                                 (implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, LocalFileFromDisk]]] =
     Await.result(s3FilesFuture, 5 minutes).right flatMap { s3Files =>
       Try {
         val s3KeyIndex = s3Files.map(_.s3Key).toSet
@@ -42,7 +58,7 @@ object Diff {
           val newOrChangedFiles = (changedFiles ++ newFiles).map(_.originalFile).toSet
           siteFiles.filterNot(f => newOrChangedFiles contains f)
         }
-        val allFiles: Seq[Either[DbRecord, ChangedFile]] = unchangedFiles.map {
+        val allFiles: Seq[Either[DbRecord, LocalFileFromDisk]] = unchangedFiles.map {
           f => Left(DbRecord(f))
         } ++ (changedFiles ++ newFiles).map {
           Right(_)
@@ -55,8 +71,9 @@ object Diff {
       }
     }
 
-  def resolveDeletes(localS3Keys: Seq[String], s3Files: Seq[S3File], redirects: Seq[Redirect])
+  def resolveDeletes(diff: Diff, s3Files: Seq[S3File], redirects: Seq[Redirect])
                     (implicit config: Config, logger: Logger): Seq[S3File] = {
+    val localS3Keys = diff.unchanged ++ diff.uploads.map(_.s3Key)
     val keysNotToBeDeleted: Set[String] = (localS3Keys ++ redirects.map(_.s3Key)).toSet
     s3Files.filterNot { s3File =>
       val ignoreOnServer = config.ignore_on_server.exists(_.fold(
@@ -69,21 +86,19 @@ object Diff {
   }
 
   object LocalFileDatabase {
-    type ChangedFile = LocalFileFromDisk
-
     def hasRecords(implicit site: Site, logger: Logger) =
       (for {
         dbFile <- getOrCreateDbFile
         database <- loadDbFromFile(dbFile)
       } yield database.headOption.isDefined) getOrElse false
 
-    def resolveDiffAgainstLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
+    def resolveDiffAgainstLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, LocalFileFromDisk]]] =
       (for {
         dbFile <- getOrCreateDbFile
         database <- loadDbFromFile(dbFile)
       } yield {
         val siteFiles = Files.listSiteFiles
-        val recordsOrChangedFiles = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, ChangedFile]]) { (localFiles, file) =>
+        val recordsOrChangedFiles = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, LocalFileFromDisk]]) { (localFiles, file) =>
           val key = DbRecord(file)
           val fileIsUnchanged = database.exists(_ == key)
           if (fileIsUnchanged)
@@ -128,7 +143,7 @@ object Diff {
         }
       }
 
-    def persist(recordsOrChangedFiles: Seq[Either[DbRecord, ChangedFile]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, ChangedFile]]] =
+    def persist(recordsOrChangedFiles: Seq[Either[DbRecord, LocalFileFromDisk]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, LocalFileFromDisk]]] =
       getOrCreateDbFile flatMap { dbFile =>
         Try {
           val dbFileContents = recordsOrChangedFiles.map { recordOrChangedFile =>

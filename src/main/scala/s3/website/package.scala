@@ -42,6 +42,8 @@ package object website {
     def dryRun: Boolean
   }
 
+  type S3Key = String
+
   trait PushAction {
     def actionName = getClass.getSimpleName.replace("$", "") // case object class names contain the '$' char
 
