@@ -145,7 +145,7 @@ object LocalFileDatabase {
       database <- loadDbFromFile(dbFile)
     } yield database.headOption.isDefined) getOrElse false
 
-  def resolveDiffWithLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
+  def resolveDiffAgainstLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
     (for {
       dbFile <- getOrCreateDbFile
       database <- loadDbFromFile(dbFile)
