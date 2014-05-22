@@ -24,6 +24,14 @@ import java.io.FileInputStream
 
 object S3 {
 
+  def uploadRedirect(redirect: Redirect, a: Attempt = 1)
+            (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
+    upload(Right(redirect))
+
+  def uploadFile(localFile: LocalFileFromDisk, a: Attempt = 1)
+                    (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
+    upload(Left(localFile))
+
   def upload(source: Either[LocalFileFromDisk, Redirect], a: Attempt = 1)
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedUpload, SuccessfulUpload]] =
