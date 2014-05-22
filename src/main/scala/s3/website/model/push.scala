@@ -39,8 +39,6 @@ object Encoding {
       else
         None
     }
-
-  type MD5 = String
 }
 
 sealed trait UploadType // Sealed, so that we can avoid inexhaustive pattern matches more easily

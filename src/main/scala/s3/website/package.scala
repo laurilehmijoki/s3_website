@@ -79,6 +79,8 @@ package object website {
 
   type Attempt = Int
 
+  type MD5 = String
+
   def retry[L <: Report, R](attempt: Attempt)
                            (createFailureReport: (Throwable) => L, retryAction: (Attempt) => Future[Either[L, R]])
                            (implicit retrySetting: RetrySetting, ec: ExecutionContextExecutor, logger: Logger):
