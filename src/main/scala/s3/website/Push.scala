@@ -139,7 +139,7 @@ object Push {
       val invalidationResults: Seq[Either[FailedInvalidation, SuccessfulInvalidation]] =
         toInvalidationBatches(pushSuccessReports) map { invalidationBatch =>
           Await.result(
-            new CloudFront().invalidate(invalidationBatch, distributionId),
+            CloudFront.invalidate(invalidationBatch, distributionId),
             atMost = 1 day
           )
         }

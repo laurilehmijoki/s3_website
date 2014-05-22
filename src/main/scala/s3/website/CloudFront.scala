@@ -2,7 +2,6 @@ package s3.website
 
 import s3.website.model.{FileUpdate, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
-import s3.website.CloudFront.{CloudFrontSetting, SuccessfulInvalidation, FailedInvalidation}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -12,11 +11,9 @@ import java.net.URI
 import Utils._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class CloudFront(implicit cloudFrontSettings: CloudFrontSetting, config: Config, logger: Logger, pushMode: PushMode) {
-  val cloudFront = cloudFrontSettings.cfClient(config)
-
+object CloudFront {
   def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
-                (implicit ec: ExecutionContextExecutor): InvalidationResult =
+                (implicit ec: ExecutionContextExecutor, cloudFrontSettings: CloudFrontSetting, config: Config, logger: Logger, pushMode: PushMode): InvalidationResult =
     Future {
       if (!pushMode.dryRun) cloudFront createInvalidation new CreateInvalidationRequest(distributionId, invalidationBatch)
       val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
@@ -29,7 +26,8 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSetting, config: Config,
     ))
 
   def tooManyInvalidationsRetry(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt)
-                          (implicit ec: ExecutionContextExecutor, logger: Logger): PartialFunction[Throwable, InvalidationResult] = {
+                               (implicit ec: ExecutionContextExecutor, logger: Logger, cloudFrontSettings: CloudFrontSetting, config: Config, pushMode: PushMode):
+  PartialFunction[Throwable, InvalidationResult] = {
     case e: TooManyInvalidationsInProgressException =>
       val duration: Duration = Duration(
         (fibs drop attempt).head min 15, /* CloudFront invalidations complete within 15 minutes */
@@ -52,10 +50,9 @@ class CloudFront(implicit cloudFrontSettings: CloudFrontSetting, config: Config,
       basicInfo
   }
 
-  type InvalidationResult = Future[Either[FailedInvalidation, SuccessfulInvalidation]]
-}
+  def cloudFront(implicit config: Config, cloudFrontSettings: CloudFrontSetting) = cloudFrontSettings.cfClient(config)
 
-object CloudFront {
+  type InvalidationResult = Future[Either[FailedInvalidation, SuccessfulInvalidation]]
 
   type CloudFrontClientProvider = (Config) => AmazonCloudFront
 
