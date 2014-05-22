@@ -1,9 +1,5 @@
 package s3.website
 
-import s3.website.model.Config
-import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
-import scala.concurrent.forkjoin.ForkJoinPool
-
 object Utils {
   lazy val fibs: Stream[Int] = 0 #:: 1 #:: fibs.zip(fibs.tail).map { n => n._1 + n._2 }
 }
