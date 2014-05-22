@@ -225,15 +225,15 @@ object LocalFile {
 object LocalFileDatabase {
   type ChangedFile = LocalFileFromDisk
   
-  def hasRecords(implicit site: Site, logger: Logger) = 
+  def hasRecords(implicit site: Site, logger: Logger) =
     (for {
-      dbFile <- databaseFile
+      dbFile <- getOrCreateDbFile
       database <- loadDbFromFile(dbFile)
     } yield database.headOption.isDefined) getOrElse false
 
   def resolveDiffWithLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
     (for {
-      dbFile <- databaseFile
+      dbFile <- getOrCreateDbFile
       database <- loadDbFromFile(dbFile)
     } yield {
       val siteFiles = LocalFile.listSiteFiles 
@@ -260,7 +260,7 @@ object LocalFileDatabase {
       case Failure(error) => Left(ErrorReport(error))
     }
 
-  private def databaseFile(implicit site: Site, logger: Logger) =
+  private def getOrCreateDbFile(implicit site: Site, logger: Logger) =
     Try {
       val dbFile = new File(getTempDirectory, "s3_website_local_db_" + sha256Hex(site.rootDirectory))
       if (!dbFile.exists()) logger.debug("Creating a new database in " + dbFile.getName)
@@ -283,7 +283,7 @@ object LocalFileDatabase {
     }
   
   def persist(recordsOrChangedFiles: Seq[Either[DbRecord, ChangedFile]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, ChangedFile]]] =
-    databaseFile flatMap { dbFile =>
+    getOrCreateDbFile flatMap { dbFile =>
       Try {
         val dbFileContents = recordsOrChangedFiles.map { recordOrChangedFile =>
           val record: DbRecord = recordOrChangedFile fold(
