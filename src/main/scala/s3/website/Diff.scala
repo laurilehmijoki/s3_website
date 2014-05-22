@@ -3,15 +3,13 @@ package s3.website
 import s3.website.model._
 import s3.website.Ruby.rubyRegexMatches
 import scala.concurrent.{Await, Future}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import java.io.File
 import scala.concurrent.duration._
 import org.apache.commons.io.FileUtils._
 import org.apache.commons.codec.digest.DigestUtils._
 import scala.io.Source
 import s3.website.Diff.LocalFileDatabase.{resolveDiffAgainstLocalDb}
-import scala.util.Failure
-import scala.util.Success
 
 case class Diff(
   unchanged: Seq[S3Key],
@@ -65,9 +63,6 @@ object Diff {
         }
         LocalFileDatabase persist allFiles
         allFiles
-      } match {
-        case Success(allFiles) => Right(allFiles)
-        case Failure(err) => Left(ErrorReport(err))
       }
     }
 
@@ -116,9 +111,6 @@ object Diff {
         recordsOrChangedFiles
       }) flatMap { recordsOrChangedFiles =>
         persist(recordsOrChangedFiles)
-      } match {
-        case Success(changedFiles) => Right(changedFiles)
-        case Failure(error) => Left(ErrorReport(error))
       }
 
     private def getOrCreateDbFile(implicit site: Site, logger: Logger) =
@@ -159,6 +151,12 @@ object Diff {
         }
       }
   }
+
+  implicit def try2Either[S](t: Try[S])(implicit logger: Logger): Either[ErrorReport, S] =
+    t match {
+      case Success(ok) => Right(ok)
+      case Failure(err) => Left(ErrorReport(err))
+    }
 }
 
 case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long)
