@@ -22,10 +22,11 @@ import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 import java.io.FileInputStream
 
-class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) {
+object S3 {
 
   def upload(source: Either[LocalFileFromDisk, Redirect], a: Attempt = 1)
-            (implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
+            (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
+  Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(source)
       val uploadDuration =
@@ -40,7 +41,8 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
     )
 
   def delete(s3File: S3File,  a: Attempt = 1)
-            (implicit config: Config): Future[Either[FailedDelete, SuccessfulDelete]] =
+            (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
+  Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
       if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3File.s3Key)
       val report = SuccessfulDelete(s3File.s3Key)
@@ -94,9 +96,7 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
     else
       None // We are not interested in tracking durations of PUT requests that don't contain data. Redirect is an example of such request.
   }
-}
 
-object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
 
   def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
