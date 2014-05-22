@@ -2,18 +2,12 @@ package s3.website.model
 
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import java.io._
-import scala.util.Try
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.zip.GZIPOutputStream
 import org.apache.commons.io.IOUtils
 import org.apache.tika.Tika
 import s3.website.Ruby._
 import s3.website._
-import scala.util.Failure
-import scala.util.Success
-import org.apache.commons.codec.digest.DigestUtils.sha256Hex
-import org.apache.commons.io.FileUtils.{write, getTempDirectory}
-import scala.io.Source
 import s3.website.model.LocalFileFromDisk.tika
 
 object Encoding {

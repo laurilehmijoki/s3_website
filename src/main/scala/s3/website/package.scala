@@ -6,7 +6,6 @@ import s3.website.S3.{PushSuccessReport, PushFailureReport}
 import com.amazonaws.AmazonServiceException
 import s3.website.model.{Config, Site}
 import java.io.File
-import scala.util.{Failure, Success, Try}
 
 package object website {
   trait Report {
