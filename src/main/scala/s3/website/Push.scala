@@ -11,7 +11,7 @@ import java.util.concurrent.Executors.newFixedThreadPool
 import s3.website.model.LocalFile.resolveDiff
 import java.util.concurrent.ExecutorService
 import s3.website.model._
-import s3.website.model.Update
+import s3.website.model.FileUpdate
 import s3.website.model.NewFile
 import s3.website.S3.PushSuccessReport
 import scala.collection.mutable.ArrayBuffer
@@ -86,7 +86,7 @@ object Push {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val redirects = Redirect.resolveRedirects
     val s3FilesFuture = resolveS3Files()
-    val redirectReports = redirects.map { new S3() upload _ }
+    val redirectReports = redirects.map { new S3() upload Right(_) }
 
     val errorsOrReports: Either[ErrorReport, PushReports] = for {
       files <- resolveDiff(s3FilesFuture).right
@@ -95,7 +95,7 @@ object Push {
         dbRecordOrChanged fold(_ => memo, changedFile => memo :+ changedFile)
       )
       val newOrChangedReports: PushReports = newOrChangedFiles.map { newOrChangedFile =>
-        LocalFile.toUpload(newOrChangedFile).right.map(new S3() upload _)
+        Right(new S3() upload Left(newOrChangedFile))
       }
       val deleteReports =
         Await.result(s3FilesFuture, 7 days).fold(
@@ -195,10 +195,10 @@ object Push {
         failureOrSuccess => failureOrSuccess.fold(
           (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
           (successReport: PushSuccessReport) => successReport match {
-            case succ: SuccessfulUpload => succ.upload.uploadType match {
-              case NewFile => counts.copy(newFiles = counts.newFiles + 1).addTransferStats(succ) // TODO nasty repetition here
-              case Update => counts.copy(updates = counts.updates + 1).addTransferStats(succ)
-              case Redirect => counts.copy(redirects = counts.redirects + 1).addTransferStats(succ)
+            case succ: SuccessfulUpload => succ.source.fold(_.uploadType, _.uploadType) match {
+              case NewFile      => counts.copy(newFiles = counts.newFiles + 1).addTransferStats(succ) // TODO nasty repetition here
+              case FileUpdate   => counts.copy(updates = counts.updates + 1).addTransferStats(succ)
+              case RedirectFile => counts.copy(redirects = counts.redirects + 1).addTransferStats(succ)
             }
             case SuccessfulDelete(_) => counts.copy(deletes = counts.deletes + 1)
           }

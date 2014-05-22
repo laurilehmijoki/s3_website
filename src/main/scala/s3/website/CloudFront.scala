@@ -1,6 +1,6 @@
 package s3.website
 
-import s3.website.model.{Update, Config}
+import s3.website.model.{FileUpdate, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
 import s3.website.CloudFront.{CloudFrontSetting, SuccessfulInvalidation, FailedInvalidation}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
@@ -121,10 +121,7 @@ object CloudFront {
 
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
-    case SuccessfulUpload(upload, _, _) => upload.uploadType match {
-      case Update => true
-      case _ => false
-    }
+    case SuccessfulUpload(localFile, _, _) => localFile.left.exists(_.uploadType == FileUpdate)
     case SuccessfulDelete(_) => true
     case _ => false
   }

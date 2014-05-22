@@ -56,7 +56,8 @@ trait UploadTypeResolved {
 sealed trait UploadType // Sealed, so that we can avoid inexhaustive pattern matches more easily
 
 case object NewFile extends UploadType
-case object Update extends UploadType
+case object FileUpdate extends UploadType
+case object RedirectFile extends UploadType
 
 trait LocalFile extends S3KeyProvider { // TODO remove as obsolete
   val s3Key: String
@@ -79,9 +80,6 @@ case class LocalFileFromDisk(
 
   lazy val lastModified = originalFile.lastModified
 
-  // May throw an exception, so remember to call this in a Try or Future monad
-  lazy val length = uploadFile.length()
-
   /**
    * This is the file we should upload, because it contains the potentially gzipped contents of the original file.
    *
@@ -97,7 +95,32 @@ case class LocalFileFromDisk(
     tempFile
   })
 
-  lazy val contentType = LocalFile.resolveContentType(originalFile)
+  lazy val contentType = {
+    val mimeType = LocalFile.tika.detect(originalFile)
+    if (mimeType.startsWith("text/") || mimeType == "application/json")
+      mimeType + "; charset=utf-8"
+    else
+      mimeType
+  }
+
+  lazy val maxAge: Option[Int] = {
+    type GlobsMap = Map[String, Int]
+    site.config.max_age.flatMap { (intOrGlobs: Either[Int, GlobsMap]) =>
+      type GlobsSeq = Seq[(String, Int)]
+      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1.length).reverse
+      intOrGlobs
+        .right.map(respectMostSpecific)
+        .fold(
+          (seconds: Int) => Some(seconds),
+          (globs: GlobsSeq) =>
+            globs.find { globAndInt =>
+              (rubyRuntime evalScriptlet s"File.fnmatch('${globAndInt._1}', '$s3Key')")
+                .toJava(classOf[Boolean])
+                .asInstanceOf[Boolean]
+            } map (_._2)
+        )
+    }
+  }
 
   /**
    * May throw an exception, so remember to call this in a Try or Future monad
@@ -111,54 +134,7 @@ case class LocalFileFromDisk(
 }
 
 object LocalFile {
-  def toUpload(localFile: LocalFile with Uploadable with UploadTypeResolved)(implicit config: Config, logger: Logger): Either[ErrorReport, Upload] = Try {
-    Upload(
-      s3Key = localFile.s3Key,
-      uploadType = localFile.uploadType,
-      essence = Right(
-        UploadBody(
-          md5 = localFile.md5,
-          contentEncoding = localFile.encodingOnS3.map(_ => "gzip"),
-          contentLength = localFile.uploadFile.length(),
-          maxAge = resolveMaxAge(localFile),
-          contentType = localFile.contentType,
-          openInputStream = () => new FileInputStream(localFile.uploadFile)
-        )
-      )
-    )
-  } match {
-    case Success(upload) => Right(upload)
-    case Failure(error) => Left(ErrorReport(error))
-  }
-
   lazy val tika = new Tika()
-
-  def resolveContentType(file: File) = {
-    val mimeType = tika.detect(file)
-    if (mimeType.startsWith("text/") || mimeType == "application/json")
-      mimeType + "; charset=utf-8"
-    else
-      mimeType
-  }
-
-  def resolveMaxAge(localFile: LocalFile)(implicit config: Config): Option[Int] = {
-    type GlobsMap = Map[String, Int]
-    config.max_age.flatMap { (intOrGlobs: Either[Int, GlobsMap]) =>
-      type GlobsSeq = Seq[(String, Int)]
-      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1.length).reverse
-      intOrGlobs
-        .right.map(respectMostSpecific)
-        .fold(
-          (seconds: Int) => Some(seconds),
-          (globs: GlobsSeq) =>
-            globs.find { globAndInt =>
-              (rubyRuntime evalScriptlet s"File.fnmatch('${globAndInt._1}', '${localFile.s3Key}')")
-                .toJava(classOf[Boolean])
-                .asInstanceOf[Boolean]
-            } map (_._2)
-        )
-    }
-  }
 
   def resolveDiff(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]]) // Todo move to Diff.scala
                   (implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] = 
@@ -179,7 +155,7 @@ object LocalFile {
           val changedFiles =
             siteFiles
               .filter(nameExistsOnS3)
-              .map(f => LocalFileFromDisk(f, uploadType = Update))
+              .map(f => LocalFileFromDisk(f, uploadType = FileUpdate))
               .filterNot(localFile => s3Md5Index contains localFile.md5)
           val unchangedFiles = {
             val newOrChangedFiles = (changedFiles ++ newFiles).map(_.originalFile).toSet
@@ -245,7 +221,7 @@ object LocalFileDatabase {
         else {
           val uploadType =
             if (database.exists(_.s3Key == key.s3Key))
-              Update
+              FileUpdate
             else
               NewFile
           localFiles :+ Right(LocalFileFromDisk(file, uploadType))
@@ -305,40 +281,19 @@ object DbRecord {
   def apply(file: File)(implicit site: Site): DbRecord = DbRecord(site resolveS3Key file, file.length, file.lastModified)
 }
 
-case class Redirect(s3Key: String, redirectTarget: String) extends S3KeyProvider
-
-object Redirect extends UploadType {
-  def resolveRedirects(implicit config: Config): Seq[Upload] = {
-    val redirects = config.redirects.fold(Nil: Seq[Redirect]) {
-      sourcesToTargets =>
-        sourcesToTargets.foldLeft(Seq(): Seq[Redirect]) {
-          (redirects, sourceToTarget) =>
-            redirects :+ Redirect(sourceToTarget._1, sourceToTarget._2)
-        }
-    }
-    redirects.map { redirect =>
-      Upload(redirect.s3Key, Redirect, Left(redirect))
-    }
-  }
+case class Redirect(s3Key: String, redirectTarget: String) extends S3KeyProvider with UploadTypeResolved {
+  def uploadType = RedirectFile
 }
 
-case class Upload(
-  s3Key: String,
-  uploadType: UploadType,
-  essence: Either[Redirect, UploadBody]
-) extends S3KeyProvider
-
-/**
- * Represents a bunch of data that should be stored into an S3 objects body.
- */
-case class UploadBody(
-  md5: MD5,
-  contentLength: Long,
-  contentEncoding: Option[String],
-  maxAge: Option[Int],
-  contentType: String,
-  openInputStream: () => InputStream // It's in the caller's responsibility to close this stream
-)
+object Redirect {
+  def resolveRedirects(implicit config: Config): Seq[Redirect] =
+    config.redirects.fold(Nil: Seq[Redirect]) { sourcesToTargets =>
+      sourcesToTargets.foldLeft(Seq(): Seq[Redirect]) {
+        (redirects, sourceToTarget) =>
+          redirects :+ Redirect(sourceToTarget._1, sourceToTarget._2)
+      }
+  }
+}
 
 case class S3File(s3Key: String, md5: MD5)
 

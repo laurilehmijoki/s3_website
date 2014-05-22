@@ -6,7 +6,7 @@ import s3.website._
 
 object Diff {
 
-  def resolveDeletes(localS3Keys: Seq[String], s3Files: Seq[S3File], redirects: Seq[Upload])
+  def resolveDeletes(localS3Keys: Seq[String], s3Files: Seq[S3File], redirects: Seq[Redirect])
                     (implicit config: Config, logger: Logger): Seq[S3File] = {
     val keysNotToBeDeleted: Set[String] = (localS3Keys ++ redirects.map(_.s3Key)).toSet
     s3Files.filterNot { s3File =>

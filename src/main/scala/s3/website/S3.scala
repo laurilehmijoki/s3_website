@@ -20,22 +20,23 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
+import java.io.FileInputStream
 
 class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) {
 
-  def upload(upload: Upload, a: Attempt = 1)
+  def upload(source: Either[LocalFileFromDisk, Redirect], a: Attempt = 1)
             (implicit config: Config): Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
-      val putObjectRequest = toPutObjectRequest(upload)
+      val putObjectRequest = toPutObjectRequest(source)
       val uploadDuration =
         if (pushMode.dryRun) None
         else recordUploadDuration(putObjectRequest, s3Settings.s3Client(config) putObject putObjectRequest)
-      val report = SuccessfulUpload(upload, putObjectRequest, uploadDuration)
+      val report = SuccessfulUpload(source, putObjectRequest, uploadDuration)
       logger.info(report)
       Right(report)
     } recoverWith retry(a)(
-      createFailureReport = error => FailedUpload(upload.s3Key, error),
-      retryAction  = newAttempt => this.upload(upload, newAttempt)
+      createFailureReport = error => FailedUpload(source.fold(_.s3Key, _.s3Key), error),
+      retryAction  = newAttempt => this.upload(source, newAttempt)
     )
 
   def delete(s3File: S3File,  a: Attempt = 1)
@@ -50,10 +51,27 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
       retryAction  = newAttempt => this.delete(s3File, newAttempt)
     )
 
-  def toPutObjectRequest(upload: Upload)(implicit config: Config) =
-    upload.essence.fold(
+  def toPutObjectRequest(source: Either[LocalFileFromDisk, Redirect])(implicit config: Config) =
+    source.fold(
+      localFile => {
+        val md = new ObjectMetadata()
+        md setContentLength localFile.uploadFile.length
+        md setContentType localFile.contentType
+        localFile.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
+        localFile.maxAge foreach { seconds =>
+          md.setCacheControl(
+            if (seconds == 0)
+              s"no-cache; max-age=$seconds"
+            else
+              s"max-age=$seconds"
+          )
+        }
+        val req = new PutObjectRequest(config.s3_bucket, localFile.s3Key, new FileInputStream(localFile.uploadFile), md)
+        config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
+        req
+      },
       redirect => {
-        val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, redirect.redirectTarget)
+        val req = new PutObjectRequest(config.s3_bucket, redirect.s3Key, redirect.redirectTarget)
         req.setMetadata({
           val md = new ObjectMetadata()
           md.setContentLength(0) // Otherwise the AWS SDK will log a warning
@@ -64,23 +82,6 @@ class S3(implicit s3Settings: S3Setting, pushMode: PushMode, executor: Execution
           md.setCacheControl("max-age=0, no-cache")
           md
         })
-        req
-      },
-      uploadBody => {
-        val md = new ObjectMetadata()
-        md setContentLength uploadBody.contentLength
-        md setContentType uploadBody.contentType
-        uploadBody.contentEncoding foreach md.setContentEncoding
-        uploadBody.maxAge foreach { seconds =>
-          md.setCacheControl(
-            if (seconds == 0)
-              s"no-cache; max-age=$seconds"
-            else
-              s"max-age=$seconds"
-          )
-        }
-        val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, uploadBody.openInputStream(), md)
-        config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
         req
       }
     )
@@ -135,13 +136,13 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(upload: Upload, putObjectRequest: PutObjectRequest, uploadDuration: Option[Duration])
+  case class SuccessfulUpload(source: Either[LocalFileFromDisk, Redirect], putObjectRequest: PutObjectRequest, uploadDuration: Option[Duration])
                              (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
     def reportMessage =
-      upload.uploadType match {
-        case NewFile  => s"${Created.renderVerb} $s3Key ($reportDetails)"
-        case Update   => s"${Updated.renderVerb} $s3Key ($reportDetails)"
-        case Redirect => s"${Redirected.renderVerb} ${upload.essence.left.get.s3Key} to ${upload.essence.left.get.redirectTarget}"
+      source.fold(_.uploadType, (redirect: Redirect) => redirect) match {
+        case NewFile                         => s"${Created.renderVerb} $s3Key ($reportDetails)"
+        case FileUpdate                      => s"${Updated.renderVerb} $s3Key ($reportDetails)"
+        case Redirect(s3Key, redirectTarget) => s"${Redirected.renderVerb} $s3Key to $redirectTarget"
       }
 
     def reportDetails = {
@@ -159,11 +160,13 @@ object S3 {
       }.mkString(" | ")
     }
 
+    def s3Key = source.fold(_.s3Key, _.s3Key)
+
     lazy val uploadSize: Option[Long] =
-      upload.essence.fold(
-        (redirect: Redirect) => None,
-        uploadBody           => Some(uploadBody.contentLength)
-      )
+      source.fold(
+        (localFile: LocalFileFromDisk) => Some(localFile.uploadFile.length()),
+        (redirect: Redirect)           => None
+    )
 
     lazy val uploadSizeForHumans: Option[String] = uploadSize filter (_ => logger.verboseOutput) map humanReadableByteCount
 
@@ -174,8 +177,6 @@ object S3 {
       } yield {
         humanizeUploadSpeed(dataSize, duration)
       }) flatMap identity filter (_ => logger.verboseOutput)
-
-    def s3Key = upload.s3Key
   }
   
   object SuccessfulUpload {
