@@ -4,11 +4,10 @@ import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import s3.website.Diff.{resolveDeletes}
+import s3.website.Diff.{resolveDeletes, resolveDiff}
 import s3.website.S3._
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
-import s3.website.model.LocalFile.resolveDiff
 import java.util.concurrent.ExecutorService
 import s3.website.model._
 import s3.website.model.FileUpdate
