@@ -127,12 +127,6 @@ object Files {
   }
 }
 
-case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long)
-
-object DbRecord {
-  def apply(file: File)(implicit site: Site): DbRecord = DbRecord(site resolveS3Key file, file.length, file.lastModified)
-}
-
 case class Redirect(s3Key: String, redirectTarget: String) {
   def uploadType = RedirectFile
 }

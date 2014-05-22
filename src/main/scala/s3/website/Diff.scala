@@ -5,7 +5,6 @@ import s3.website.Ruby.rubyRegexMatches
 import scala.concurrent.{Await, Future}
 import scala.util.Try
 import java.io.File
-import s3.website.model.LocalFileFromDisk
 import scala.concurrent.duration._
 import org.apache.commons.io.FileUtils._
 import org.apache.commons.codec.digest.DigestUtils._
@@ -13,6 +12,8 @@ import scala.util.Failure
 import scala.util.Success
 import scala.io.Source
 import s3.website.Diff.LocalFileDatabase.{resolveDiffAgainstLocalDb, ChangedFile}
+import scala.util.Failure
+import scala.util.Success
 
 object Diff {
 
@@ -143,4 +144,10 @@ object Diff {
         }
       }
   }
+}
+
+case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long)
+
+object DbRecord {
+  def apply(file: File)(implicit site: Site): DbRecord = DbRecord(site resolveS3Key file, file.length, file.lastModified)
 }
