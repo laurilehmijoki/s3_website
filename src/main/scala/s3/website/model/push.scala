@@ -38,10 +38,7 @@ case object NewFile extends UploadType
 case object FileUpdate extends UploadType
 case object RedirectFile extends UploadType
 
-case class LocalFileFromDisk(
-  originalFile: File,
-  uploadType: UploadType
-)(implicit site: Site) {
+case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implicit site: Site) {
   lazy val s3Key = site.resolveS3Key(originalFile)
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
