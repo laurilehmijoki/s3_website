@@ -228,12 +228,11 @@ object Push {
                          ) {
     val thereWasSomethingToPush = updates + newFiles + redirects + deletes > 0
 
-    def addTransferStats(successfulUpload: SuccessfulUpload): PushCounts = {
+    def addTransferStats(successfulUpload: SuccessfulUpload): PushCounts =
       copy(
         uploadedBytes = uploadedBytes + (successfulUpload.uploadSize getOrElse 0L),
         uploadDurations = uploadDurations ++ successfulUpload.uploadDuration
       )
-    }
   }
 
   type FinishedPushOperations = Seq[Either[ErrorReport, PushErrorOrSuccess]]
