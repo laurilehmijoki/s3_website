@@ -2,7 +2,6 @@ package s3
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{TimeUnit, Duration}
-import s3.website.Utils._
 import s3.website.S3.{PushSuccessReport, PushFailureReport}
 import com.amazonaws.AmazonServiceException
 import s3.website.model.{Config, Site}
@@ -118,4 +117,6 @@ package object website {
   implicit def site2Config(implicit site: Site): Config = site.config
 
   type ErrorOrFile = Either[ErrorReport, File]
+
+  lazy val fibs: Stream[Int] = 0 #:: 1 #:: fibs.zip(fibs.tail).map { n => n._1 + n._2 }
 }

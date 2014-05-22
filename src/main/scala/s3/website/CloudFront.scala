@@ -8,7 +8,6 @@ import scala.concurrent.duration._
 import s3.website.S3.{SuccessfulDelete, PushSuccessReport, SuccessfulUpload}
 import com.amazonaws.auth.BasicAWSCredentials
 import java.net.URI
-import Utils._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object CloudFront {

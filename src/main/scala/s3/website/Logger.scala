@@ -1,9 +1,5 @@
 package s3.website
 
-object Utils {
-  lazy val fibs: Stream[Int] = 0 #:: 1 #:: fibs.zip(fibs.tail).map { n => n._1 + n._2 }
-}
-
 class Logger(val verboseOutput: Boolean, logMessage: (String) => Unit = println) {
   def debug(msg: String) = if (verboseOutput) log(Debug, msg)
   def info(msg: String) = log(Info, msg)
