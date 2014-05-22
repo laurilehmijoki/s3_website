@@ -640,12 +640,6 @@ class S3WebsiteSpec extends Specification {
         .listObjects(Matchers.any(classOf[ListObjectsRequest]))
     }
 
-    def asSeenByS3Client(upload: Upload)(implicit config: Config, logger: Logger): PutObjectRequest = {
-      val req = ArgumentCaptor.forClass(classOf[PutObjectRequest])
-      verify(amazonS3Client).putObject(req.capture())
-      req.getValue
-    }
-
     def sentPutObjectRequests: Seq[PutObjectRequest] = {
       val req = ArgumentCaptor.forClass(classOf[PutObjectRequest])
       verify(amazonS3Client, Mockito.atLeast(1)).putObject(req.capture())
