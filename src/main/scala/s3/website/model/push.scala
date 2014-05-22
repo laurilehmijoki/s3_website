@@ -18,6 +18,7 @@ import scala.io.Source
 import s3.website.model.LocalFileDatabase.ChangedFile
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import s3.website.model.LocalFileFromDisk.tika
 
 object Encoding {
 
@@ -73,7 +74,7 @@ case class LocalFileFromDisk(
   })
 
   lazy val contentType = {
-    val mimeType = LocalFile.tika.detect(originalFile)
+    val mimeType = tika.detect(originalFile)
     if (mimeType.startsWith("text/") || mimeType == "application/json")
       mimeType + "; charset=utf-8"
     else
@@ -110,9 +111,11 @@ case class LocalFileFromDisk(
   private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
 }
 
-object LocalFile {
+object LocalFileFromDisk {
   lazy val tika = new Tika()
+}
 
+object Files {
   def recursiveListFiles(f: File): Seq[File] = {
     val these = f.listFiles
     these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
@@ -151,7 +154,7 @@ object LocalFileDatabase {
       dbFile <- getOrCreateDbFile
       database <- loadDbFromFile(dbFile)
     } yield {
-      val siteFiles = LocalFile.listSiteFiles 
+      val siteFiles = Files.listSiteFiles
       val recordsOrChangedFiles = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, ChangedFile]]) { (localFiles, file) =>
         val key = DbRecord(file)
         val fileIsUnchanged = database.exists(_ == key)

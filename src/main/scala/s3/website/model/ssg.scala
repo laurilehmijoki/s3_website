@@ -19,7 +19,7 @@ object Ssg {
     }
 
   def findSiteDirectory(workingDirectory: File): ErrorOrFile =
-    LocalFile.recursiveListFiles(workingDirectory).find { file =>
+    Files.recursiveListFiles(workingDirectory).find { file =>
       file.isDirectory && automaticallySupportedSiteGenerators.exists(_.outputDirectory == file.getName)
     }.fold(Left(notFoundErrorReport): ErrorOrFile)(Right(_))
 }

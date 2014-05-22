@@ -24,7 +24,7 @@ object Diff {
         Try {
           val s3KeyIndex = s3Files.map(_.s3Key).toSet
           val s3Md5Index = s3Files.map(_.md5).toSet
-          val siteFiles = LocalFile.listSiteFiles
+          val siteFiles = Files.listSiteFiles
           val nameExistsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
           val newFiles = siteFiles
             .filterNot(nameExistsOnS3)
