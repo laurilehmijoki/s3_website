@@ -6,14 +6,12 @@ import scala.util.Try
 import s3.website.model.Encoding._
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.zip.GZIPOutputStream
-import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.IOUtils
 import org.apache.tika.Tika
 import s3.website.Ruby._
 import s3.website._
-import s3.website.model.Encoding.Gzip
 import scala.util.Failure
 import scala.util.Success
-import s3.website.model.Encoding.Zopfli
 import org.apache.commons.codec.digest.DigestUtils.sha256Hex
 import org.apache.commons.io.FileUtils.{write, getTempDirectory}
 import scala.io.Source
@@ -45,35 +43,16 @@ object Encoding {
   type MD5 = String
 }
 
-sealed trait S3KeyProvider {
-  def s3Key: String
-}
-
-trait UploadTypeResolved {
-  def uploadType: UploadType
-}
-
 sealed trait UploadType // Sealed, so that we can avoid inexhaustive pattern matches more easily
 
 case object NewFile extends UploadType
 case object FileUpdate extends UploadType
 case object RedirectFile extends UploadType
 
-trait LocalFile extends S3KeyProvider { // TODO remove as obsolete
-  val s3Key: String
-}
-
-trait Uploadable {
-  def uploadFile: File
-  def contentType: String
-  def md5: MD5
-  val encodingOnS3: Option[Either[Gzip, Zopfli]]
-}
-
 case class LocalFileFromDisk(
   originalFile: File,
   uploadType: UploadType
-)(implicit site: Site) extends LocalFile with Uploadable with UploadTypeResolved {
+)(implicit site: Site) {
   lazy val s3Key = site.resolveS3Key(originalFile)
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
@@ -275,13 +254,13 @@ object LocalFileDatabase {
     }
 }
 
-case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long) extends S3KeyProvider
+case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long)
 
 object DbRecord {
   def apply(file: File)(implicit site: Site): DbRecord = DbRecord(site resolveS3Key file, file.length, file.lastModified)
 }
 
-case class Redirect(s3Key: String, redirectTarget: String) extends S3KeyProvider with UploadTypeResolved {
+case class Redirect(s3Key: String, redirectTarget: String) {
   def uploadType = RedirectFile
 }
 
