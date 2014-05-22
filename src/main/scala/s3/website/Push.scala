@@ -86,7 +86,7 @@ object Push {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val redirects = Redirect.resolveRedirects
     val s3FilesFuture = resolveS3Files()
-    val redirectResults = redirects.map { new S3() upload (_) }
+    val redirectResults = redirects.map { new S3() upload _ }
 
     val errorsOrReports: Either[ErrorReport, PushReports] = for {
       files <- resolveDiff(s3FilesFuture).right
@@ -95,14 +95,14 @@ object Push {
         dbRecordOrChanged fold(_ => memo, changedFile => memo :+ changedFile)
       )
       val newOrChangedReports: PushReports = newOrChangedFiles.map { newOrChangedFile =>
-        LocalFile.toUpload(newOrChangedFile).right.map(new S3() upload (_))
+        LocalFile.toUpload(newOrChangedFile).right.map(new S3() upload _)
       }
       val deleteReports =
         Await.result(s3FilesFuture, 7 days).fold(
           err => Left(err) :: Nil,
           s3Files =>
             resolveDeletes(files.map(_.fold(_.s3Key, _.s3Key)), s3Files, redirects).map {
-              new S3() delete (_)
+              new S3() delete _
             } map(Right(_))
         )
       newOrChangedReports ++ deleteReports ++ redirectResults.map(Right(_))
