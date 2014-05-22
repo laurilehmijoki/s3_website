@@ -520,6 +520,35 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  // Because of the local database, the first and second run are implemented differently.
+  "pushing files for the second time" should {
+    "delete the S3 objects that no longer exist on the local site" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+      push
+      setS3Files(S3File("obsolete.txt", ""))
+      push
+      sentDelete must equalTo("obsolete.txt")
+    }
+
+    "push new files to the bucket" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+      push
+      setLocalFile("newfile.txt")
+      push
+      sentPutObjectRequest.getKey must equalTo("newfile.txt")
+    }
+
+    "push locally changed files" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFileWithContent(("file.txt", "first run"))
+      push
+      setLocalFileWithContent(("file.txt", "second run"))
+      push
+      sentPutObjectRequests.length must equalTo(2)
+    }
+
+    "detect files that someone else has changed on the S3 bucket" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+      pending
+    }
+  }
+
   "Jekyll site" should {
     "be detected automatically" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
@@ -687,19 +716,14 @@ class S3WebsiteSpec extends Specification {
     val configDirectory: File = workingDirectory // Represents the --config-dir=X option
     lazy val localDatabase: File = new File(FileUtils.getTempDirectory, "s3_website_local_db_" + sha256Hex(siteDirectory.getPath))
 
-    lazy val allDirectories = workingDirectory :: siteDirectory :: configDirectory :: Nil
-
     def before {
-      allDirectories foreach forceMkdir
+      workingDirectory :: siteDirectory :: configDirectory :: Nil foreach forceMkdir
     }
 
     def after {
-      allDirectories foreach { dir =>
+      (workingDirectory :: siteDirectory :: configDirectory :: localDatabase :: Nil) foreach { dir =>
         if (dir.exists) forceDelete(dir)
       }
-
-      localDatabase.ensuring(_.exists(), "The local database file must exist for all sites")
-      forceDelete(localDatabase)
     }
   }
 
@@ -734,7 +758,7 @@ class S3WebsiteSpec extends Specification {
       |s3_bucket: bucket
     """.stripMargin
 
-    implicit lazy val cliArgs: CliArgs = siteWithFilesAndContent(config, localFilesWithContent)
+    implicit def cliArgs: CliArgs = siteWithFilesAndContent(config, localFilesWithContent)
     def pushMode: PushMode // Represents the --dry-run switch
 
     def buildSite(
