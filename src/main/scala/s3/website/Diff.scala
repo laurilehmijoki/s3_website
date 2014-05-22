@@ -5,11 +5,14 @@ import s3.website.Ruby.rubyRegexMatches
 import scala.concurrent.{Await, Future}
 import scala.util.Try
 import java.io.File
-import scala.util.Failure
 import s3.website.model.LocalFileFromDisk
-import scala.util.Success
-import s3.website.model.LocalFileDatabase.{resolveDiffAgainstLocalDb, ChangedFile}
 import scala.concurrent.duration._
+import org.apache.commons.io.FileUtils._
+import org.apache.commons.codec.digest.DigestUtils._
+import scala.util.Failure
+import scala.util.Success
+import scala.io.Source
+import s3.website.Diff.LocalFileDatabase.{resolveDiffAgainstLocalDb, ChangedFile}
 
 object Diff {
 
@@ -62,5 +65,82 @@ object Diff {
       if (ignoreOnServer) logger.debug(s"Ignoring ${s3File.s3Key} on server")
       keysNotToBeDeleted.exists(_ == s3File.s3Key) || ignoreOnServer
     }
+  }
+
+  object LocalFileDatabase {
+    type ChangedFile = LocalFileFromDisk
+
+    def hasRecords(implicit site: Site, logger: Logger) =
+      (for {
+        dbFile <- getOrCreateDbFile
+        database <- loadDbFromFile(dbFile)
+      } yield database.headOption.isDefined) getOrElse false
+
+    def resolveDiffAgainstLocalDb(implicit site: Site, logger: Logger): Either[ErrorReport, Seq[Either[DbRecord, ChangedFile]]] =
+      (for {
+        dbFile <- getOrCreateDbFile
+        database <- loadDbFromFile(dbFile)
+      } yield {
+        val siteFiles = Files.listSiteFiles
+        val recordsOrChangedFiles = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, ChangedFile]]) { (localFiles, file) =>
+          val key = DbRecord(file)
+          val fileIsUnchanged = database.exists(_ == key)
+          if (fileIsUnchanged)
+            localFiles :+ Left(key)
+          else {
+            val uploadType =
+              if (database.exists(_.s3Key == key.s3Key))
+                FileUpdate
+              else
+                NewFile
+            localFiles :+ Right(LocalFileFromDisk(file, uploadType))
+          }
+        }
+        logger.debug(s"Discovered ${siteFiles.length} files on the site, of which ${recordsOrChangedFiles count (_.isRight)} are new or changed")
+        recordsOrChangedFiles
+      }) flatMap { recordsOrChangedFiles =>
+        persist(recordsOrChangedFiles)
+      } match {
+        case Success(changedFiles) => Right(changedFiles)
+        case Failure(error) => Left(ErrorReport(error))
+      }
+
+    private def getOrCreateDbFile(implicit site: Site, logger: Logger) =
+      Try {
+        val dbFile = new File(getTempDirectory, "s3_website_local_db_" + sha256Hex(site.rootDirectory))
+        if (!dbFile.exists()) logger.debug("Creating a new database in " + dbFile.getName)
+        dbFile.createNewFile()
+        dbFile
+      }
+
+    private def loadDbFromFile(databaseFile: File)(implicit site: Site, logger: Logger): Try[Stream[DbRecord]] =
+      Try {
+        // record format: "s3Key(file.path)|length(file)|mtime(file)"
+        val RecordRegex = "(.*?)\\|(\\d+)\\|(\\d+)".r
+        Source
+          .fromFile(databaseFile, "utf-8")
+          .getLines()
+          .toStream
+          .map {
+          case RecordRegex(s3Key, fileLength, fileModified) =>
+            DbRecord(s3Key, fileLength.toLong, fileModified.toLong)
+        }
+      }
+
+    def persist(recordsOrChangedFiles: Seq[Either[DbRecord, ChangedFile]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, ChangedFile]]] =
+      getOrCreateDbFile flatMap { dbFile =>
+        Try {
+          val dbFileContents = recordsOrChangedFiles.map { recordOrChangedFile =>
+            val record: DbRecord = recordOrChangedFile fold(
+              record => record,
+              changedFile => DbRecord(changedFile.s3Key, changedFile.originalFile.length, changedFile.originalFile.lastModified)
+              )
+            record.s3Key :: record.fileLength :: record.fileModified :: Nil mkString "|"
+          } mkString "\n"
+
+          write(dbFile, dbFileContents)
+          recordsOrChangedFiles
+        }
+      }
   }
 }

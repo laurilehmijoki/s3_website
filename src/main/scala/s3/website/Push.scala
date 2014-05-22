@@ -26,7 +26,7 @@ import java.io.File
 import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 import s3.website.ByteHelper.humanReadableByteCount
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
-import s3.website.model.LocalFileDatabase.ChangedFile
+import s3.website.Diff.LocalFileDatabase.ChangedFile
 
 object Push {
 
