@@ -4,11 +4,13 @@ import com.amazonaws.services.s3.model.S3ObjectSummary
 import java.io._
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.zip.GZIPOutputStream
-import org.apache.commons.io.IOUtils
 import org.apache.tika.Tika
 import s3.website.Ruby._
 import s3.website._
 import s3.website.model.LocalFileFromDisk.tika
+import s3.website.model.Encoding.encodingOnS3
+import java.io.File.createTempFile
+import org.apache.commons.io.IOUtils.copy
 
 object Encoding {
 
@@ -50,15 +52,7 @@ case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implici
    *
    * May throw an exception, so remember to call this in a Try or Future monad
    */
-  lazy val uploadFile: File = encodingOnS3
-    .fold(originalFile)(algorithm => {
-    val tempFile = File.createTempFile(originalFile.getName, "gzip")
-    tempFile.deleteOnExit()
-    using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
-      IOUtils.copy(fis(originalFile), stream)
-    }
-    tempFile
-  })
+  lazy val uploadFile: File = LocalFileFromDisk uploadFile originalFile
 
   lazy val contentType = {
     val mimeType = tika.detect(originalFile)
@@ -90,16 +84,27 @@ case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implici
   /**
    * May throw an exception, so remember to call this in a Try or Future monad
    */
-  lazy val md5 = using(fis(uploadFile)) { inputStream =>
-    DigestUtils.md5Hex(inputStream)
-  }
-
-  private[this] def fis(file: File): InputStream = new FileInputStream(file)
-  private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
+  lazy val md5 = LocalFileFromDisk md5 originalFile
 }
 
 object LocalFileFromDisk {
   lazy val tika = new Tika()
+
+  def md5(originalFile: File)(implicit site: Site) = using(fis { uploadFile(originalFile) }) { DigestUtils.md5Hex }
+
+  def uploadFile(originalFile: File)(implicit site: Site): File =
+    encodingOnS3(site resolveS3Key originalFile)
+      .fold(originalFile)(algorithm => {
+        val tempFile = createTempFile(originalFile.getName, "gzip")
+        tempFile.deleteOnExit()
+        using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
+          copy(fis(originalFile), stream)
+        }
+        tempFile
+      })
+
+  private[this] def fis(file: File): InputStream = new FileInputStream(file)
+  private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
 }
 
 object Files {

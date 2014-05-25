@@ -48,17 +48,17 @@ object S3 {
       retryAction  = newAttempt => this.upload(source, newAttempt)
     )
 
-  def delete(s3File: S3File,  a: Attempt = 1)
+  def delete(s3Key: S3Key,  a: Attempt = 1)
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
-      if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3File.s3Key)
-      val report = SuccessfulDelete(s3File.s3Key)
+      if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
+      val report = SuccessfulDelete(s3Key)
       logger.info(report)
       Right(report)
     } recoverWith retry(a)(
-      createFailureReport = error => FailedDelete(s3File.s3Key, error),
-      retryAction  = newAttempt => this.delete(s3File, newAttempt)
+      createFailureReport = error => FailedDelete(s3Key, error),
+      retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
 
   def toPutObjectRequest(source: Either[LocalFileFromDisk, Redirect])(implicit config: Config) =

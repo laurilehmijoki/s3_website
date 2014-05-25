@@ -522,21 +522,21 @@ class S3WebsiteSpec extends Specification {
 
   // Because of the local database, the first and second run are implemented differently.
   "pushing files for the second time" should {
-    "delete the S3 objects that no longer exist on the local site" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+    "delete the S3 objects that no longer exist on the local site" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       push
       setS3Files(S3File("obsolete.txt", ""))
       push
       sentDelete must equalTo("obsolete.txt")
     }
 
-    "push new files to the bucket" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+    "push new files to the bucket" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       push
       setLocalFile("newfile.txt")
       push
       sentPutObjectRequest.getKey must equalTo("newfile.txt")
     }
 
-    "push locally changed files" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
+    "push locally changed files" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setLocalFileWithContent(("file.txt", "first run"))
       push
       setLocalFileWithContent(("file.txt", "second run"))
@@ -544,8 +544,21 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequests.length must equalTo(2)
     }
 
-    "detect files that someone else has changed on the S3 bucket" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
-      pending
+    "push locally changed files only once" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFileWithContent(("file.txt", "first run"))
+      push
+      setS3Files(S3File("file.txt", md5Hex("first run")))
+      setLocalFileWithContent(("file.txt", "second run"))
+      push
+      sentPutObjectRequests.length must equalTo(2)
+    }
+
+    "detect files that someone else has changed on the S3 bucket" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFileWithContent(("file.txt", "first run"))
+      push
+      setOutdatedS3Keys("file.txt")
+      push
+      sentPutObjectRequests.length must equalTo(2)
     }
   }
 
@@ -745,7 +758,7 @@ class S3WebsiteSpec extends Specification {
   trait EmptySite extends Directories {
     type LocalFileWithContent = (String, String)
 
-    val localFilesWithContent: mutable.Buffer[LocalFileWithContent] = mutable.Buffer()
+    val localFilesWithContent: mutable.Set[LocalFileWithContent] = mutable.Set()
     def setLocalFile(fileName: String) = setLocalFileWithContent((fileName, ""))
     def setLocalFiles(fileNames: String*) = fileNames foreach setLocalFile
     def setLocalFileWithContent(fileNameAndContent: LocalFileWithContent) = localFilesWithContent += fileNameAndContent
@@ -761,7 +774,19 @@ class S3WebsiteSpec extends Specification {
     implicit def cliArgs: CliArgs = siteWithFilesAndContent(config, localFilesWithContent)
     def pushMode: PushMode // Represents the --dry-run switch
 
-    def buildSite(
+    private def siteWithFilesAndContent(config: String = "", localFilesWithContent: mutable.Set[LocalFileWithContent]): CliArgs = {
+      localFilesWithContent.foreach {
+        case (filePath, content) =>
+          val file = new File(siteDirectory, filePath)
+          forceMkdir(file.getParentFile)
+          file.createNewFile()
+          write(file, content)
+          localFilesWithContent remove(filePath, content) // Remove the file from the set once we've persisted it on the disk.
+      }
+      buildCliArgs(config)
+    }
+
+    private def buildCliArgs(
                     config: String = "",
                     baseConfig: String =
                       """
@@ -786,17 +811,6 @@ class S3WebsiteSpec extends Specification {
 
         override def configDir = configDirectory.getAbsolutePath
       }
-    }
-
-    def siteWithFilesAndContent(config: String = "", localFilesWithContent: Seq[LocalFileWithContent]): CliArgs = {
-      localFilesWithContent.foreach {
-        case (filePath, content) =>
-          val file = new File(siteDirectory, filePath)
-          forceMkdir(file.getParentFile)
-          file.createNewFile()
-          write(file, content)
-      }
-      buildSite(config)
     }
   }
 }

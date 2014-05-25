@@ -89,14 +89,23 @@ object Push {
     val errorsOrReports: Either[ErrorReport, PushReports] = for {
       diff <- resolveDiff(s3FilesFuture).right
     } yield {
-      val newOrChangedReports: PushReports = diff.uploads.map(S3 uploadFile _) map (Right(_))
-      val deleteReports: PushReports =
-        Await.result(s3FilesFuture, 7 days).fold(
-          err => Left(err) :: Nil,
-          s3Files =>
-            resolveDeletes(diff, s3Files, redirects).map(S3 delete _) map (Right(_))
+      val newOrChangedReports: PushReports = diff.uploads.map { uploadBatch =>
+        uploadBatch.map(_.right.map(_.map(S3 uploadFile _)))
+      }.map (Await.result(_, 1 day)).foldLeft(Seq(): PushReports) { (memo: PushReports, res: Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]) =>
+        res.fold(
+          error => memo :+ Left(error),
+          (pushResults: Seq[Future[PushErrorOrSuccess]]) => memo ++ (pushResults map (Right(_)))
         )
-      newOrChangedReports ++ deleteReports ++ redirectReports
+      }
+      val deleteReports =
+        Await.result(resolveDeletes(diff, s3FilesFuture, redirects), 1 day).right.map { keysToDelete =>
+          keysToDelete map (S3 delete _)
+        }.fold(
+          error => Left(error) :: Nil,
+          (pushResults: Seq[Future[PushErrorOrSuccess]]) => pushResults map (Right(_))
+        )
+      val diffErrorReport: PushReports = Await.result(diff.persistenceError, 1 day).fold(Nil: PushReports)(Left(_) :: Nil)
+      newOrChangedReports ++ deleteReports ++ redirectReports ++ diffErrorReport
     }
     val errorsOrFinishedPushOps = errorsOrReports.right map awaitForResults
     val invalidationSucceeded = invalidateCloudFrontItems(errorsOrFinishedPushOps)
@@ -180,12 +189,13 @@ object Push {
         (error: ErrorReport) => counts.copy(failures = counts.failures + 1),
         failureOrSuccess => failureOrSuccess.fold(
           (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
-          (successReport: PushSuccessReport) => successReport match {
-            case succ: SuccessfulUpload => succ.source.fold(_.uploadType, _.uploadType) match {
-              case NewFile      => counts.copy(newFiles = counts.newFiles + 1).addTransferStats(succ) // TODO nasty repetition here
-              case FileUpdate   => counts.copy(updates = counts.updates + 1).addTransferStats(succ)
-              case RedirectFile => counts.copy(redirects = counts.redirects + 1).addTransferStats(succ)
-            }
+          (successReport: PushSuccessReport) =>
+            successReport match {
+              case succ: SuccessfulUpload => succ.source.fold(_.uploadType, _.uploadType) match {
+                case NewFile      => counts.copy(newFiles = counts.newFiles + 1).addTransferStats(succ) // TODO nasty repetition here
+                case FileUpdate   => counts.copy(updates = counts.updates + 1).addTransferStats(succ)
+                case RedirectFile => counts.copy(redirects = counts.redirects + 1).addTransferStats(succ)
+              }
             case SuccessfulDelete(_) => counts.copy(deletes = counts.deletes + 1)
           }
         )

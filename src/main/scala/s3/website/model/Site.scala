@@ -6,14 +6,17 @@ import org.yaml.snakeyaml.Yaml
 import s3.website.model.Config._
 import scala.io.Source.fromFile
 import scala.language.postfixOps
-import s3.website.Logger
+import s3.website.{S3Key, Logger, ErrorReport}
 import scala.util.Failure
 import s3.website.model.Config.UnsafeYaml
 import scala.util.Success
-import s3.website.ErrorReport
 
 case class Site(rootDirectory: String, config: Config) {
   def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory, "").replaceFirst("^/", "")
+
+  def resolveFile(s3File: S3File): File = resolveFile(s3File.s3Key)
+
+  def resolveFile(s3Key: S3Key): File = new File(s"$rootDirectory/$s3Key")
 }
 
 object Site {
