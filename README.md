@@ -72,6 +72,12 @@ s3_bucket: blog.example.com
 roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
 you can omit the `s3_id` and `s3_secret` keys in the config file.)
 
+S3_website implements supports for reading environment variables from a file using
+the [dotenv](https://github.com/bkeepers/dotenv) gem. You can create a `.env` file
+in the project's root directory to take advantage of this feature. Please have
+a look at [dotenv's usage guide](https://github.com/bkeepers/dotenv#usage) for
+syntax information.
+
 ## Project goals
 
 * Provide a command-line interface tool for deploying and managing S3 websites
@@ -408,6 +414,7 @@ Contributors (in alphabetical order)
 * Christopher Petersen
 * David Michael Barr
 * David Raffensperger
+* Douglas Teoh
 * Greg Karékinian
 * John Allison
 * Jordan White

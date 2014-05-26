@@ -40,6 +40,10 @@ This project uses [Semantic Versioning](http://semver.org).
 
 * You can no longer use this gem as a Ruby library
 
+## 1.8.0
+
+* Add support for (dotenv)[https://github.com/bkeepers/dotenv]
+
 ## 1.7.6
 
 * Remove a test setting from *Gemfile*
