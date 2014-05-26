@@ -6,6 +6,8 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ### New features
 
+* Faster uploads for extra large sites
+
 * Simulate deployments with `push --dry-run`
 
 * Support CloudFront invalidations when the site contains over 3000 files
