@@ -3,9 +3,10 @@ require 'spec_helper'
 describe S3Website::Upload do
   describe 'uploading blacklisted files' do
     let(:blacklisted_files) {
-      [ 's3_website.yml' ]
+      [ 's3_website.yml', '.env' ]
     }
-    it 'should fail if the upload file is s3_website.yml' do
+
+    it 'should fail if the upload file is blacklisted' do
       blacklisted_files.each do |blacklisted_file|
         expect {
           S3Website::Upload.new blacklisted_file, mock(), {}, mock()

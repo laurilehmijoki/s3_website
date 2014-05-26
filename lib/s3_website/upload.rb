@@ -5,7 +5,7 @@ require 'zopfli'
 module S3Website
   class Upload
     attr_reader :config, :file, :path, :full_path, :s3
-    BLACKLISTED_FILES = ['s3_website.yml']
+    BLACKLISTED_FILES = ['s3_website.yml', '.env']
 
     def initialize(path, s3, config, site_dir)
       raise "May not upload #{path}, because it's blacklisted" if Upload.is_blacklisted(path, config)

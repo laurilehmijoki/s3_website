@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.8.1
+
+* Do not push the *.env* file
+
 ## 1.8.0
 
 * Add support for (dotenv)[https://github.com/bkeepers/dotenv]
