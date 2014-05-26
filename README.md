@@ -450,6 +450,7 @@ Contributors (in alphabetical order)
 * Christopher Petersen
 * David Michael Barr
 * David Raffensperger
+* Douglas Teoh
 * Greg Karékinian
 * John Allison
 * Jordan White
