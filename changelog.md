@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.8.0
+
+* Add support for (dotenv)[https://github.com/bkeepers/dotenv]
+
 ## 1.7.6
 
 * Remove a test setting from *Gemfile*
