@@ -311,6 +311,14 @@ redirects:
   music-files/promo.mp4: http://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
 
+To setup up redirects for both trailing slash as well as a URL without the trailing slash, use '/' to end the path URL:
+
+```yaml
+redirects:
+  /about/: /about_me
+  /about/blog/: /about_blog
+```
+
 #### Routing Rules
 
 You can configure more complex redirect rules by adding the following
