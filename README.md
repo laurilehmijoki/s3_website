@@ -147,13 +147,6 @@ gzip:
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
 
-#### Gzip zopfli
-
-By adding the line `gzip_zopfli: true` into the config file, you can benefit
-from the zopfli algorithm, which is 100% compatible with the traditional gzip
-algorithm. A zopfli compression takes longer but results in about 5% smaller
-files.
-
 ### Using non-standard AWS regions
 
 By default, `s3_website_monadic` uses the US Standard Region. You can upload your

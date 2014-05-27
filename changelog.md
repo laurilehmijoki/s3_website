@@ -40,6 +40,11 @@ This project uses [Semantic Versioning](http://semver.org).
 
 * You can no longer use this gem as a Ruby library
 
+* `gzip_zopfli: true`
+
+    At the time of writing, there does not exist a stable zopfli implementation
+    for Java.
+
 ## 1.8.1
 
 * Do not push the *.env* file
