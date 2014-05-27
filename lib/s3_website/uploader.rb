@@ -22,7 +22,18 @@ module S3Website
         )
 
         redirects = config['redirects'] || {}
-        changed_redirects = setup_redirects redirects, config, s3
+        smart_redirects = Hash.new
+        redirects.map do |path, target|
+          paths = []
+          if path.end_with?('/')
+            smart_redirects[path[0..-2]] = target
+            smart_redirects[path + 'index.html'] = target
+          else
+            smart_redirects[path] = target
+          end
+        end
+
+        changed_redirects = setup_redirects smart_redirects, config, s3
 
         deleted_files = remove_superfluous_files(
           s3,
@@ -30,7 +41,7 @@ module S3Website
           {
             :s3_bucket => config['s3_bucket'],
             :site_dir => site_dir,
-            :redirects => redirects,
+            :redirects => smart_redirects,
             :in_headless_mode => in_headless_mode,
             :ignore_on_server => config["ignore_on_server"]
           }
@@ -121,8 +132,8 @@ module S3Website
       begin
         current_head = s3_object.head
       rescue AWS::S3::Errors::NoSuchKey
-      end
 
+      end
       if current_head.nil? or current_head[:website_redirect_location] != target
         s3_object.write('', :website_redirect_location => target)
         {
