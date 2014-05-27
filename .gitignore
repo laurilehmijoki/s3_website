@@ -8,3 +8,4 @@ Gemfile.lock
 .idea
 target
 .idea_modules
+.vagrant

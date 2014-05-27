@@ -1,0 +1,25 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  vms = {
+    'ubuntu_14.04' => {
+      :box_url => 'https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box',
+      :ip => '33.33.33.0'
+    },
+    'centos_6.5' => {
+      :box_url => 'http://puppet-vagrant-boxes.puppetlabs.com/centos-65-x64-virtualbox-puppet.box',
+      :ip => '33.33.33.1'
+    }
+  }
+  vms.each do |vm_name, vm_opts|
+    config.vm.define vm_name do |node_config|
+      node_config.vm.box = vm_name
+      node_config.vm.box_url = vm_opts.fetch(:box_url)
+      node_config.vm.network :private_network, ip: vm_opts.fetch(:ip)
+    end
+  end
+end
