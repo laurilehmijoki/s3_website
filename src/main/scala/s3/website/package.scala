@@ -103,7 +103,14 @@ package object website {
         case exception: AmazonServiceException => Some(exception.getStatusCode)
         case _ => None
       }
-    httpStatusCode.exists(c => c >= 400 && c < 500)
+    val isAwsTimeoutException =
+      error match {
+        case exception: AmazonServiceException =>
+          // See http://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#ErrorCodeList
+          exception.getErrorCode == "RequestTimeout"
+        case _ => false
+      }
+    httpStatusCode.exists(c => c >= 400 && c < 500) && !isAwsTimeoutException
   }
   
   implicit class NumReport(val num: Int) extends AnyVal {

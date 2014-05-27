@@ -109,6 +109,26 @@ class S3WebsiteSpec extends Specification {
       verify(amazonS3Client, times(1)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
+    "try again if the request times out"  in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      var attempt = 0
+      when(amazonS3Client putObject Matchers.any(classOf[PutObjectRequest])) thenAnswer new Answer[PutObjectResult] {
+        def answer(invocation: InvocationOnMock) = {
+          attempt += 1
+          if (attempt < 2) {
+            val e = new AmazonServiceException("Too long a request")
+            e.setStatusCode(400)
+            e.setErrorCode("RequestTimeout")
+            throw e
+          } else {
+            new PutObjectResult
+          }
+        }
+      }
+      setLocalFile("index.html")
+      val exitStatus = push
+      verify(amazonS3Client, times(2)).putObject(Matchers.any(classOf[PutObjectRequest]))
+    }
+
     "try again if the delete fails" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
       deleteFailsAndThenSucceeds(howManyFailures = 5)
