@@ -97,7 +97,7 @@ def resolve_jar(project_root, logger)
     project_root + '/target/scala-2.11/s3_website.jar'
   released_jar_lookup_paths = [
     project_root + "/s3_website-#{S3Website::VERSION}.jar",
-    ENV['TMPDIR'] + "/s3_website-#{S3Website::VERSION}.jar"
+    (ENV['TMPDIR'] || '/tmp') + "/s3_website-#{S3Website::VERSION}.jar"
   ]
   found_jar = ([development_jar_path] + released_jar_lookup_paths)
   .select { |jar_path|
