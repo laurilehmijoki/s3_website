@@ -16,6 +16,7 @@ def run(cmd)
 end
 
 puts "Building s3_website.jar..."
+run "./sbt clean"
 run "./sbt assembly"
 
 tag_name = "v#{version}"
