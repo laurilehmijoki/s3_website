@@ -274,6 +274,14 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  ".env file" should { // The .env file is the https://github.com/bkeepers/dotenv file
+    "never be uploaded" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFile(".env")
+      push
+      noUploadsOccurred must beTrue
+    }
+  }
+
   "exclude_from_upload: string" should {
     "result in matching files not being uploaded" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = "exclude_from_upload: .DS_.*?"

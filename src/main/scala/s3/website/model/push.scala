@@ -122,7 +122,8 @@ object Files {
           (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(s3Key, _))
         )
       }
-      val doNotUpload = excludeByConfig || s3Key == "s3_website.yml"
+      val neverUpload = "s3_website.yml" :: ".env" :: Nil
+      val doNotUpload = excludeByConfig || (neverUpload contains s3Key)
       if (doNotUpload) logger.debug(s"Excluded $s3Key from upload")
       doNotUpload
     }
