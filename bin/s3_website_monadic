@@ -83,12 +83,64 @@ class Cli < Thor
 end
 
 def run_s3_website_jar(jar_file, call_dir, logger)
+  java_installed = resolve_exit_status('which javas') or resolve_exit_status('javas -version')
+  unless java_installed
+    logger.info_msg "Cannot find Java. s3_website push is implemented in Scala, and it needs Java to run."
+    autoinstall_java_or_print_help_and_exit(logger)
+  end
   args = ARGV.join(' ').sub('push', '')
   logger.debug_msg "Using #{jar_file}"
   if system("java -cp #{jar_file} s3.website.Push #{args}")
     exit 0
   else
     exit 1
+  end
+end
+
+def resolve_exit_status(cmd)
+  `#{cmd}`
+  cmd_succeeded = $? == 0
+rescue
+  cmd_succeeded = false
+end
+
+def autoinstall_java_or_print_help_and_exit(logger)
+  @logger = logger
+  automatic_methods = [
+    {
+      :package_manager_lookup => 'which apt-get',
+      :install_command => 'sudo apt-get install --assume-yes openjdk-7-jre'
+    },
+    {
+      :package_manager_lookup => 'which yum',
+      :install_command => 'sudo yum install --assumeyes java-1.7.0-openjdk'
+    }
+  ]
+
+  def print_manual_method_and_exit
+    @logger.info_msg 'Go to http://java.com, install Java and then try again.'
+    exit 1
+  end
+
+  manual_method_help =
+
+  automatic_method = automatic_methods.find { |automatic_method|
+    resolve_exit_status automatic_method.fetch(:package_manager_lookup)
+  }
+  if automatic_method
+    @logger.info_msg "Do you want me to install Java with the command `#{automatic_method.fetch(:install_command)}`? [Y/n]"
+    user_answer = $stdin.gets
+    if user_answer.chomp.downcase == 'y' or user_answer == "\n"
+      automatic_method_succeeded = system automatic_method.fetch(:install_command)
+      unless automatic_method_succeeded
+        @logger.fail_msg "Could not automatically install Java. Try setting it up manually:"
+        print_manual_method_and_exit
+      end
+    else
+      print_manual_method_and_exit
+    end
+  else
+    print_manual_method_and_exit
   end
 end
 
