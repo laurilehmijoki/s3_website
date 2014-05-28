@@ -352,7 +352,7 @@ available, ensure that the `s3_website.yml` file is in the list of ignored files
 For git users this means that the file `.gitignore` should mention the
 `s3_website.yml` file.
 
-If you use the .dotenv gem, ensure that you do not push the *.env* file to a
+If you use the .dotenv gem, ensure that you do not push the `.env` file to a
 public git repository.
 
 ## Known issues
