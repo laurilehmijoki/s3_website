@@ -17,6 +17,10 @@
 
     gem install s3_website_monadic
 
+If you have been using the version 1 of this gem, please read the [release
+note](/changelog.md#200)
+on version 2. It contains information on backward incompatible changes.
+
 ## Usage
 
 Here's how you can get started:
