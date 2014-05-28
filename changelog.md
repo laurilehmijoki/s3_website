@@ -7,8 +7,11 @@ This project uses [Semantic Versioning](http://semver.org).
 ### New features
 
 * Faster uploads for extra large sites
- * Use a local database for calculating diffs. This removes the need to read all
+
+   Use a local database for calculating diffs. This removes the need to read all
    the files of the website, when you call the `s3_website push` command.
+
+   Use proper multithreading with JVM threads.
 
 * Simulate deployments with `push --dry-run`
 
@@ -24,10 +27,16 @@ This project uses [Semantic Versioning](http://semver.org).
 
 * Fault tolerance – do not crash if one of the uploads fails
 
+   Before, the push command crashed if something unexpected happened. From now
+   on, s3_website will run all the operations it can, and report errors in the
+   end.
+
 ### Java is now required
 
-* The `push` command is now written in Scala. This means that you need Java 1.6
-  or above to run the command `s3_website push`.
+* The `push` command is now written in Scala
+
+   This means that you need Java 1.6 or above to run the command `s3_website
+   push`.
 
 ### Removed features
 
