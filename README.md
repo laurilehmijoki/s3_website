@@ -17,10 +17,6 @@
 
     gem install s3_website_monadic
 
-If you have been using the version 1 of this gem, please read the [release
-note](/changelog.md#200)
-on version 2. It contains information on backward incompatible changes.
-
 ## Usage
 
 Here's how you can get started:
@@ -334,7 +330,7 @@ If you experience the "too many open files" error, either increase the amount of
 maximum open files (on Unix-like systems, see `man ulimit`) or decrease the
 `concurrency_level` setting.
 
-## Simulating deployments
+### Simulating deployments
 
 You can simulate the `s3_website_monadic push` operation by adding the
 `--dry-run` switch. The dry run mode will not apply any modifications on your S3
@@ -343,6 +339,11 @@ operation would actually do if run without the dry switch.
 
 You can use the dry run mode if you are unsure what kind of effects the `push`
 operation would cause to your live website.
+
+## Migrating from v1 to v2
+
+Please read the [release note](/changelog.md#200) on version 2. It contains
+information on backward incompatible changes.
 
 ## Example configurations
 
