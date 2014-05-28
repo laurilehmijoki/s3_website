@@ -359,9 +359,7 @@ public git repository.
 
 Please create an issue and send a pull request if you spot any.
 
-## Development
-
-### Versioning
+## Versioning
 
 s3_website_monadic uses [Semantic Versioning](http://semver.org).
 
@@ -369,10 +367,9 @@ In the spirit of semantic versioning, here is the definition of public API for
 s3_website: Within a major version, s3_website_monadic will not break
 backwards-compatibility of anything that is mentioned in this README file.
 
-### Tests
+## Development
 
-  * Install bundler and run `bundle install`
-  * Run all tests by invoking `rake test`
+See [development](additional-docs/development.md).
 
 ### Contributing
 
@@ -387,12 +384,6 @@ If you are not sure how to test your pull request, you can ask the [gem owners
 ](http://rubygems.org/gems/s3_website) to supplement the request with tests.
 However, by including proper tests, you increase the chances of your pull
 request being incorporated into future releases.
-
-#### Checklist for new features
-
-* Is it tested?
-* Is it documented in README?
-* Is it mentioned in `resources/configuration_file_template.yml`?
 
 ## License
 
