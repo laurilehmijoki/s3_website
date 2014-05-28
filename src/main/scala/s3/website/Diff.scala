@@ -151,15 +151,20 @@ object Diff {
 
         val changesMissedByLocalDiff: Future[Either[ErrorReport, Seq[LocalFileFromDisk]]] = s3FilesFuture.map { errorOrS3Files =>
           for (s3Files <- errorOrS3Files.right) yield {
+            val remoteS3Keys = s3Files.map(_.s3Key).toSet
             val localS3Keys = unchangedAccordingToLocalDiff.map(_.s3Key).toSet
             val localMd5 = unchangedAccordingToLocalDiff.map(_.uploadFileMd5).toSet
-            val changedOnS3 = s3Files.filter { s3File =>
-              (localS3Keys contains s3File.s3Key) && !(localMd5 contains s3File.md5)
+            def isChangedOnS3(s3File: S3File) = (localS3Keys contains s3File.s3Key) && !(localMd5 contains s3File.md5)
+            val changedOnS3 = s3Files collect {
+              case s3File if isChangedOnS3(s3File) =>
+                LocalFileFromDisk(site resolveFile s3File, FileUpdate)
             }
-            logger.debug(s"Detected ${changedOnS3.length} object(s) that have changed on S3 but not on the local site")
-            changedOnS3 map { s3File =>
-              LocalFileFromDisk(site resolveFile s3File, FileUpdate)
+            val missingFromS3 = localS3Keys collect {
+              case localS3Key if !(remoteS3Keys contains localS3Key) =>
+                LocalFileFromDisk(site resolveFile localS3Key, NewFile)
+
             }
+            changedOnS3 ++ missingFromS3
           }
         }
 

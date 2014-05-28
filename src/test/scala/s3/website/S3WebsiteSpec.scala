@@ -27,6 +27,7 @@ import s3.website.Push.{push, CliArgs}
 import s3.website.CloudFront.CloudFrontSetting
 import s3.website.S3.S3Setting
 import org.apache.commons.codec.digest.DigestUtils
+import java.util.Date
 
 class S3WebsiteSpec extends Specification {
 
@@ -588,6 +589,15 @@ class S3WebsiteSpec extends Specification {
       push
       sentPutObjectRequests.length must equalTo(2)
     }
+
+    "push locally unchanged files that are missing from S3" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFileWithContentAndLastModified(("file.txt", "contents", new Date(1400000000000L)))
+      push
+      // Simulate the situation where someone else has deleted file.txt, and we push for the second time
+      setLocalFileWithContentAndLastModified(("file.txt", "contents", new Date(1400000000000L)))
+      push
+      sentPutObjectRequests.length must equalTo(2) // Even though we use the local db, we should notice that someone else has deleted file.txt
+    }
   }
 
   "Jekyll site" should {
@@ -785,11 +795,15 @@ class S3WebsiteSpec extends Specification {
   
   trait EmptySite extends Directories {
     type LocalFileWithContent = (String, String)
+    type LocalFileWithContentAndLastModified = (String, String, Date)
 
-    val localFilesWithContent: mutable.Set[LocalFileWithContent] = mutable.Set()
+    val localFilesWithContent: mutable.Set[LocalFileWithContentAndLastModified] = mutable.Set()
     def setLocalFile(fileName: String) = setLocalFileWithContent((fileName, ""))
     def setLocalFiles(fileNames: String*) = fileNames foreach setLocalFile
-    def setLocalFileWithContent(fileNameAndContent: LocalFileWithContent) = localFilesWithContent += fileNameAndContent
+    def setLocalFileWithContent(fileNameAndContent: LocalFileWithContent) =
+      setLocalFileWithContentAndLastModified((fileNameAndContent._1, fileNameAndContent._2, new Date))
+    def setLocalFileWithContentAndLastModified(fileNameAndContentAndLastModified: LocalFileWithContentAndLastModified) =
+      localFilesWithContent += fileNameAndContentAndLastModified
     def setLocalFilesWithContent(fileNamesAndContent: LocalFileWithContent*) = fileNamesAndContent foreach setLocalFileWithContent
     var config = ""
     val baseConfig =
@@ -802,15 +816,16 @@ class S3WebsiteSpec extends Specification {
     implicit def cliArgs: CliArgs = siteWithFilesAndContent(config, localFilesWithContent)
     def pushMode: PushMode // Represents the --dry-run switch
 
-    private def siteWithFilesAndContent(config: String = "", localFilesWithContent: mutable.Set[LocalFileWithContent]): CliArgs = {
+    private def siteWithFilesAndContent(config: String = "", localFilesWithContent: mutable.Set[LocalFileWithContentAndLastModified]): CliArgs = {
       localFilesWithContent.foreach {
-        case (filePath, content) =>
+        case (filePath, content, lastModified) =>
           val file = new File(siteDirectory, filePath)
           forceMkdir(file.getParentFile)
           file.createNewFile()
           write(file, content)
-          localFilesWithContent remove(filePath, content) // Remove the file from the set once we've persisted it on the disk.
+          file.setLastModified(lastModified.getTime)
       }
+      localFilesWithContent.clear() // Once we've persisted the changes on the disk, clear the queue. I.e., keep the state where it should be – on the disk.
       buildCliArgs(config)
     }
 
