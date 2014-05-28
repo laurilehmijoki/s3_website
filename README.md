@@ -30,11 +30,6 @@ Here's how you can get started:
   S3 website. If the bucket does not exist, the command will create it for you.
 * Run `s3_website_monadic push` to push your website to S3. Congratulations! You are live.
 
-**Important security note:** if the source code of your website is publicly
-available, ensure that the `s3_website.yml` file is in the list of ignored files.
-For git users this means that the file `.gitignore` should mention the
-`s3_website.yml` file.
-
 ### For Jekyll users
 
 S3_website will automatically discover your website in the *_site* directory.
@@ -349,6 +344,16 @@ information on backward incompatible changes.
 
 See
 <https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/example-configurations.md>.
+
+## On security
+
+If the source code of your website is publicly
+available, ensure that the `s3_website.yml` file is in the list of ignored files.
+For git users this means that the file `.gitignore` should mention the
+`s3_website.yml` file.
+
+If you use the .dotenv gem, ensure that you do not push the *.env* file to a
+public git repository.
 
 ## Known issues
 
