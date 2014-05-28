@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](http://semver.org).
 ### New features
 
 * Faster uploads for extra large sites
+ * Use a local database for calculating diffs. This removes the need to read all
+   the files of the website, when you call the `s3_website push` command.
 
 * Simulate deployments with `push --dry-run`
 
