@@ -117,7 +117,7 @@ object CloudFront {
 
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
-    case SuccessfulUpload(localFile, _, _) => localFile.left.exists(_.uploadType == FileUpdate)
+    case succ: SuccessfulUpload => succ.details.fold(_.uploadType, _.uploadType) == FileUpdate
     case SuccessfulDelete(_) => true
     case _ => false
   }

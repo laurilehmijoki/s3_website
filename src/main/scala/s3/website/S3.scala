@@ -31,8 +31,15 @@ object S3 {
       val putObjectRequest = toPutObjectRequest(source).get
       val uploadDuration =
         if (pushMode.dryRun) None
-        else recordUploadDuration(putObjectRequest, s3Settings.s3Client(config) putObject putObjectRequest)
-      val report = SuccessfulUpload(source, putObjectRequest, uploadDuration)
+        else Some(recordUploadDuration(putObjectRequest, s3Settings.s3Client(config) putObject putObjectRequest))
+      val report = SuccessfulUpload(
+        source.fold(_.s3Key, _.s3Key),
+        source.fold(
+          localFile => Left(SuccessfulNewOrCreatedDetails(localFile.uploadType, localFile.uploadFile.get.length(), uploadDuration)),
+          redirect  => Right(SuccessfulRedirectDetails(redirect.uploadType, redirect.redirectTarget))
+        ),
+        putObjectRequest
+      )
       logger.info(report)
       Right(report)
     } recoverWith retry(a)(
@@ -93,13 +100,10 @@ object S3 {
       }
     )
 
-  def recordUploadDuration(putObjectRequest: PutObjectRequest, f: => Unit): Option[UploadDuration] = {
+  def recordUploadDuration(putObjectRequest: PutObjectRequest, f: => Unit): UploadDuration = {
     val start = System.currentTimeMillis()
     f
-    if (putObjectRequest.getMetadata.getContentLength > 0)
-      Some(System.currentTimeMillis - start)
-    else
-      None // We are not interested in tracking durations of PUT requests that don't contain data. Redirect is an example of such request.
+    System.currentTimeMillis - start
   }
 
   def awsS3Client(config: Config) = new AmazonS3Client(awsCredentials(config))
@@ -141,14 +145,18 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(source: Either[LocalFileFromDisk, Redirect], putObjectRequest: PutObjectRequest, uploadDuration: Option[UploadDuration])
+  case class SuccessfulRedirectDetails(uploadType: UploadType, redirectTarget: String)
+  case class SuccessfulNewOrCreatedDetails(uploadType: UploadType, uploadSize: Long, uploadDuration: Option[Long])
+
+  case class SuccessfulUpload(s3Key: S3Key,
+                              details: Either[SuccessfulNewOrCreatedDetails, SuccessfulRedirectDetails],
+                              putObjectRequest: PutObjectRequest)
                              (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
     def reportMessage =
-      source.fold(_.uploadType, (redirect: Redirect) => redirect) match {
-        case NewFile                         => s"${Created.renderVerb} $s3Key ($reportDetails)"
-        case FileUpdate                      => s"${Updated.renderVerb} $s3Key ($reportDetails)"
-        case Redirect(s3Key, redirectTarget) => s"${Redirected.renderVerb} $s3Key to $redirectTarget"
-      }
+      details.fold(
+        newOrCreatedDetails => s"${newOrCreatedDetails.uploadType.pushAction} $s3Key ($reportDetails)",
+        redirectDetails     => s"${redirectDetails.uploadType.pushAction} $s3Key to ${redirectDetails.redirectTarget}"
+      )
 
     def reportDetails = {
       val md = putObjectRequest.getMetadata
@@ -165,12 +173,9 @@ object S3 {
       }.mkString(" | ")
     }
 
-    def s3Key = source.fold(_.s3Key, _.s3Key)
-
-    lazy val uploadSize: Option[Long] =
-      source.fold(
-        (localFile: LocalFileFromDisk) => Some(localFile.uploadFile.get.length()),
-        (redirect: Redirect)           => None
+    lazy val uploadSize = details.fold(
+      newOrCreatedDetails => Some(newOrCreatedDetails.uploadSize),
+      redirectDetails     => None
     )
 
     lazy val uploadSizeForHumans: Option[String] = uploadSize filter (_ => logger.verboseOutput) map humanReadableByteCount
@@ -178,7 +183,7 @@ object S3 {
     lazy val uploadSpeedForHumans: Option[String] =
       (for {
         dataSize <- uploadSize
-        duration <- uploadDuration
+        duration <- details.left.map(_.uploadDuration).left.toOption.flatten
       } yield {
         humanizeUploadSpeed(dataSize, duration)
       }) flatMap identity filter (_ => logger.verboseOutput)

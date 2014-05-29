@@ -191,7 +191,7 @@ object Push {
           (failureReport: PushFailureReport) => counts.copy(failures = counts.failures + 1),
           (successReport: PushSuccessReport) =>
             successReport match {
-              case succ: SuccessfulUpload => succ.source.fold(_.uploadType, _.uploadType) match {
+              case succ: SuccessfulUpload => succ.details.fold(_.uploadType, _.uploadType) match {
                 case NewFile      => counts.copy(newFiles = counts.newFiles + 1).addTransferStats(succ) // TODO nasty repetition here
                 case FileUpdate   => counts.copy(updates = counts.updates + 1).addTransferStats(succ)
                 case RedirectFile => counts.copy(redirects = counts.redirects + 1).addTransferStats(succ)
@@ -235,7 +235,7 @@ object Push {
     def addTransferStats(successfulUpload: SuccessfulUpload): PushCounts =
       copy(
         uploadedBytes = uploadedBytes + (successfulUpload.uploadSize getOrElse 0L),
-        uploadDurations = uploadDurations ++ successfulUpload.uploadDuration
+        uploadDurations = uploadDurations ++ successfulUpload.details.fold(_.uploadDuration, _ => None)
       )
   }
 

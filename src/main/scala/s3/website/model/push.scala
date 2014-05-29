@@ -35,11 +35,20 @@ object Encoding {
     }
 }
 
-sealed trait UploadType // Sealed, so that we can avoid inexhaustive pattern matches more easily
+sealed trait UploadType {
+  val pushAction: PushAction
+}
 
-case object NewFile extends UploadType
-case object FileUpdate extends UploadType
-case object RedirectFile extends UploadType
+case object NewFile extends UploadType {
+  val pushAction = Created
+}
+case object FileUpdate extends UploadType {
+  val pushAction = Updated
+}
+
+case object RedirectFile extends UploadType {
+  val pushAction = Redirected
+}
 
 case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implicit site: Site) {
   lazy val s3Key = site.resolveS3Key(originalFile)
