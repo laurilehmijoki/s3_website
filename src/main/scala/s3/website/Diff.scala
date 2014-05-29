@@ -142,7 +142,7 @@ object Diff {
           case Left(f) => f
         }
 
-        val uploadsResolvedByLocalDiff = localDiffResult collect {
+        val uploadsAccordingToLocalDiff = localDiffResult collect {
           case Right(f) => f
         }
 
@@ -195,13 +195,13 @@ object Diff {
             records1 <- unchanged.right
             records2 <- changedAccordingToS3.right
           } yield
-            persist(records1.map(Left(_)) ++ records2.map(Right(_)) ++ uploadsResolvedByLocalDiff.map(Right(_))) match {
+            persist(records1.map(Left(_)) ++ records2.map(Right(_)) ++ uploadsAccordingToLocalDiff.map(Right(_))) match {
               case Success(_)   => Unit
               case Failure(err) => ErrorReport(err)
             }
         Diff(
           unchangedFilesFinal map (_.right.map(_ map (_.s3Key))),
-          uploads = Future(Right(uploadsResolvedByLocalDiff)) :: changedAccordingToS3Diff :: Nil,
+          uploads = Future(Right(uploadsAccordingToLocalDiff)) :: changedAccordingToS3Diff :: Nil,
           persistenceError = persistenceError map (_.left.toOption)
         )
       }
