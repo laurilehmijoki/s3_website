@@ -28,19 +28,19 @@ object Diff {
 
   private def resolveDiffAgainstGetBucketResponse(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
                                                  (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Either[ErrorReport, Diff] = {
-    val diffSrc = s3FilesFuture.map { errorOrS3Files =>
+    val diffAgainstS3 = s3FilesFuture.map { errorOrS3Files =>
       errorOrS3Files.right.flatMap { s3Files =>
         Try {
           val s3KeyIndex = s3Files.map(_.s3Key).toSet
           val s3Md5Index = s3Files.map(_.md5).toSet
           val siteFiles = Files.listSiteFiles
-          val nameExistsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
+          val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
           val isChangedOnS3 = (localFile: LocalFileFromDisk) => !(s3Md5Index contains localFile.md5)
           val newFiles = siteFiles collect {
-            case file if !nameExistsOnS3(file) => LocalFileFromDisk(file, NewFile)
+            case file if !existsOnS3(file) => LocalFileFromDisk(file, NewFile)
           }
           val changedFiles = siteFiles collect {
-            case file if nameExistsOnS3(file) => LocalFileFromDisk(file, FileUpdate)
+            case file if existsOnS3(file) => LocalFileFromDisk(file, FileUpdate)
           } filter isChangedOnS3
           val unchangedFiles = {
             val newOrChangedFiles = (changedFiles ++ newFiles).map(_.originalFile).toSet
@@ -60,7 +60,7 @@ object Diff {
       }
     }
     def collectResult[B](pf: PartialFunction[Either[DbRecord, LocalFileFromDisk],B]) =
-      diffSrc.map { errorOrDiffSource =>
+      diffAgainstS3.map { errorOrDiffSource =>
         errorOrDiffSource.right map (_ collect pf)
       }
     val unchanged = collectResult {
