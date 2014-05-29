@@ -1,6 +1,8 @@
 package s3.website
 
-class Logger(val verboseOutput: Boolean, logMessage: (String) => Unit = println) {
+import scala.util.Try
+
+class Logger(val verboseOutput: Boolean) {
   def debug(msg: String) = if (verboseOutput) log(Debug, msg)
   def info(msg: String) = log(Info, msg)
   def fail(msg: String) = log(Failure, msg)
@@ -10,9 +12,9 @@ class Logger(val verboseOutput: Boolean, logMessage: (String) => Unit = println)
 
   def pending(msg: String) = log(Wait, msg)
 
-  private def log(logType: LogType, msgRaw: String) {
+  private def log(logType: LogType, msgRaw: String): Try[Unit] = {
     val msg = msgRaw.replaceAll("\\n", "\n       ") // Indent new lines, so that they arrange nicely with other log lines
-    logMessage(s"[$logType] $msg")
+    Try(println(s"[$logType] $msg"))
   }
 
   sealed trait LogType {

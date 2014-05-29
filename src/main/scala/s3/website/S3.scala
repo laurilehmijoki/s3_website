@@ -2,26 +2,17 @@ package s3.website
 
 import s3.website.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
-import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.s3.model._
 import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import com.amazonaws.services.s3.model.StorageClass.ReducedRedundancy
-import s3.website.S3.SuccessfulUpload
-import s3.website.S3.SuccessfulDelete
-import s3.website.S3.FailedUpload
-import scala.Some
-import s3.website.S3.FailedDelete
-import s3.website.S3.S3Setting
 import s3.website.ByteHelper.humanReadableByteCount
-import org.joda.time.{Seconds, Duration, Interval}
-import scala.concurrent.duration.TimeUnit
-import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 import java.io.FileInputStream
 import s3.website.model.Config.awsCredentials
+import scala.util.Try
 
 object S3 {
 
@@ -37,7 +28,7 @@ object S3 {
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
-      val putObjectRequest = toPutObjectRequest(source)
+      val putObjectRequest = toPutObjectRequest(source).get
       val uploadDuration =
         if (pushMode.dryRun) None
         else recordUploadDuration(putObjectRequest, s3Settings.s3Client(config) putObject putObjectRequest)
@@ -62,25 +53,30 @@ object S3 {
       retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
 
-  def toPutObjectRequest(source: Either[LocalFileFromDisk, Redirect])(implicit config: Config) =
+  def toPutObjectRequest(source: Either[LocalFileFromDisk, Redirect])(implicit config: Config): Try[PutObjectRequest] =
     source.fold(
-      localFile => {
-        val md = new ObjectMetadata()
-        md setContentLength localFile.uploadFile.length
-        md setContentType localFile.contentType
-        localFile.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
-        localFile.maxAge foreach { seconds =>
-          md.setCacheControl(
-            if (seconds == 0)
-              s"no-cache; max-age=$seconds"
-            else
-              s"max-age=$seconds"
-          )
+      localFile =>
+        for {
+          uploadFile <- localFile.uploadFile
+          contentType <- localFile.contentType
+        } yield {
+          val md = new ObjectMetadata()
+          md setContentLength uploadFile.length
+          md setContentType contentType
+          localFile.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
+          localFile.maxAge foreach { seconds =>
+            md.setCacheControl(
+              if (seconds == 0)
+                s"no-cache; max-age=$seconds"
+              else
+                s"max-age=$seconds"
+            )
+          }
+          val req = new PutObjectRequest(config.s3_bucket, localFile.s3Key, new FileInputStream(uploadFile), md)
+          config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
+          req
         }
-        val req = new PutObjectRequest(config.s3_bucket, localFile.s3Key, new FileInputStream(localFile.uploadFile), md)
-        config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
-        req
-      },
+      ,
       redirect => {
         val req = new PutObjectRequest(config.s3_bucket, redirect.s3Key, redirect.redirectTarget)
         req.setMetadata({
@@ -93,7 +89,7 @@ object S3 {
           md.setCacheControl("max-age=0, no-cache")
           md
         })
-        req
+        Try(req)
       }
     )
 
@@ -173,7 +169,7 @@ object S3 {
 
     lazy val uploadSize: Option[Long] =
       source.fold(
-        (localFile: LocalFileFromDisk) => Some(localFile.uploadFile.length()),
+        (localFile: LocalFileFromDisk) => Some(localFile.uploadFile.get.length()),
         (redirect: Redirect)           => None
     )
 

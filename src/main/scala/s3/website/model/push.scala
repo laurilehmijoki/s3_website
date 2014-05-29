@@ -11,6 +11,7 @@ import s3.website.model.LocalFileFromDisk.tika
 import s3.website.model.Encoding.encodingOnS3
 import java.io.File.createTempFile
 import org.apache.commons.io.IOUtils.copy
+import scala.util.Try
 
 object Encoding {
 
@@ -50,9 +51,9 @@ case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implici
    *
    * May throw an exception, so remember to call this in a Try or Future monad
    */
-  lazy val uploadFile: File = LocalFileFromDisk uploadFile originalFile
+  lazy val uploadFile: Try[File] = LocalFileFromDisk uploadFile originalFile
 
-  lazy val contentType = {
+  lazy val contentType: Try[String] = tika map { tika =>
     val mimeType = tika.detect(originalFile)
     if (mimeType.startsWith("text/") || mimeType == "application/json")
       mimeType + "; charset=utf-8"
@@ -86,20 +87,25 @@ case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implici
 }
 
 object LocalFileFromDisk {
-  lazy val tika = new Tika()
+  lazy val tika = Try(new Tika())
 
-  def md5(originalFile: File)(implicit site: Site) = using(fis { uploadFile(originalFile) }) { DigestUtils.md5Hex }
+  def md5(originalFile: File)(implicit site: Site): Try[MD5] =
+    uploadFile(originalFile) map { file =>
+      using(fis { file }) { DigestUtils.md5Hex }
+    }
 
-  def uploadFile(originalFile: File)(implicit site: Site): File =
+  def uploadFile(originalFile: File)(implicit site: Site): Try[File] =
     encodingOnS3(site resolveS3Key originalFile)
-      .fold(originalFile)(algorithm => {
-        val tempFile = createTempFile(originalFile.getName, "gzip")
-        tempFile.deleteOnExit()
-        using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
-          copy(fis(originalFile), stream)
+      .fold(Try(originalFile))(algorithm =>
+        Try {
+          val tempFile = createTempFile(originalFile.getName, "gzip")
+          tempFile.deleteOnExit()
+          using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
+            copy(fis(originalFile), stream)
+          }
+          tempFile
         }
-        tempFile
-      })
+      )
 
   private[this] def fis(file: File): InputStream = new FileInputStream(file)
   private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()

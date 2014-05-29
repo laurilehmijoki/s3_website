@@ -35,7 +35,7 @@ object Diff {
           val s3Md5Index = s3Files.map(_.md5).toSet
           val siteFiles = Files.listSiteFiles
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
-          val isChangedOnS3 = (localFile: LocalFileFromDisk) => !(s3Md5Index contains localFile.md5)
+          val isChangedOnS3 = (localFile: LocalFileFromDisk) => !(s3Md5Index contains localFile.md5.get)
           val newFiles = siteFiles collect {
             case file if !existsOnS3(file) => LocalFileFromDisk(file, NewFile)
           }
@@ -247,7 +247,7 @@ object Diff {
           val dbFileContents = recordsOrChangedFiles.map { recordOrChangedFile =>
             val record: DbRecord = recordOrChangedFile fold(
               record => record,
-              changedFile => DbRecord(changedFile.s3Key, changedFile.originalFile.length, changedFile.originalFile.lastModified, changedFile.md5)
+              changedFile => DbRecord(changedFile.s3Key, changedFile.originalFile.length, changedFile.originalFile.lastModified, changedFile.md5.get)
               )
             record.s3Key :: record.fileLength :: record.fileModified :: record.uploadFileMd5 :: Nil mkString "|"
           } mkString "\n"
@@ -275,6 +275,6 @@ object Diff {
   
   object DbRecord {
     def apply(original: File)(implicit site: Site): DbRecord =
-      DbRecord(site resolveS3Key original, original.length, original.lastModified, LocalFileFromDisk.md5(original))
+      DbRecord(site resolveS3Key original, original.length, original.lastModified, LocalFileFromDisk.md5(original).get)
   }
 }
