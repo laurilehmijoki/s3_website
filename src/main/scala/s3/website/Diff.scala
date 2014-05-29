@@ -77,16 +77,14 @@ object Diff {
     val localKeys = for {
       errorOrUnchanged <- diff.unchanged
       errorsOrChanges  <- Future.sequence(diff.uploads)
-    } yield {
+    } yield
       errorsOrChanges.foldLeft(errorOrUnchanged: Either[ErrorReport, Seq[S3Key]]) { (memo, errorOrChanges) =>
         for {
           mem <- memo.right
           keysToDelete <- errorOrChanges.right
-        } yield {
-          mem ++ keysToDelete.map(_.s3Key)
-        }
+        } yield mem ++ keysToDelete.map(_.s3Key)
       }
-    }
+
     s3Files zip localKeys map { (s3Files: Either[ErrorReport, Seq[S3File]], errorOrLocalKeys: Either[ErrorReport, Seq[S3Key]]) =>
       for {
         localS3Keys <- errorOrLocalKeys.right
