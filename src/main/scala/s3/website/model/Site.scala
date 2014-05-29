@@ -47,7 +47,10 @@ object Site {
           concurrency_level <- loadOptionalInt("concurrency_level").right
           redirects <- loadRedirects.right
         } yield {
-          gzip_zopfli.foreach(_ => logger.info("zopfli is not currently supported"))
+          gzip_zopfli.foreach(_ => logger.info(
+            """|zopfli is not currently supported
+               |If you find a stable Java implementation for zopfli, please send an email to lauri.lehmijoki@iki.fi about it."""
+            .stripMargin))
           extensionless_mime_type.foreach(_ => logger.info(
             s"Ignoring the extensionless_mime_type setting in $yamlConfigPath. Counting on Apache Tika to infer correct mime types.")
           )
