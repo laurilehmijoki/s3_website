@@ -45,8 +45,6 @@ case class LocalFileFromDisk(originalFile: File, uploadType: UploadType)(implici
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
 
-  lazy val lastModified = originalFile.lastModified
-
   /**
    * This is the file we should upload, because it contains the potentially gzipped contents of the original file.
    *
