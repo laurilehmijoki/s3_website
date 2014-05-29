@@ -228,7 +228,7 @@ object Push {
                          redirects: Int = 0, 
                          deletes: Int = 0,
                          uploadedBytes: Long = 0,
-                         uploadDurations: Seq[org.joda.time.Duration] = Nil
+                         uploadDurations: Seq[UploadDuration] = Nil
                          ) {
     val thereWasSomethingToPush = updates + newFiles + redirects + deletes > 0
 

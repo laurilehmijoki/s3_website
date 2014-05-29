@@ -97,11 +97,11 @@ object S3 {
       }
     )
 
-  def recordUploadDuration(putObjectRequest: PutObjectRequest, f: => Unit): Option[Duration] = {
+  def recordUploadDuration(putObjectRequest: PutObjectRequest, f: => Unit): Option[UploadDuration] = {
     val start = System.currentTimeMillis()
     f
     if (putObjectRequest.getMetadata.getContentLength > 0)
-      Some(new Duration(start, System.currentTimeMillis))
+      Some(System.currentTimeMillis - start)
     else
       None // We are not interested in tracking durations of PUT requests that don't contain data. Redirect is an example of such request.
   }
@@ -145,7 +145,7 @@ object S3 {
     def s3Key: String
   }
 
-  case class SuccessfulUpload(source: Either[LocalFileFromDisk, Redirect], putObjectRequest: PutObjectRequest, uploadDuration: Option[Duration])
+  case class SuccessfulUpload(source: Either[LocalFileFromDisk, Redirect], putObjectRequest: PutObjectRequest, uploadDuration: Option[UploadDuration])
                              (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
     def reportMessage =
       source.fold(_.uploadType, (redirect: Redirect) => redirect) match {
@@ -189,10 +189,10 @@ object S3 {
   }
   
   object SuccessfulUpload {
-    def humanizeUploadSpeed(uploadedBytes: Long, uploadDurations: Duration*): Option[String] = {
-      val totalDurationMillis = uploadDurations.foldLeft(new org.joda.time.Duration(0)){ (memo, duration) =>
-        memo.plus(duration)
-      }.getMillis // retain precision by using milliseconds
+    def humanizeUploadSpeed(uploadedBytes: Long, uploadDurations: UploadDuration*): Option[String] = {
+      val totalDurationMillis = uploadDurations.foldLeft(0L){ (memo, duration) =>
+        memo + duration
+      }
       if (totalDurationMillis > 0) {
         val bytesPerMillisecond = uploadedBytes / totalDurationMillis
         val bytesPerSecond = bytesPerMillisecond * 1000 * uploadDurations.length

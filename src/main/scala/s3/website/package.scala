@@ -44,6 +44,8 @@ package object website {
 
   type S3Key = String
 
+  type UploadDuration = Long
+
   trait PushAction {
     def actionName = getClass.getSimpleName.replace("$", "") // case object class names contain the '$' char
 
