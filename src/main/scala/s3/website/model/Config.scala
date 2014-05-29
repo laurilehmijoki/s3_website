@@ -4,10 +4,11 @@ import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
 import s3.website.ErrorReport
+import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 
 case class Config(
-  s3_id:                      String,
-  s3_secret:                  String,
+  s3_id:                      Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
+  s3_secret:                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
   s3_bucket:                  String,
   s3_endpoint:                S3Endpoint,
   max_age:                    Option[Either[Int, Map[String, Int]]],
@@ -23,6 +24,20 @@ case class Config(
 )
 
 object Config {
+
+  def awsCredentials(config: Config): AWSCredentialsProvider = {
+    val credentialsFromConfigFile = for {
+      s3_id <- config.s3_id
+      s3_secret <- config.s3_secret
+    } yield new BasicAWSCredentials(s3_id, s3_secret)
+    credentialsFromConfigFile.fold(new DefaultAWSCredentialsProviderChain: AWSCredentialsProvider)(credentials =>
+      new AWSCredentialsProvider {
+        def getCredentials = credentials
+        def refresh() = {}
+      }
+    )
+  }
+
   def loadOptionalBooleanOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Boolean, Seq[String]]]] = {
     val yamlValue = for {
       optionalValue <- loadOptionalValue(key)

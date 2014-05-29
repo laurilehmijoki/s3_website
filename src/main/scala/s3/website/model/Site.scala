@@ -31,8 +31,8 @@ object Site {
       case Success(yamlObject) =>
         implicit val unsafeYaml = UnsafeYaml(yamlObject)
         val config: Either[ErrorReport, Config] = for {
-          s3_id <- loadRequiredString("s3_id").right
-          s3_secret <- loadRequiredString("s3_secret").right
+          s3_id <- loadOptionalString("s3_id").right
+          s3_secret <- loadOptionalString("s3_secret").right
           s3_bucket <- loadRequiredString("s3_bucket").right
           s3_endpoint <- loadEndpoint.right
           max_age <- loadMaxAge.right

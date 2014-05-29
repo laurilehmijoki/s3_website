@@ -21,6 +21,7 @@ import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 import java.io.FileInputStream
+import s3.website.model.Config.awsCredentials
 
 object S3 {
 
@@ -105,7 +106,7 @@ object S3 {
       None // We are not interested in tracking durations of PUT requests that don't contain data. Redirect is an example of such request.
   }
 
-  def awsS3Client(config: Config) = new AmazonS3Client(new BasicAWSCredentials(config.s3_id, config.s3_secret))
+  def awsS3Client(config: Config) = new AmazonS3Client(awsCredentials(config))
 
   def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
                               (implicit config: Config, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):

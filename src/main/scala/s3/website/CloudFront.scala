@@ -9,6 +9,7 @@ import s3.website.S3.{SuccessfulDelete, PushSuccessReport, SuccessfulUpload}
 import com.amazonaws.auth.BasicAWSCredentials
 import java.net.URI
 import scala.concurrent.{ExecutionContextExecutor, Future}
+import s3.website.model.Config.awsCredentials
 
 object CloudFront {
   def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
@@ -63,8 +64,7 @@ object CloudFront {
     def reportMessage = s"Failed to invalidate the CloudFront distribution (${error.getMessage})"
   }
 
-  def awsCloudFrontClient(config: Config) =
-    new AmazonCloudFrontClient(new BasicAWSCredentials(config.s3_id, config.s3_secret))
+  def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient(awsCredentials(config))
   
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
     val invalidationPaths: Seq[String] = {
