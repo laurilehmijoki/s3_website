@@ -35,14 +35,12 @@ object Diff {
           val s3Md5Index = s3Files.map(_.md5).toSet
           val siteFiles = Files.listSiteFiles
           val nameExistsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
-          val newFiles = siteFiles
-            .filterNot(nameExistsOnS3)
-            .map { f => LocalFileFromDisk(f, uploadType = NewFile)}
-          val changedFiles =
-            siteFiles
-              .filter(nameExistsOnS3)
-              .map(f => LocalFileFromDisk(f, uploadType = FileUpdate))
-              .filterNot(localFile => s3Md5Index contains localFile.md5)
+          val newFiles = siteFiles collect {
+            case file if !nameExistsOnS3(file) => LocalFileFromDisk(file, NewFile)
+          }
+          val changedFiles = siteFiles collect {
+            case file if nameExistsOnS3(file) => LocalFileFromDisk(file, FileUpdate)
+          } filterNot(localFile => s3Md5Index contains localFile.md5)
           val unchangedFiles = {
             val newOrChangedFiles = (changedFiles ++ newFiles).map(_.originalFile).toSet
             siteFiles.filterNot(f => newOrChangedFiles contains f)
