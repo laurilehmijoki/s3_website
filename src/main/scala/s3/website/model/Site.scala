@@ -48,7 +48,7 @@ object Site {
           redirects <- loadRedirects.right
         } yield {
           gzip_zopfli.foreach(_ => logger.info(
-            """|zopfli is not currently supported
+            """|Zopfli is not currently supported. Falling back to regular gzip.
                |If you find a stable Java implementation for zopfli, please send an email to lauri.lehmijoki@iki.fi about it."""
             .stripMargin))
           extensionless_mime_type.foreach(_ => logger.info(
