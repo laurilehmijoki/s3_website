@@ -21,13 +21,15 @@ import com.amazonaws.services.cloudfront.model.{CreateInvalidationResult, Create
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
 import java.util.concurrent.atomic.AtomicInteger
-import org.apache.commons.io.FileUtils.{forceDelete, forceMkdir, write}
+import org.apache.commons.io.FileUtils._
 import scala.collection.mutable
 import s3.website.Push.{push, CliArgs}
 import s3.website.CloudFront.CloudFrontSetting
 import s3.website.S3.S3Setting
 import org.apache.commons.codec.digest.DigestUtils
 import java.util.Date
+import s3.website.CloudFront.CloudFrontSetting
+import s3.website.S3.S3Setting
 
 class S3WebsiteSpec extends Specification {
 
@@ -799,12 +801,15 @@ class S3WebsiteSpec extends Specification {
   trait EmptySite extends Directories {
     type LocalFileWithContent = (String, String)
 
-    val localFilesWithContent: mutable.Set[LocalFileWithContent] = mutable.Set()
     def setLocalFile(fileName: String) = setLocalFileWithContent((fileName, ""))
     def setLocalFiles(fileNames: String*) = fileNames foreach setLocalFile
-    def setLocalFileWithContent(fileNameAndContent: LocalFileWithContent) =
-      localFilesWithContent += fileNameAndContent
     def setLocalFilesWithContent(fileNamesAndContent: LocalFileWithContent*) = fileNamesAndContent foreach setLocalFileWithContent
+    def setLocalFileWithContent(fileNameAndContent: LocalFileWithContent) = {
+      val file = new File(siteDirectory, fileNameAndContent._1)
+      forceMkdir(file.getParentFile)
+      file.createNewFile()
+      write(file, fileNameAndContent._2)
+    }
     var config = ""
     val baseConfig =
     """
@@ -813,20 +818,8 @@ class S3WebsiteSpec extends Specification {
       |s3_bucket: bucket
     """.stripMargin
 
-    implicit def cliArgs: CliArgs = siteWithFilesAndContent(config, localFilesWithContent)
+    implicit def cliArgs: CliArgs = buildCliArgs(config)
     def pushMode: PushMode // Represents the --dry-run switch
-
-    private def siteWithFilesAndContent(config: String = "", localFilesWithContent: mutable.Set[LocalFileWithContent]): CliArgs = {
-      localFilesWithContent.foreach {
-        case (filePath, content) =>
-          val file = new File(siteDirectory, filePath)
-          forceMkdir(file.getParentFile)
-          file.createNewFile()
-          write(file, content)
-      }
-      localFilesWithContent.clear() // Once we've persisted the changes on the disk, clear the queue. I.e., keep the state where it should be – on the disk.
-      buildCliArgs(config)
-    }
 
     private def buildCliArgs(
                     config: String = "",
