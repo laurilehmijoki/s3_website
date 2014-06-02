@@ -20,11 +20,11 @@ object S3 {
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
     upload(Right(redirect))
 
-  def uploadFile(localFile: LocalFileFromDisk, a: Attempt = 1)
+  def uploadFile(localFile: LocalFile, a: Attempt = 1)
                     (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
     upload(Left(localFile))
 
-  def upload(source: Either[LocalFileFromDisk, Redirect], a: Attempt = 1)
+  def upload(source: Either[LocalFile, Redirect], a: Attempt = 1)
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
@@ -60,7 +60,7 @@ object S3 {
       retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
 
-  def toPutObjectRequest(source: Either[LocalFileFromDisk, Redirect])(implicit config: Config): Try[PutObjectRequest] =
+  def toPutObjectRequest(source: Either[LocalFile, Redirect])(implicit config: Config): Try[PutObjectRequest] =
     source.fold(
       localFile =>
         for {
