@@ -119,6 +119,7 @@ def autoinstall_java_or_print_help_and_exit(logger)
 
   def print_manual_method_and_exit
     @logger.info_msg 'Go to http://java.com, install Java and then try again.'
+    @logger.info_msg "(If you cannot or do not want to install Java, you can use latest 1.x version of this gem, which requires only Ruby. For more info, see https://github.com/laurilehmijoki/s3_website/tree/1.x)"
     exit 1
   end
 
