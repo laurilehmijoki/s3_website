@@ -33,4 +33,4 @@ release = client.create_release(
 )
 puts "Uploading s3_website.jar..."
 client.upload_asset(release[:url], 'target/scala-2.11/s3_website.jar')
-run "gem push pkg/s3_website_monadic-#{version}.gem"
+run "gem push pkg/s3_website-#{version}.gem"
