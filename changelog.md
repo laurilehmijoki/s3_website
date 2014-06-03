@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.0.1
+
+* Rename binary s3_website_monadic to s3_website
+
 ## 2.0.0
 
 ### New features
