@@ -1,10 +1,16 @@
-name := "s3_website_monadic"
+import AssemblyKeys._
+
+name := "s3_website"
 
 version := "0.0.1"
 
-scalaVersion := "2.11.0"
+scalaVersion := "2.11.1"
 
 scalacOptions += "-feature"
+
+scalacOptions += "-language:implicitConversions"
+
+scalacOptions += "-language:postfixOps"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.13"
 
@@ -20,4 +26,10 @@ libraryDependencies += "org.apache.tika" % "tika-core" % "1.4"
 
 libraryDependencies += "com.lexicalscope.jewelcli" % "jewelcli" % "0.8.9"
 
+libraryDependencies += "org.specs2" %% "specs2" % "2.3.11" % "test"
+
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+jarName in assembly := "s3_website.jar"
+
+test in assembly := {}

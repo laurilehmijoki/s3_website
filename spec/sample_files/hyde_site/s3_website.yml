@@ -1,3 +1,0 @@
-s3_id: <%= 'hello' %>
-s3_secret: <%= 'world' %>
-s3_bucket: galaxy

@@ -2,6 +2,69 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.0.0
+
+### New features
+
+* Faster uploads for extra large sites
+
+   Use a local database for calculating diffs. This removes the need to read all
+   the files of the website, when you call the `s3_website push` command.
+
+   Use proper multithreading with JVM threads.
+
+* Simulate deployments with `push --dry-run`
+
+* Support CloudFront invalidations when the site contains over 3000 files
+
+* Display transferred bytes
+
+* Display upload speed
+
+* `push --verbose` switch
+
+### Bug fixes
+
+* Fault tolerance – do not crash if one of the uploads fails
+
+   Before, the push command crashed if something unexpected happened. From now
+   on, s3_website will run all the operations it can, and report errors in the
+   end.
+
+### Java is now required
+
+* The `push` command is now written in Scala
+
+   This means that you need Java 1.6 or above to run the command `s3_website
+   push`.
+
+### Removed features
+
+* `extensionless_mime_type`
+
+    s3_website now relies on Apache Tika to infer the mime type.
+
+* the `--headless` switch on the command-line
+
+    s3_website always deletes the files that are on the S3 bucket but not on the local file system.
+    Use the settings `ignore_on_server` and `exclude_from_upload` to control the retained files.
+
+* You can no longer use this gem as a Ruby library. You can migrate by calling
+  the `s3_website push --site=x --config-dir=y` system command from your Ruby code.
+
+* `gzip_zopfli: true`
+
+    At the time of writing, there does not exist a stable zopfli implementation
+    for Java.
+
+## 1.8.1
+
+* Do not push the *.env* file
+
+## 1.8.0
+
+* Add support for (dotenv)[https://github.com/bkeepers/dotenv]
+
 ## 1.7.6
 
 * Remove a test setting from *Gemfile*

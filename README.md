@@ -17,8 +17,8 @@
 
     gem install s3_website
 
-`s3_website` requires Ruby. Here is documentation on installing Ruby:
-<http://www.ruby-lang.org/en/downloads/>.
+s3_website needs both [Ruby](https://www.ruby-lang.org/en/downloads/)
+and [Java](http://java.com) to run.
 
 ## Usage
 
@@ -32,11 +32,6 @@ Here's how you can get started:
 * Run `s3_website cfg apply`. This will configure your bucket to function as an
   S3 website. If the bucket does not exist, the command will create it for you.
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
-
-**Important security note:** if the source code of your website is publicly
-available, ensure that the `s3_website.yml` file is in the list of ignored files.
-For git users this means that the file `.gitignore` should mention the
-`s3_website.yml` file.
 
 ### For Jekyll users
 
@@ -70,6 +65,12 @@ s3_bucket: blog.example.com
 (If you are using `s3_website` on an [EC2 instance with IAM
 roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
 you can omit the `s3_id` and `s3_secret` keys in the config file.)
+
+S3_website implements supports for reading environment variables from a file using
+the [dotenv](https://github.com/bkeepers/dotenv) gem. You can create a `.env` file
+in the project's root directory to take advantage of this feature. Please have
+a look at [dotenv's usage guide](https://github.com/bkeepers/dotenv#usage) for
+syntax information.
 
 ## Project goals
 
@@ -139,25 +140,6 @@ gzip:
 
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
-
-#### Gzip zopfli
-
-By adding the line `gzip_zopfli: true` into the config file, you can benefit
-from the zopfli algorithm, which is 100% compatible with the traditional gzip
-algorithm. A zopfli compression takes longer but results in about 5% smaller
-files.
-
-### Specifying a MIME type for files without extensions
-
-`s3_website` will look up the MIME type of each file it uploads, and infer the Content-Type from it automatically. By default, files without an extension will have a blank Content-Type.
-
-You can specify a default MIME type for files without an extension using a line like this in `s3_website.yml`:
-
-```yaml
-extensionless_mime_type: text/html
-```
-
-This is useful when you are uploading HTML files for which you want 'clean' URLs, e.g. `www.domain.com/info`.
 
 ### Using non-standard AWS regions
 
@@ -279,15 +261,6 @@ index file, your source bucket in Cloudfront likely is pointing to the S3 Origin
 *example.com.s3.amazonaws.com*. Update the source to the S3 Website Endpoint,
 *e.g. example.com.s3-website-us-east-1.amazonaws.com*, to fix this.
 
-### The headless mode
-
-s3_website has a headless mode, where human interactions are disabled.
-
-In the headless mode, `s3_website` will automatically delete the files on the S3
-bucket that are not on your local computer.
-
-Enable the headless mode by adding the `--headless` argument after `s3_website`.
-
 ### Configuring redirects on your S3 website
 
 You can set HTTP redirects on your S3 website in two ways. If you only need
@@ -334,32 +307,6 @@ For more information on configuring redirects, see the documentation of the
 gem, which comes as a transitive dependency of the `s3_website` gem. (The
 command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
 
-### Using `s3_website` as a library
-
-By nature, `s3_website` is a command-line interface tool. You can, however, use
-it programmatically by calling the same API as the executable `s3_website` does:
-
-````ruby
-require 's3_website'
-is_headless = true
-S3Website::Tasks.push('/website/root', '/path/to/your/website/_site/', is_headless)
-````
-
-You can also use a basic `Hash` instead of a `s3_website.yml` file:
-
-```ruby
-config = {
-  "s3_id"     => YOUR_AWS_S3_ACCESS_KEY_ID,
-  "s3_secret" => YOUR_AWS_S3_SECRET_ACCESS_KEY,
-  "s3_bucket" => "your.blog.bucket.com"
-}
-in_headless = true
-S3Website::Uploader.run('/path/to/your/website/_site/', config, in_headless)
-```
-
-The code above will assume that you have the `s3_website.yml` in the directory
-`/path/to/your/website`.
-
 ### Specifying custom concurrency level
 
 By default, `s3_website` does 3 operations in parallel. An operation can be an
@@ -381,18 +328,41 @@ If you experience the "too many open files" error, either increase the amount of
 maximum open files (on Unix-like systems, see `man ulimit`) or decrease the
 `concurrency_level` setting.
 
+### Simulating deployments
+
+You can simulate the `s3_website push` operation by adding the
+`--dry-run` switch. The dry run mode will not apply any modifications on your S3
+bucket or CloudFront distribution. It will merely print out what the `push`
+operation would actually do if run without the dry switch.
+
+You can use the dry run mode if you are unsure what kind of effects the `push`
+operation would cause to your live website.
+
+## Migrating from v1 to v2
+
+Please read the [release note](/changelog.md#200) on version 2. It contains
+information on backward incompatible changes.
+
 ## Example configurations
 
 See
 <https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/example-configurations.md>.
 
+## On security
+
+If the source code of your website is publicly
+available, ensure that the `s3_website.yml` file is in the list of ignored files.
+For git users this means that the file `.gitignore` should mention the
+`s3_website.yml` file.
+
+If you use the .dotenv gem, ensure that you do not push the `.env` file to a
+public git repository.
+
 ## Known issues
 
 Please create an issue and send a pull request if you spot any.
 
-## Development
-
-### Versioning
+## Versioning
 
 s3_website uses [Semantic Versioning](http://semver.org).
 
@@ -400,10 +370,9 @@ In the spirit of semantic versioning, here is the definition of public API for
 s3_website: Within a major version, s3_website will not break
 backwards-compatibility of anything that is mentioned in this README file.
 
-### Tests
+## Development
 
-  * Install bundler and run `bundle install`
-  * Run all tests by invoking `rake test`
+See [development](additional-docs/development.md).
 
 ### Contributing
 
@@ -418,12 +387,6 @@ If you are not sure how to test your pull request, you can ask the [gem owners
 ](http://rubygems.org/gems/s3_website) to supplement the request with tests.
 However, by including proper tests, you increase the chances of your pull
 request being incorporated into future releases.
-
-#### Checklist for new features
-
-* Is it tested?
-* Is it documented in README?
-* Is it mentioned in `resources/configuration_file_template.yml`?
 
 ## License
 
@@ -444,6 +407,7 @@ Contributors (in alphabetical order)
 * Christopher Petersen
 * David Michael Barr
 * David Raffensperger
+* Douglas Teoh
 * Greg Karékinian
 * John Allison
 * Jordan White

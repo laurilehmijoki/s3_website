@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
-$:.push File.expand_path("../lib", __FILE__)
+require File.join([File.dirname(__FILE__),'lib','s3_website','version.rb'])
 
 Gem::Specification.new do |s|
   s.name        = "s3_website"
-  s.version     = "1.7.6"
+  s.version     = S3Website::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Lauri Lehmijoki"]
   s.email       = ["lauri.lehmijoki@iki.fi"]
@@ -15,27 +15,18 @@ Gem::Specification.new do |s|
   }
   s.license     = 'MIT'
 
-  s.default_executable = %q{s3_website}
+  s.default_executable = %q{s3_website_monadic}
 
-  s.add_dependency 'aws-sdk', '~> 1'
-  s.add_dependency 'filey-diff', '~> 2.0.0'
-  s.add_dependency 'simple-cloudfront-invalidator', '~> 1'
-  s.add_dependency 'erubis', '~> 2.7.0'
-  s.add_dependency 'mime-types', '~> 1'
   s.add_dependency 'thor', '= 0.18.1'
   s.add_dependency 'configure-s3-website', '= 1.5.5'
-  s.add_dependency 'zopfli', '~> 0.0.3'
+  s.add_dependency 'colored', '1.2'
+  s.add_dependency 'dotenv', '~> 0.11.1'
 
-  s.add_development_dependency 'rspec', '2.14.0'
-  s.add_development_dependency 'rspec-expectations', '2.14.4'
-  s.add_development_dependency 'cucumber', '1.3.10'
-  s.add_development_dependency 'aruba', '0.5.3'
   s.add_development_dependency 'rake', '10.1.1'
-  s.add_development_dependency 'vcr', '2.8.0'
-  s.add_development_dependency 'webmock', '1.16.1'
+  s.add_development_dependency 'octokit', '3.1.0'
 
-  s.files         = `git ls-files`.split("\n")
-  s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
+  s.files         = `git ls-files`.split("\n").reject { |f| f.match('sbt-launch.jar') }
+  s.test_files    = `git ls-files -- src/test/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 end
