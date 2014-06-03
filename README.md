@@ -343,7 +343,8 @@ Please read the [release note](/changelog.md#200) on version 2. It contains
 information on backward incompatible changes.
 
 You can find the v1 branch
-[here](https://github.com/laurilehmijoki/s3_website/tree/1.x).
+[here](https://github.com/laurilehmijoki/s3_website/tree/1.x). It's in
+maintenance mode. This means that v1 will see only critical bugfix releases.
 
 ## Example configurations
 
