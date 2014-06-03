@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/laurilehmijoki/s3_website.png?branch=master)](https://travis-ci.org/laurilehmijoki/s3_website)
 [![Gem Version](https://fury-badge.herokuapp.com/rb/s3_website.png)](http://badge.fury.io/rb/s3_website)
 
-## What `s3_website_monadic` can do for you
+## What `s3_website` can do for you
 
 * Create and configure an S3 website for you
 * Upload your static website to AWS S3
@@ -15,9 +15,9 @@
 
 ## Install
 
-    gem install s3_website_monadic
+    gem install s3_website
 
-s3_website_monadic needs both [Ruby](https://www.ruby-lang.org/en/downloads/)
+s3_website needs both [Ruby](https://www.ruby-lang.org/en/downloads/)
 and [Java](http://java.com) to run.
 
 ## Usage
@@ -27,11 +27,11 @@ Here's how you can get started:
 * Create API credentials that have sufficient permissions to S3. More info
   [here](https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/setting-up-aws-credentials.md).
 * Go to your website directory
-* Run `s3_website_monadic cfg create`. This generates a configuration file called `s3_website.yml`.
+* Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
-* Run `s3_website_monadic cfg apply`. This will configure your bucket to function as an
+* Run `s3_website cfg apply`. This will configure your bucket to function as an
   S3 website. If the bucket does not exist, the command will create it for you.
-* Run `s3_website_monadic push` to push your website to S3. Congratulations! You are live.
+* Run `s3_website push` to push your website to S3. Congratulations! You are live.
 
 ### For Jekyll users
 
@@ -46,11 +46,11 @@ S3_website will automatically discover your website in the *public/output* direc
 It's a good idea to store the `s3_website.yml` file in your project's root.
 Let's say the contents you wish to upload to your S3 website bucket are in
 *my_website_output*. You can upload the contents of that directory with
-`s3_website_monadic push --site my_website_output`.
+`s3_website push --site my_website_output`.
 
 If you want to store the `s3_website.yml` file in a directory other than
 the project's root you can specify the directory.
-`s3_website_monadic push --config_dir config`.
+`s3_website push --config_dir config`.
 
 ### Using environment variables
 
@@ -87,8 +87,8 @@ syntax information.
 * Be as fast as possible. Do in parallel all that can be done in parallel.
 * Maintain 90% backward compatibility with the jekyll-s3 gem
 
-`s3_website_monadic` attempts to be a command-line interface tool that is easy to
-understand and use. For example, `s3_website_monadic --help` should print you all the
+`s3_website` attempts to be a command-line interface tool that is easy to
+understand and use. For example, `s3_website --help` should print you all the
 things it can perform. Please create an issue if you think the tool is
 incomprehensible or inconsistent.
 
@@ -143,7 +143,7 @@ not the pre-processed extensions.
 
 ### Using non-standard AWS regions
 
-By default, `s3_website_monadic` uses the US Standard Region. You can upload your
+By default, `s3_website` uses the US Standard Region. You can upload your
 website to other regions by adding the setting `s3_endpoint` into the
 `s3_website.yml` file.
 
@@ -176,7 +176,7 @@ ignore_on_server:
 
 ### Excluding files from upload
 
-You can instruct `s3_website_monadic` not to push certain files:
+You can instruct `s3_website` not to push certain files:
 
 ```yaml
 exclude_from_upload: test
@@ -204,7 +204,7 @@ It is easy to deliver your S3-based web site via Cloudfront, the CDN of Amazon.
 
 #### Creating a new CloudFront distribution
 
-When you run the command `s3_website_monadic cfg apply`, it will ask you whether you
+When you run the command `s3_website cfg apply`, it will ask you whether you
 want to deliver your website via CloudFront. If you answer yes, the command will
 create a CloudFront distribution for you.
 
@@ -215,12 +215,12 @@ S3 bucket, just add the following line into the file `s3_website.yml`:
 
     cloudfront_distribution_id: your-dist-id
 
-Next time you run `s3_website_monadic push`, it will invalidate the items on CloudFront and
+Next time you run `s3_website push`, it will invalidate the items on CloudFront and
 thus force the CDN system to reload the changes from your website S3 bucket.
 
 #### Specifying custom settings for your CloudFront distribution
 
-`s3_website_monadic` lets you define custom settings for your CloudFront distribution.
+`s3_website` lets you define custom settings for your CloudFront distribution.
 
 For example, like this you can define a your own TTL and CNAME:
 
@@ -235,11 +235,11 @@ cloudfront_distribution_config:
 ```
 
 Once you've saved the configuration into `s3_website.yml`, you can apply them by
-running `s3_website_monadic cfg apply`.
+running `s3_website cfg apply`.
 
 #### Invalidating root resources instead of index.htmls
 
-By default, `s3_website_monadic push` calls the CloudFront invalidation API with the
+By default, `s3_website push` calls the CloudFront invalidation API with the
 file-name-as-it-is. This means that if your file is *article/index.html*, the
 push command will call the invalidation API on the resource
 *article/index.html*.
@@ -269,7 +269,7 @@ Redirects method. Otherwise, use the Routing Rules method.
 
 #### Simple Redirects
 
-For simple redirects `s3_website_monadic` uses Amazon S3's
+For simple redirects `s3_website` uses Amazon S3's
 [`x-amz-website-redirect-location`](http://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html)
 metadata. It will create zero-byte objects for each path you want
 redirected with the appropriate `x-amz-website-redirect-location` value.
@@ -299,17 +299,17 @@ routing_rules:
       http_redirect_code: 301
 ```
 
-After adding the configuration, run the command `s3_website_monadic cfg apply` on your
+After adding the configuration, run the command `s3_website cfg apply` on your
 command-line interface. This will apply the routing rules on your S3 bucket.
 
 For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
-gem, which comes as a transitive dependency of the `s3_website_monadic` gem. (The
-command `s3_website_monadic cfg apply` internally calls the `configure-s3-website` gem.)
+gem, which comes as a transitive dependency of the `s3_website` gem. (The
+command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
 
 ### Specifying custom concurrency level
 
-By default, `s3_website_monadic` does 3 operations in parallel. An operation can be an
+By default, `s3_website` does 3 operations in parallel. An operation can be an
 HTTP PUT operation against the S3 API, for example.
 
 You can increase the concurrency level by adding the following setting into the
@@ -330,7 +330,7 @@ maximum open files (on Unix-like systems, see `man ulimit`) or decrease the
 
 ### Simulating deployments
 
-You can simulate the `s3_website_monadic push` operation by adding the
+You can simulate the `s3_website push` operation by adding the
 `--dry-run` switch. The dry run mode will not apply any modifications on your S3
 bucket or CloudFront distribution. It will merely print out what the `push`
 operation would actually do if run without the dry switch.
@@ -364,10 +364,10 @@ Please create an issue and send a pull request if you spot any.
 
 ## Versioning
 
-s3_website_monadic uses [Semantic Versioning](http://semver.org).
+s3_website uses [Semantic Versioning](http://semver.org).
 
 In the spirit of semantic versioning, here is the definition of public API for
-s3_website: Within a major version, s3_website_monadic will not break
+s3_website: Within a major version, s3_website will not break
 backwards-compatibility of anything that is mentioned in this README file.
 
 ## Development
