@@ -17,6 +17,9 @@
 
     gem install s3_website_monadic
 
+s3_website_monadic needs both [Ruby](https://www.ruby-lang.org/en/downloads/)
+and [Java](http://java.com) to run.
+
 ## Usage
 
 Here's how you can get started:
