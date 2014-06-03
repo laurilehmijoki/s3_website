@@ -85,7 +85,6 @@ syntax information.
 * Let the power users benefit from advanced S3 website features such as
   redirects, Cache-Control headers and gzip support
 * Be as fast as possible. Do in parallel all that can be done in parallel.
-* Maintain 90% backward compatibility with the jekyll-s3 gem
 
 `s3_website` attempts to be a command-line interface tool that is easy to
 understand and use. For example, `s3_website --help` should print you all the
