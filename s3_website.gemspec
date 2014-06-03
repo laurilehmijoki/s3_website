@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   }
   s.license     = 'MIT'
 
-  s.default_executable = %q{s3_website_monadic}
+  s.default_executable = %q{s3_website}
 
   s.add_dependency 'thor', '= 0.18.1'
   s.add_dependency 'configure-s3-website', '= 1.5.5'
