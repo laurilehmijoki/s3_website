@@ -15,7 +15,7 @@
 
 ## Install
 
-    gem install s3_website
+    gem install s3_website -v '~> 1'
 
 `s3_website` requires Ruby. Here is documentation on installing Ruby:
 <http://www.ruby-lang.org/en/downloads/>.
