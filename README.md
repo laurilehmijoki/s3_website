@@ -342,6 +342,9 @@ operation would cause to your live website.
 Please read the [release note](/changelog.md#200) on version 2. It contains
 information on backward incompatible changes.
 
+You can find the v1 branch
+[here](https://github.com/laurilehmijoki/s3_website/tree/1.x).
+
 ## Example configurations
 
 See
