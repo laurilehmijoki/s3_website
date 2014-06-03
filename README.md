@@ -25,7 +25,7 @@ and [Java](http://java.com) to run.
 Here's how you can get started:
 
 * Create API credentials that have sufficient permissions to S3. More info
-  [here](https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/setting-up-aws-credentials.md).
+  [here](additional-docs/setting-up-aws-credentials.md).
 * Go to your website directory
 * Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
@@ -348,8 +348,7 @@ maintenance mode. This means that v1 will see only critical bugfix releases.
 
 ## Example configurations
 
-See
-<https://github.com/laurilehmijoki/s3_website/blob/master/additional-docs/example-configurations.md>.
+See [example-configurations](additional-docs/example-configurations.md).
 
 ## On security
 
