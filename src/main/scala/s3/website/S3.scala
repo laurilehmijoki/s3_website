@@ -18,13 +18,13 @@ object S3 {
 
   def uploadRedirect(redirect: Redirect, a: Attempt = 1)
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
-    upload(Right(redirect))
+    uploadToS3(Right(redirect))
 
-  def uploadFile(localFile: LocalFile, a: Attempt = 1)
+  def uploadFile(up: Upload, a: Attempt = 1)
                     (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
-    upload(Left(localFile))
+    uploadToS3(Left(up))
 
-  def upload(source: Either[LocalFile, Redirect], a: Attempt = 1)
+  def uploadToS3(source: Either[Upload, Redirect], a: Attempt = 1)
             (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
@@ -35,7 +35,7 @@ object S3 {
       val report = SuccessfulUpload(
         source.fold(_.s3Key, _.s3Key),
         source.fold(
-          localFile => Left(SuccessfulNewOrCreatedDetails(localFile.uploadType, localFile.uploadFile.get.length(), uploadDuration)),
+          upload => Left(SuccessfulNewOrCreatedDetails(upload.uploadType, upload.uploadFile.get.length(), uploadDuration)),
           redirect  => Right(SuccessfulRedirectDetails(redirect.uploadType, redirect.redirectTarget))
         ),
         putObjectRequest
@@ -44,7 +44,7 @@ object S3 {
       Right(report)
     } recoverWith retry(a)(
       createFailureReport = error => FailedUpload(source.fold(_.s3Key, _.s3Key), error),
-      retryAction  = newAttempt => this.upload(source, newAttempt)
+      retryAction  = newAttempt => this.uploadToS3(source, newAttempt)
     )
 
   def delete(s3Key: S3Key,  a: Attempt = 1)
@@ -60,18 +60,18 @@ object S3 {
       retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
 
-  def toPutObjectRequest(source: Either[LocalFile, Redirect])(implicit config: Config): Try[PutObjectRequest] =
+  def toPutObjectRequest(source: Either[Upload, Redirect])(implicit config: Config): Try[PutObjectRequest] =
     source.fold(
-      localFile =>
+      upload =>
         for {
-          uploadFile <- localFile.uploadFile
-          contentType <- localFile.contentType
+          uploadFile <- upload.uploadFile
+          contentType <- upload.contentType
         } yield {
           val md = new ObjectMetadata()
           md setContentLength uploadFile.length
           md setContentType contentType
-          localFile.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
-          localFile.maxAge foreach { seconds =>
+          upload.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
+          upload.maxAge foreach { seconds =>
             md.setCacheControl(
               if (seconds == 0)
                 s"no-cache; max-age=$seconds"
@@ -79,7 +79,7 @@ object S3 {
                 s"max-age=$seconds"
             )
           }
-          val req = new PutObjectRequest(config.s3_bucket, localFile.s3Key, new FileInputStream(uploadFile), md)
+          val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, new FileInputStream(uploadFile), md)
           config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
           req
         }

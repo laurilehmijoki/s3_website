@@ -7,7 +7,7 @@ import java.util.zip.GZIPOutputStream
 import org.apache.tika.Tika
 import s3.website.Ruby._
 import s3.website._
-import s3.website.model.LocalFile.tika
+import s3.website.model.Upload.tika
 import s3.website.model.Encoding.encodingOnS3
 import java.io.File.createTempFile
 import org.apache.commons.io.IOUtils.copy
@@ -50,7 +50,7 @@ case object RedirectFile extends UploadType {
   val pushAction = Redirected
 }
 
-case class LocalFile(originalFile: File, uploadType: UploadType)(implicit site: Site) {
+case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Site) {
   lazy val s3Key = site.resolveS3Key(originalFile)
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
@@ -60,7 +60,7 @@ case class LocalFile(originalFile: File, uploadType: UploadType)(implicit site: 
    *
    * May throw an exception, so remember to call this in a Try or Future monad
    */
-  lazy val uploadFile: Try[File] = LocalFile uploadFile originalFile
+  lazy val uploadFile: Try[File] = Upload uploadFile originalFile
 
   lazy val contentType: Try[String] = tika map { tika =>
     val mimeType = tika.detect(originalFile)
@@ -92,10 +92,10 @@ case class LocalFile(originalFile: File, uploadType: UploadType)(implicit site: 
   /**
    * May throw an exception, so remember to call this in a Try or Future monad
    */
-  lazy val md5 = LocalFile md5 originalFile
+  lazy val md5 = Upload md5 originalFile
 }
 
-object LocalFile {
+object Upload {
   lazy val tika = Try(new Tika())
 
   def md5(originalFile: File)(implicit site: Site): Try[MD5] =

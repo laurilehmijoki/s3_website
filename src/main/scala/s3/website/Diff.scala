@@ -19,7 +19,7 @@ case class Diff(
 
 object Diff {
 
-  type UploadBatch = Future[Either[ErrorReport, Seq[LocalFile]]]
+  type UploadBatch = Future[Either[ErrorReport, Seq[Upload]]]
 
   def resolveDiff(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
                  (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Either[ErrorReport, Diff] =
@@ -35,31 +35,31 @@ object Diff {
           val s3Md5Index = s3Files.map(_.md5).toSet
           val siteFiles = Files.listSiteFiles
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
-          val isChangedOnS3 = (localFile: LocalFile) => !(s3Md5Index contains localFile.md5.get)
-          val newFiles = siteFiles collect {
-            case file if !existsOnS3(file) => LocalFile(file, NewFile)
+          val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains upload.md5.get)
+          val newUploads = siteFiles collect {
+            case file if !existsOnS3(file) => Upload(file, NewFile)
           }
-          val changedFiles = siteFiles collect {
-            case file if existsOnS3(file) => LocalFile(file, FileUpdate)
+          val changedUploads = siteFiles collect {
+            case file if existsOnS3(file) => Upload(file, FileUpdate)
           } filter isChangedOnS3
           val unchangedFiles = {
-            val newOrChangedFiles = (changedFiles ++ newFiles).map(_.originalFile).toSet
+            val newOrChangedFiles = (changedUploads ++ newUploads).map(_.originalFile).toSet
             siteFiles.filterNot(f => newOrChangedFiles contains f)
           }
-          val allFiles: Seq[Either[DbRecord, LocalFile]] = unchangedFiles.map {
+          val recordsAndUploads: Seq[Either[DbRecord, Upload]] = unchangedFiles.map {
             f => Left(DbRecord(f))
-          } ++ (changedFiles ++ newFiles).map {
+          } ++ (changedUploads ++ newUploads).map {
             Right(_)
           }
-          LocalFileDatabase persist allFiles
-          allFiles
+          LocalFileDatabase persist recordsAndUploads
+          recordsAndUploads
         } match {
           case Success(ok) => Right(ok)
           case Failure(err) => Left(ErrorReport(err))
         }
       }
     }
-    def collectResult[B](pf: PartialFunction[Either[DbRecord, LocalFile],B]) =
+    def collectResult[B](pf: PartialFunction[Either[DbRecord, Upload],B]) =
       diffAgainstS3.map { errorOrDiffSource =>
         errorOrDiffSource.right map (_ collect pf)
       }
@@ -67,7 +67,7 @@ object Diff {
       case Left(dbRecord) => dbRecord.s3Key
     }
     val uploads: UploadBatch = collectResult {
-      case Right(localFile) => localFile
+      case Right(upload) => upload
     }
     Right(Diff(unchanged, uploads :: Nil, persistenceError = Future(None)))
   }
@@ -112,26 +112,26 @@ object Diff {
 
     def resolveDiffAgainstLocalDb(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
                                  (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Either[ErrorReport, Diff] = {
-      val localDiff: Either[ErrorReport, Seq[Either[DbRecord, LocalFile]]] =
+      val localDiff: Either[ErrorReport, Seq[Either[DbRecord, Upload]]] =
         (for {
           dbFile <- getOrCreateDbFile
           databaseIndices <- loadDbFromFile(dbFile)
         } yield {
           val siteFiles = Files.listSiteFiles
-          val recordsOrChangedFiles = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, LocalFile]]) { (localFiles, file) =>
+          val recordsOrUploads = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, Upload]]) { (recordsOrUps, file) =>
             val truncatedKey = TruncatedDbRecord(file)
             val fileIsUnchanged = databaseIndices.truncatedIndex contains truncatedKey
             if (fileIsUnchanged)
-              localFiles :+ Left(databaseIndices.fullIndex find (_.truncated == truncatedKey) get)
+              recordsOrUps :+ Left(databaseIndices.fullIndex find (_.truncated == truncatedKey) get)
             else {
               val uploadType =
                 if (databaseIndices.s3KeyIndex contains truncatedKey.s3Key) FileUpdate
                 else NewFile
-              localFiles :+ Right(LocalFile(file, uploadType))
+              recordsOrUps :+ Right(Upload(file, uploadType))
             }
           }
-          logger.debug(s"Discovered ${siteFiles.length} files on the local site, of which ${recordsOrChangedFiles count (_.isRight)} are new or changed")
-          recordsOrChangedFiles
+          logger.debug(s"Discovered ${siteFiles.length} files on the local site, of which ${recordsOrUploads count (_.isRight)} are new or changed")
+          recordsOrUploads
         }) match {
           case Success(ok) => Right(ok)
           case Failure(err) => Left(ErrorReport(err))
@@ -146,7 +146,7 @@ object Diff {
           case Right(f) => f
         }
 
-        val changesMissedByLocalDiff: Future[Either[ErrorReport, Seq[LocalFile]]] = s3FilesFuture.map { errorOrS3Files =>
+        val changesMissedByLocalDiff: Future[Either[ErrorReport, Seq[Upload]]] = s3FilesFuture.map { errorOrS3Files =>
           for (s3Files <- errorOrS3Files.right) yield {
             val remoteS3Keys = s3Files.map(_.s3Key).toSet
             val localS3Keys = unchangedAccordingToLocalDiff.map(_.s3Key).toSet
@@ -154,11 +154,11 @@ object Diff {
             def isChangedOnS3(s3File: S3File) = (localS3Keys contains s3File.s3Key) && !(localMd5 contains s3File.md5)
             val changedOnS3 = s3Files collect {
               case s3File if isChangedOnS3(s3File) =>
-                LocalFile(site resolveFile s3File, FileUpdate)
+                Upload(site resolveFile s3File, FileUpdate)
             }
             val missingFromS3 = localS3Keys collect {
               case localS3Key if !(remoteS3Keys contains localS3Key) =>
-                LocalFile(site resolveFile localS3Key, NewFile)
+                Upload(site resolveFile localS3Key, NewFile)
 
             }
             changedOnS3 ++ missingFromS3
@@ -177,23 +177,23 @@ object Diff {
         val unchangedFilesFinal = errorOrDiffAgainstS3 map {
           _ fold (
             (error: ErrorReport) => Left(error),
-            (syncResult: (Seq[DbRecord], Seq[LocalFile])) => Right(syncResult._1)
+            (syncResult: (Seq[DbRecord], Seq[Upload])) => Right(syncResult._1)
           )
         }
 
-        val changedAccordingToS3Diff = errorOrDiffAgainstS3.map {
+        val uploadsAccordingToS3Diff = errorOrDiffAgainstS3.map {
           _ fold (
             (error: ErrorReport) => Left(error),
-            (syncResult: (Seq[DbRecord], Seq[LocalFile])) => Right(syncResult._2)
+            (syncResult: (Seq[DbRecord], Seq[Upload])) => Right(syncResult._2)
           )
         }
         val persistenceError: Future[Either[ErrorReport, _]] = for {
           unchanged <- unchangedFilesFinal
-          changedAccordingToS3 <- changedAccordingToS3Diff
+          uploads <- uploadsAccordingToS3Diff
         } yield
           for {
             records1 <- unchanged.right
-            records2 <- changedAccordingToS3.right
+            records2 <- uploads.right
           } yield
             persist(records1.map(Left(_)) ++ records2.map(Right(_)) ++ uploadsAccordingToLocalDiff.map(Right(_))) match {
               case Success(_)   => Unit
@@ -201,7 +201,7 @@ object Diff {
             }
         Diff(
           unchangedFilesFinal map (_.right.map(_ map (_.s3Key))),
-          uploads = Future(Right(uploadsAccordingToLocalDiff)) :: changedAccordingToS3Diff :: Nil,
+          uploads = Future(Right(uploadsAccordingToLocalDiff)) :: uploadsAccordingToS3Diff :: Nil,
           persistenceError = persistenceError map (_.left.toOption)
         )
       }
@@ -241,19 +241,19 @@ object Diff {
         )
       }
 
-    def persist(recordsOrChangedFiles: Seq[Either[DbRecord, LocalFile]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, LocalFile]]] =
+    def persist(recordsOrUploads: Seq[Either[DbRecord, Upload]])(implicit site: Site, logger: Logger): Try[Seq[Either[DbRecord, Upload]]] =
       getOrCreateDbFile flatMap { dbFile =>
         Try {
-          val dbFileContents = recordsOrChangedFiles.map { recordOrChangedFile =>
-            val record: DbRecord = recordOrChangedFile fold(
+          val dbFileContents = recordsOrUploads.map { recordOrUpload =>
+            val record: DbRecord = recordOrUpload fold(
               record => record,
-              changedFile => DbRecord(changedFile.s3Key, changedFile.originalFile.length, changedFile.originalFile.lastModified, changedFile.md5.get)
+              upload => DbRecord(upload.s3Key, upload.originalFile.length, upload.originalFile.lastModified, upload.md5.get)
               )
             record.s3Key :: record.fileLength :: record.fileModified :: record.uploadFileMd5 :: Nil mkString "|"
           } mkString "\n"
 
           write(dbFile, dbFileContents)
-          recordsOrChangedFiles
+          recordsOrUploads
         }
       }
   }
@@ -275,6 +275,6 @@ object Diff {
   
   object DbRecord {
     def apply(original: File)(implicit site: Site): DbRecord =
-      DbRecord(site resolveS3Key original, original.length, original.lastModified, LocalFile.md5(original).get)
+      DbRecord(site resolveS3Key original, original.length, original.lastModified, Upload.md5(original).get)
   }
 }
