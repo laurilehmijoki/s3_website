@@ -37,10 +37,10 @@ object Diff {
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
           val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains upload.md5.get)
           val newUploads = siteFiles collect {
-            case file if !existsOnS3(file) => Upload(file, NewFile)
+            case file if !existsOnS3(file) => Upload(file, NewFile, reasonForUpload = "the file is missing from S3")
           }
           val changedUploads = siteFiles collect {
-            case file if existsOnS3(file) => Upload(file, FileUpdate)
+            case file if existsOnS3(file) => Upload(file, FileUpdate, reasonForUpload = "the S3 bucket has different contents for this file")
           } filter isChangedOnS3
           val unchangedFiles = {
             val newOrChangedFiles = (changedUploads ++ newUploads).map(_.originalFile).toSet
@@ -124,10 +124,12 @@ object Diff {
             if (fileIsUnchanged)
               recordsOrUps :+ Left(databaseIndices.fullIndex find (_.truncated == truncatedKey) get)
             else {
+              val isUpdate = databaseIndices.s3KeyIndex contains truncatedKey.s3Key
+
               val uploadType =
-                if (databaseIndices.s3KeyIndex contains truncatedKey.s3Key) FileUpdate
+                if (isUpdate) FileUpdate
                 else NewFile
-              recordsOrUps :+ Right(Upload(file, uploadType))
+              recordsOrUps :+ Right(Upload(file, uploadType, reasonForUpload(truncatedKey, databaseIndices, isUpdate)))
             }
           }
           logger.debug(s"Discovered ${siteFiles.length} files on the local site, of which ${recordsOrUploads count (_.isRight)} are new or changed")
@@ -154,11 +156,11 @@ object Diff {
             def isChangedOnS3(s3File: S3File) = (localS3Keys contains s3File.s3Key) && !(localMd5 contains s3File.md5)
             val changedOnS3 = s3Files collect {
               case s3File if isChangedOnS3(s3File) =>
-                Upload(site resolveFile s3File, FileUpdate)
+                Upload(site resolveFile s3File, FileUpdate, reasonForUpload = "someone else has modified the file on the S3 bucket")
             }
             val missingFromS3 = localS3Keys collect {
               case localS3Key if !(remoteS3Keys contains localS3Key) =>
-                Upload(site resolveFile localS3Key, NewFile)
+                Upload(site resolveFile localS3Key, NewFile, reasonForUpload = "someone else has removed the file from the S3 bucket")
 
             }
             changedOnS3 ++ missingFromS3
@@ -207,6 +209,22 @@ object Diff {
       }
     }
 
+    private def reasonForUpload(truncatedKey: TruncatedDbRecord, databaseIndices: DbIndices, isUpdate: Boolean) = {
+      if (isUpdate) {
+        val lengthChanged = !(databaseIndices.fileLenghtIndex contains truncatedKey.fileLength)
+        val mtimeChanged = !(databaseIndices.lastModifiedIndex contains truncatedKey.fileModified)
+        if (lengthChanged)
+          "file length has changed according to the local database"
+        else if (mtimeChanged)
+          "file mtime has changed according to the local database"
+        else if (mtimeChanged && lengthChanged)
+          "file mtime and length have changed according to the local database"
+        else
+          "programmer error: faulty logic in inferring the reason for upload"
+      }
+      else "file is new according to the local database"
+    }
+
     private def getOrCreateDbFile(implicit site: Site, logger: Logger) =
       Try {
         val dbFile = new File(getTempDirectory, "s3_website_local_db_" + sha256Hex(site.rootDirectory))
@@ -216,9 +234,11 @@ object Diff {
       }
     
     case class DbIndices(
-      s3KeyIndex:     Set[S3Key],
-      truncatedIndex: Set[TruncatedDbRecord],
-      fullIndex:      Set[DbRecord]
+      s3KeyIndex:        Set[S3Key],
+      fileLenghtIndex:   Set[Long],
+      lastModifiedIndex: Set[Long],
+      truncatedIndex:    Set[TruncatedDbRecord],
+      fullIndex:         Set[DbRecord]
     ) 
 
     private def loadDbFromFile(databaseFile: File)(implicit site: Site, logger: Logger): Try[DbIndices] =
@@ -237,7 +257,9 @@ object Diff {
         DbIndices(
           s3KeyIndex = fullIndex map (_.s3Key), 
           truncatedIndex = fullIndex map (TruncatedDbRecord(_)),
-          fullIndex
+          fileLenghtIndex = fullIndex map (_.fileLength),
+          lastModifiedIndex = fullIndex map (_.fileModified),
+          fullIndex = fullIndex
         )
       }
 

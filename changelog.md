@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.0
+
+* Show the upload reason when calling `push --verbose`
+
 ## 2.0.1
 
 * Rename binary s3_website_monadic to s3_website
