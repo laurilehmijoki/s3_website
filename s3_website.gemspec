@@ -25,7 +25,12 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake', '10.1.1'
   s.add_development_dependency 'octokit', '3.1.0'
 
-  s.files         = `git ls-files`.split("\n").reject { |f| f.match('sbt-launch.jar') }
+  s.files         = `git ls-files`
+                      .split("\n")
+                      # Reject the SBT jar, as it is a big file.
+                      .reject { |f| f.match('sbt-launch.jar') }
+                      # Include the checksum file in the gem:
+                      .push('resources/s3_website.jar.md5')
   s.test_files    = `git ls-files -- src/test/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]

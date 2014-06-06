@@ -9,3 +9,7 @@ Gemfile.lock
 target
 .idea_modules
 .vagrant
+
+# The checksum is unique to each build, and we don't store builds in git.
+# Consequently, ignore the checksum file.
+resources/s3_website.jar.md5

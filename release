@@ -16,8 +16,13 @@ def run(cmd)
 end
 
 puts "Building s3_website.jar..."
+jar_location = 'target/scala-2.11/s3_website.jar'
 run "./sbt clean"
 run "./sbt assembly"
+
+# The bin s3_website uses the MD5 checksum to verify that the jar is not corrupted
+jar_md5 = Digest::MD5.file(jar_location).hexdigest
+File.write('resources/s3_website.jar.md5', jar_md5)
 
 tag_name = "v#{version}"
 run "git tag #{tag_name} && git push origin #{tag_name}"
@@ -32,5 +37,5 @@ release = client.create_release(
   :body => "See https://github.com/laurilehmijoki/s3_website/blob/master/changelog.md##{version.gsub('.', '')}"
 )
 puts "Uploading s3_website.jar..."
-client.upload_asset(release[:url], 'target/scala-2.11/s3_website.jar')
+client.upload_asset(release[:url], jar_location)
 run "gem push pkg/s3_website-#{version}.gem"

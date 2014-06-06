@@ -2,6 +2,7 @@
 
 require File.expand_path(File.dirname(__FILE__)+ '/../lib/s3_website')
 require 'colored'
+require 'digest/md5'
 
 class Cfg < Thor
   desc 'create', 'Create a config file with placeholder values'
@@ -157,8 +158,18 @@ def resolve_jar(project_root, logger)
       File.exists? jar_path
     }.
     first
+  def jar_has_valid_checksum(jar_path, logger)
+    expected_checksum = File.read(File.dirname(__FILE__) + '/../resources/s3_website.jar.md5')
+    found_checksum = Digest::MD5.file(jar_path).hexdigest
+    if expected_checksum == found_checksum
+      true
+    else
+      logger.info_msg "The jar file has invalid checksum. Expected #{expected_checksum} but got #{found_checksum}"
+      false
+    end
+  end
   jar_file =
-    if found_jar
+    if found_jar and jar_has_valid_checksum(found_jar, logger)
       found_jar
     else
       is_development = File.exists?(project_root + '/.git')
