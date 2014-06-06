@@ -164,7 +164,7 @@ def resolve_jar(project_root, logger)
     if expected_checksum == found_checksum
       true
     else
-      logger.info_msg "The jar is corrupted. (Expected checksum #{expected_checksum} but got #{found_checksum}.)"
+      logger.info_msg "The jar file is corrupted. (Expected checksum #{expected_checksum} but got #{found_checksum}.)"
       false
     end
   end
