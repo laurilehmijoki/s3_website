@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.2
+
+* Show a more informative message if the jar file is corrupted.
+
 ## 2.1.1
 
 * Verify that the s3_website.jar is not corrupted. Download it again, if it is.
