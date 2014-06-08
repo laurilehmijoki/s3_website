@@ -222,7 +222,7 @@ object Diff {
         else
           "programmer error: faulty logic in inferring the reason for upload"
       }
-      else "file is new according"
+      else "file is new"
     }
 
     private def getOrCreateDbFile(implicit site: Site, logger: Logger) =
