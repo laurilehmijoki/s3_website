@@ -8,7 +8,7 @@ import java.io.File
 import org.apache.commons.io.FileUtils._
 import org.apache.commons.codec.digest.DigestUtils._
 import scala.io.Source
-import s3.website.Diff.LocalFileDatabase.resolveDiffAgainstLocalDb
+import s3.website.Diff.LocalFileDatabase.{DbRecord, resolveDiffAgainstLocalDb}
 import s3.website.Diff.UploadBatch
 
 case class Diff(
@@ -58,7 +58,7 @@ object Diff {
         }
       }
     }
-    def collectResult[B](pf: PartialFunction[Either[DbRecord, Upload],B]) =
+    def collectResult[B](pf: PartialFunction[Either[DbRecord, Upload], B]) =
       diffAgainstS3.map { errorOrDiffSource =>
         errorOrDiffSource.right map (_ collect pf)
       }
@@ -75,7 +75,9 @@ object Diff {
       for {
         remoteS3Keys <- s3Files.right.map(_ map (_.s3Key)).right
       } yield {
-        val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
+        val keysToRetain = (localS3Keys ++ (redirects map {
+          _.s3Key
+        })).toSet
         remoteS3Keys filterNot { s3Key =>
           val ignoreOnServer = site.config.ignore_on_server.exists(_.fold(
             (ignoreRegex: String) => rubyRegexMatches(s3Key, ignoreRegex),
@@ -124,15 +126,14 @@ object Diff {
         }
 
       localDiff.right map { localDiffResult =>
-        val unchangedAccordingToLocalDiff = localDiffResult collect {
-          case Left(f) => f
-        }
-
         val uploadsAccordingToLocalDiff = localDiffResult collect {
           case Right(f) => f
         }
 
-        val changesMissedByLocalDiff: Future[Either[ErrorReport, Seq[Upload]]] = s3FilesFuture.map { errorOrS3Files =>
+        val uploadsAccordingToS3Diff: Future[Either[ErrorReport, Seq[Upload]]] = s3FilesFuture.map { errorOrS3Files =>
+          val unchangedAccordingToLocalDiff = localDiffResult collect {
+            case Left(f) => f
+          }
           for (s3Files <- errorOrS3Files.right) yield {
             val remoteS3Keys = s3Files.map(_.s3Key).toSet
             val localS3Keys = unchangedAccordingToLocalDiff.map(_.s3Key).toSet
@@ -151,38 +152,14 @@ object Diff {
           }
         }
 
-        val errorOrDiffAgainstS3 =
-          changesMissedByLocalDiff map { errorOrUploads =>
-            errorOrUploads.right map { uploadsMissedByLocalDiff =>
-              val uploadsS3KeyIndex = uploadsMissedByLocalDiff.map(_.s3Key).toSet
-              val unchangedAccordingToLocalAndS3Diff = unchangedAccordingToLocalDiff.filterNot(uploadsS3KeyIndex contains _.s3Key)
-              (unchangedAccordingToLocalAndS3Diff, uploadsMissedByLocalDiff)
-            }
-          }
-
-        val unchangedFilesFinal = errorOrDiffAgainstS3 map {
-          _ fold (
-            (error: ErrorReport) => Left(error),
-            (syncResult: (Seq[DbRecord], Seq[Upload])) => Right(syncResult._1)
-          )
-        }
-
-        val uploadsAccordingToS3Diff = errorOrDiffAgainstS3.map {
-          _ fold (
-            (error: ErrorReport) => Left(error),
-            (syncResult: (Seq[DbRecord], Seq[Upload])) => Right(syncResult._2)
-          )
-        }
         val persistenceError: Future[Either[ErrorReport, _]] = for {
-          unchanged <- unchangedFilesFinal
-          uploads <- uploadsAccordingToS3Diff
+          errorOrUploadsAccordingToS3 <- uploadsAccordingToS3Diff
         } yield
           for {
-            records1 <- unchanged.right
-            records2 <- uploads.right
+            uploadsAccordingToS3 <- errorOrUploadsAccordingToS3.right
           } yield
-            persist(records1.map(Left(_)) ++ records2.map(Right(_)) ++ uploadsAccordingToLocalDiff.map(Right(_))) match {
-              case Success(_)   => Unit
+            persistUploads(uploadsAccordingToS3 ++ uploadsAccordingToLocalDiff) match {
+              case Success(_) => Unit
               case Failure(err) => ErrorReport(err)
             }
         Diff(
@@ -197,9 +174,9 @@ object Diff {
         val lengthChanged = !(databaseIndices.fileLenghtIndex contains truncatedKey.fileLength)
         val mtimeChanged = !(databaseIndices.lastModifiedIndex contains truncatedKey.fileModified)
         if (mtimeChanged && lengthChanged) LocalLengthAndMtimeChanged
-        else if (lengthChanged)            LocalLengthChanged
-        else if (mtimeChanged)             LocalMtimeChanged
-        else                               UnknownReason
+        else if (lengthChanged) LocalLengthChanged
+        else if (mtimeChanged) LocalMtimeChanged
+        else UnknownReason
       }
       else FileIsNew
     }
@@ -211,14 +188,14 @@ object Diff {
         dbFile.createNewFile()
         dbFile
       }
-    
+
     case class DbIndices(
-      s3KeyIndex:        Set[S3Key],
-      fileLenghtIndex:   Set[Long],
-      lastModifiedIndex: Set[Long],
-      truncatedIndex:    Set[TruncatedDbRecord],
-      fullIndex:         Set[DbRecord]
-    ) 
+                          s3KeyIndex: Set[S3Key],
+                          fileLenghtIndex: Set[Long],
+                          lastModifiedIndex: Set[Long],
+                          truncatedIndex: Set[TruncatedDbRecord],
+                          fullIndex: Set[DbRecord]
+                          )
 
     private def loadDbFromFile(databaseFile: File)(implicit site: Site, logger: Logger): Try[DbIndices] =
       Try {
@@ -229,12 +206,12 @@ object Diff {
           .getLines()
           .toStream
           .map {
-            case RecordRegex(s3Key, fileLength, fileModified, md5) =>
-              DbRecord(s3Key, fileLength.toLong, fileModified.toLong, md5)
-          }
+          case RecordRegex(s3Key, fileLength, fileModified, md5) =>
+            DbRecord(s3Key, fileLength.toLong, fileModified.toLong, md5)
+        }
           .toSet
         DbIndices(
-          s3KeyIndex = fullIndex map (_.s3Key), 
+          s3KeyIndex = fullIndex map (_.s3Key),
           truncatedIndex = fullIndex map (TruncatedDbRecord(_)),
           fileLenghtIndex = fullIndex map (_.fileLength),
           lastModifiedIndex = fullIndex map (_.fileModified),
@@ -248,34 +225,53 @@ object Diff {
           val dbFileContents = recordsOrUploads.map { recordOrUpload =>
             val record: DbRecord = recordOrUpload fold(
               record => record,
-              upload => DbRecord(upload.s3Key, upload.originalFile.length, upload.originalFile.lastModified, upload.md5.get)
+              upload => DbRecord(upload)
               )
-            record.s3Key :: record.fileLength :: record.fileModified :: record.uploadFileMd5 :: Nil mkString "|"
+            record.asString
           } mkString "\n"
 
           write(dbFile, dbFileContents)
           recordsOrUploads
         }
       }
-  }
 
-  case class TruncatedDbRecord(s3Key: String, fileLength: Long, fileModified: Long)
+    def persistUploads(uploads: Seq[Upload])(implicit site: Site, logger: Logger): Try[Unit] =
+      (for {
+        dbFile <- getOrCreateDbFile
+        databaseIndices <- loadDbFromFile(dbFile)
+      } yield {
+        val changedRecords = uploads map (DbRecord(_))
+        val changedS3KeysIndex = changedRecords.map(_.s3Key).toSet
+        val unchangedRecords = databaseIndices.fullIndex.filterNot(changedS3KeysIndex contains _.s3Key)
+        val dbFileContents = (changedRecords ++ unchangedRecords).map(_.asString).mkString("\n")
+        Try(
+          write(dbFile, dbFileContents)
+        )
+      }).flatten
 
-  object TruncatedDbRecord {
-    def apply(dbRecord: DbRecord): TruncatedDbRecord = TruncatedDbRecord(dbRecord.s3Key, dbRecord.fileLength, dbRecord.fileModified)
-    
-    def apply(file: File)(implicit site: Site): TruncatedDbRecord = TruncatedDbRecord(site resolveS3Key file, file.length, file.lastModified)
-  }
+    case class TruncatedDbRecord(s3Key: String, fileLength: Long, fileModified: Long)
 
-  /**
-   * @param uploadFileMd5 if the file is gzipped, this checksum should be calculated on the gzipped file, not the original file
-   */
-  case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long, uploadFileMd5: MD5) {
-    lazy val truncated = TruncatedDbRecord(s3Key, fileLength, fileModified)
-  }
-  
-  object DbRecord {
-    def apply(original: File)(implicit site: Site): DbRecord =
-      DbRecord(site resolveS3Key original, original.length, original.lastModified, Upload.md5(original).get)
+    object TruncatedDbRecord {
+      def apply(dbRecord: DbRecord): TruncatedDbRecord = TruncatedDbRecord(dbRecord.s3Key, dbRecord.fileLength, dbRecord.fileModified)
+
+      def apply(file: File)(implicit site: Site): TruncatedDbRecord = TruncatedDbRecord(site resolveS3Key file, file.length, file.lastModified)
+    }
+
+    /**
+     * @param uploadFileMd5 if the file is gzipped, this checksum should be calculated on the gzipped file, not the original file
+     */
+    case class DbRecord(s3Key: String, fileLength: Long, fileModified: Long, uploadFileMd5: MD5) {
+      lazy val truncated = TruncatedDbRecord(s3Key, fileLength, fileModified)
+
+      lazy val asString = (s3Key :: fileLength :: fileModified :: uploadFileMd5 :: Nil).mkString("|")
+    }
+
+    object DbRecord {
+      def apply(original: File)(implicit site: Site): DbRecord =
+        DbRecord(site resolveS3Key original, original.length, original.lastModified, Upload.md5(original).get)
+
+      def apply(upload: Upload): DbRecord =
+        DbRecord(upload.s3Key, upload.originalFile.length, upload.originalFile.lastModified, upload.md5.get)
+    }
   }
 }
