@@ -214,15 +214,15 @@ object Diff {
         val lengthChanged = !(databaseIndices.fileLenghtIndex contains truncatedKey.fileLength)
         val mtimeChanged = !(databaseIndices.lastModifiedIndex contains truncatedKey.fileModified)
         if (mtimeChanged && lengthChanged)
-          "file mtime and length have changed according to the local database"
+          "file mtime and length have changed"
         else if (lengthChanged)
-          "file length has changed according to the local database"
+          "file length has changed"
         else if (mtimeChanged)
-          "file mtime has changed according to the local database"
+          "file mtime has changed"
         else
           "programmer error: faulty logic in inferring the reason for upload"
       }
-      else "file is new according to the local database"
+      else "file is new according"
     }
 
     private def getOrCreateDbFile(implicit site: Site, logger: Logger) =
