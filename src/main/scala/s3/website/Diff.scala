@@ -36,10 +36,10 @@ object Diff {
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
           val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains upload.md5.get)
           val newUploads = siteFiles collect {
-            case file if !existsOnS3(file) => Upload(file, NewFile, reasonForUpload = "the file is missing from S3")
+            case file if !existsOnS3(file) => Upload(file, NewFile, reasonForUpload = DeletedOnS3)
           }
           val changedUploads = siteFiles collect {
-            case file if existsOnS3(file) => Upload(file, FileUpdate, reasonForUpload = "the S3 bucket has different contents for this file")
+            case file if existsOnS3(file) => Upload(file, FileUpdate, reasonForUpload = Md5ChangedOnS3)
           } filter isChangedOnS3
           val unchangedFiles = {
             val newOrChangedFiles = (changedUploads ++ newUploads).map(_.originalFile).toSet
@@ -140,11 +140,11 @@ object Diff {
             def isChangedOnS3(s3File: S3File) = (localS3Keys contains s3File.s3Key) && !(localMd5 contains s3File.md5)
             val changedOnS3 = s3Files collect {
               case s3File if isChangedOnS3(s3File) =>
-                Upload(site resolveFile s3File, FileUpdate, reasonForUpload = "someone else has modified the file on the S3 bucket")
+                Upload(site resolveFile s3File, FileUpdate, reasonForUpload = Md5ChangedOnS3)
             }
             val missingFromS3 = localS3Keys collect {
               case localS3Key if !(remoteS3Keys contains localS3Key) =>
-                Upload(site resolveFile localS3Key, NewFile, reasonForUpload = "someone else has removed the file from the S3 bucket")
+                Upload(site resolveFile localS3Key, NewFile, reasonForUpload = DeletedOnS3)
 
             }
             changedOnS3 ++ missingFromS3
@@ -196,16 +196,12 @@ object Diff {
       if (isUpdate) {
         val lengthChanged = !(databaseIndices.fileLenghtIndex contains truncatedKey.fileLength)
         val mtimeChanged = !(databaseIndices.lastModifiedIndex contains truncatedKey.fileModified)
-        if (mtimeChanged && lengthChanged)
-          "file mtime and length have changed"
-        else if (lengthChanged)
-          "file length has changed"
-        else if (mtimeChanged)
-          "file mtime has changed"
-        else
-          "programmer error: faulty logic in inferring the reason for upload"
+        if (mtimeChanged && lengthChanged) LocalLengthAndMtimeChanged
+        else if (lengthChanged)            LocalLengthChanged
+        else if (mtimeChanged)             LocalMtimeChanged
+        else                               UnknownReason
       }
-      else "file is new"
+      else FileIsNew
     }
 
     private def getOrCreateDbFile(implicit site: Site, logger: Logger) =

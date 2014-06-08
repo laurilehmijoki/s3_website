@@ -35,6 +35,23 @@ object Encoding {
     }
 }
 
+sealed trait ReasonForUpload {
+  override def toString =
+    getClass
+      .getSimpleName
+      .replace("$", "") // case object class names have the dollar
+      .replaceAll("([A-Z])", " $1")
+      .toLowerCase
+      .trim
+}
+case object Md5ChangedOnS3 extends ReasonForUpload
+case object DeletedOnS3 extends ReasonForUpload
+case object LocalMtimeChanged extends ReasonForUpload
+case object LocalLengthChanged extends ReasonForUpload
+case object LocalLengthAndMtimeChanged extends ReasonForUpload
+case object FileIsNew extends ReasonForUpload
+case object UnknownReason extends ReasonForUpload
+
 sealed trait UploadType {
   val pushAction: PushAction
 }
@@ -50,7 +67,7 @@ case object RedirectFile extends UploadType {
   val pushAction = Redirected
 }
 
-case class Upload(originalFile: File, uploadType: UploadType, reasonForUpload: String)(implicit site: Site) {
+case class Upload(originalFile: File, uploadType: UploadType, reasonForUpload: ReasonForUpload)(implicit site: Site) {
   lazy val s3Key = site.resolveS3Key(originalFile)
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)

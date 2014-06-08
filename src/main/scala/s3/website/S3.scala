@@ -146,7 +146,7 @@ object S3 {
   }
 
   case class SuccessfulRedirectDetails(uploadType: UploadType, redirectTarget: String)
-  case class SuccessfulNewOrCreatedDetails(uploadType: UploadType, uploadSize: Long, uploadDuration: Option[Long], reasonForUpload: String)
+  case class SuccessfulNewOrCreatedDetails(uploadType: UploadType, uploadSize: Long, uploadDuration: Option[Long], reasonForUpload: ReasonForUpload)
 
   case class SuccessfulUpload(s3Key: S3Key,
                               details: Either[SuccessfulNewOrCreatedDetails, SuccessfulRedirectDetails],
