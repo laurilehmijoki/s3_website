@@ -12,7 +12,6 @@ import s3.website.Diff.LocalFileDatabase.resolveDiffAgainstLocalDb
 import s3.website.Diff.UploadBatch
 
 case class Diff(
-  unchanged: Future[Either[ErrorReport, Seq[S3Key]]],
   uploads: Seq[UploadBatch],
   persistenceError: Future[Option[ErrorReport]]
 )
@@ -63,36 +62,22 @@ object Diff {
       diffAgainstS3.map { errorOrDiffSource =>
         errorOrDiffSource.right map (_ collect pf)
       }
-    val unchanged = collectResult {
-      case Left(dbRecord) => dbRecord.s3Key
-    }
     val uploads: UploadBatch = collectResult {
       case Right(upload) => upload
     }
-    Right(Diff(unchanged, uploads :: Nil, persistenceError = Future(None)))
+    Right(Diff(uploads :: Nil, persistenceError = Future(None)))
   }
 
   def resolveDeletes(diff: Diff, s3Files: Future[Either[ErrorReport, Seq[S3File]]], redirects: Seq[Redirect])
-                    (implicit config: Config, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] = {
-    val localKeys = for {
-      errorOrUnchanged <- diff.unchanged
-      errorsOrChanges  <- Future.sequence(diff.uploads)
-    } yield
-      errorsOrChanges.foldLeft(errorOrUnchanged: Either[ErrorReport, Seq[S3Key]]) { (memo, errorOrChanges) =>
-        for {
-          mem <- memo.right
-          keysToDelete <- errorOrChanges.right
-        } yield mem ++ keysToDelete.map(_.s3Key)
-      }
-
-    s3Files zip localKeys map { (s3Files: Either[ErrorReport, Seq[S3File]], errorOrLocalKeys: Either[ErrorReport, Seq[S3Key]]) =>
+                    (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] =
+    s3Files map { (s3Files: Either[ErrorReport, Seq[S3File]]) =>
+      val localS3Keys = Files.listSiteFiles.map(site resolveS3Key)
       for {
-        localS3Keys <- errorOrLocalKeys.right
         remoteS3Keys <- s3Files.right.map(_ map (_.s3Key)).right
       } yield {
         val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
         remoteS3Keys filterNot { s3Key =>
-          val ignoreOnServer = config.ignore_on_server.exists(_.fold(
+          val ignoreOnServer = site.config.ignore_on_server.exists(_.fold(
             (ignoreRegex: String) => rubyRegexMatches(s3Key, ignoreRegex),
             (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3Key, _))
           ))
@@ -100,8 +85,7 @@ object Diff {
           (keysToRetain contains s3Key) || ignoreOnServer
         }
       }
-    }.tupled
-  }
+    }
 
   object LocalFileDatabase {
     def hasRecords(implicit site: Site, logger: Logger) =
@@ -202,7 +186,6 @@ object Diff {
               case Failure(err) => ErrorReport(err)
             }
         Diff(
-          unchangedFilesFinal map (_.right.map(_ map (_.s3Key))),
           uploads = Future(Right(uploadsAccordingToLocalDiff)) :: uploadsAccordingToS3Diff :: Nil,
           persistenceError = persistenceError map (_.left.toOption)
         )
