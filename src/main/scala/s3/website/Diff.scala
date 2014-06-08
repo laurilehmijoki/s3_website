@@ -36,7 +36,7 @@ object Diff {
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
           val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains upload.md5.get)
           val newUploads = siteFiles collect {
-            case file if !existsOnS3(file) => Upload(file, NewFile, reasonForUpload = DeletedOnS3)
+            case file if !existsOnS3(file) => Upload(file, NewFile, reasonForUpload = MissingFromS3)
           }
           val changedUploads = siteFiles collect {
             case file if existsOnS3(file) => Upload(file, FileUpdate, reasonForUpload = Md5ChangedOnS3)
@@ -118,7 +118,7 @@ object Diff {
             }
             val missingFromS3 = localS3Keys collect {
               case localS3Key if !(remoteS3Keys contains localS3Key) =>
-                Upload(site resolveFile localS3Key, NewFile, reasonForUpload = DeletedOnS3)
+                Upload(site resolveFile localS3Key, NewFile, reasonForUpload = MissingFromS3)
 
             }
             changedOnS3 ++ missingFromS3

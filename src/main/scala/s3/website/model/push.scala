@@ -45,7 +45,7 @@ sealed trait ReasonForUpload {
       .trim
 }
 case object Md5ChangedOnS3 extends ReasonForUpload
-case object DeletedOnS3 extends ReasonForUpload
+case object MissingFromS3 extends ReasonForUpload
 case object LocalMtimeChanged extends ReasonForUpload
 case object LocalLengthChanged extends ReasonForUpload
 case object LocalLengthAndMtimeChanged extends ReasonForUpload
