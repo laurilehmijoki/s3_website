@@ -98,33 +98,6 @@ object Diff {
 
     def resolveDiffAgainstLocalDb(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
                                  (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Either[ErrorReport, Diff] = {
-      val localDiff: Either[ErrorReport, Seq[Either[DbRecord, Upload]]] =
-        (for {
-          dbFile <- getOrCreateDbFile
-          databaseIndices <- loadDbFromFile(dbFile)
-        } yield {
-          val siteFiles = Files.listSiteFiles
-          val recordsOrUploads = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, Upload]]) { (recordsOrUps, file) =>
-            val truncatedKey = TruncatedDbRecord(file)
-            val fileIsUnchanged = databaseIndices.truncatedIndex contains truncatedKey
-            if (fileIsUnchanged)
-              recordsOrUps :+ Left(databaseIndices.fullIndex find (_.truncated == truncatedKey) get)
-            else {
-              val isUpdate = databaseIndices.s3KeyIndex contains truncatedKey.s3Key
-
-              val uploadType =
-                if (isUpdate) FileUpdate
-                else NewFile
-              recordsOrUps :+ Right(Upload(file, uploadType, reasonForUpload(truncatedKey, databaseIndices, isUpdate)))
-            }
-          }
-          logger.debug(s"Discovered ${siteFiles.length} files on the local site, of which ${recordsOrUploads count (_.isRight)} are new or changed")
-          recordsOrUploads
-        }) match {
-          case Success(ok) => Right(ok)
-          case Failure(err) => Left(ErrorReport(err))
-        }
-
       localDiff.right map { localDiffResult =>
         val uploadsAccordingToLocalDiff = localDiffResult collect {
           case Right(f) => f
@@ -168,6 +141,34 @@ object Diff {
         )
       }
     }
+
+    private def localDiff(implicit site: Site, logger: Logger, executor: ExecutionContextExecutor):
+    Either[ErrorReport, Seq[Either[DbRecord, Upload]]] =
+      (for {
+        dbFile <- getOrCreateDbFile
+        databaseIndices <- loadDbFromFile(dbFile)
+      } yield {
+        val siteFiles = Files.listSiteFiles
+        val recordsOrUploads = siteFiles.foldLeft(Seq(): Seq[Either[DbRecord, Upload]]) { (recordsOrUps, file) =>
+          val truncatedKey = TruncatedDbRecord(file)
+          val fileIsUnchanged = databaseIndices.truncatedIndex contains truncatedKey
+          if (fileIsUnchanged)
+            recordsOrUps :+ Left(databaseIndices.fullIndex find (_.truncated == truncatedKey) get)
+          else {
+            val isUpdate = databaseIndices.s3KeyIndex contains truncatedKey.s3Key
+
+            val uploadType =
+              if (isUpdate) FileUpdate
+              else NewFile
+            recordsOrUps :+ Right(Upload(file, uploadType, reasonForUpload(truncatedKey, databaseIndices, isUpdate)))
+          }
+        }
+        logger.debug(s"Discovered ${siteFiles.length} files on the local site, of which ${recordsOrUploads count (_.isRight)} are new or changed")
+        recordsOrUploads
+      }) match {
+        case Success(ok) => Right(ok)
+        case Failure(err) => Left(ErrorReport(err))
+      }
 
     private def reasonForUpload(truncatedKey: TruncatedDbRecord, databaseIndices: DbIndices, isUpdate: Boolean) = {
       if (isUpdate) {
