@@ -70,7 +70,7 @@ object Diff {
 
   def resolveDeletes(diff: Diff, s3Files: Future[Either[ErrorReport, Seq[S3File]]], redirects: Seq[Redirect])
                     (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] =
-    s3Files map { (s3Files: Either[ErrorReport, Seq[S3File]]) =>
+    s3Files map { s3Files =>
       val localS3Keys = Files.listSiteFiles.map(site resolveS3Key)
       for {
         remoteS3Keys <- s3Files.right.map(_ map (_.s3Key)).right
