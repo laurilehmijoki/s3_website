@@ -213,12 +213,12 @@ object Diff {
       if (isUpdate) {
         val lengthChanged = !(databaseIndices.fileLenghtIndex contains truncatedKey.fileLength)
         val mtimeChanged = !(databaseIndices.lastModifiedIndex contains truncatedKey.fileModified)
-        if (lengthChanged)
+        if (mtimeChanged && lengthChanged)
+          "file mtime and length have changed according to the local database"
+        else if (lengthChanged)
           "file length has changed according to the local database"
         else if (mtimeChanged)
           "file mtime has changed according to the local database"
-        else if (mtimeChanged && lengthChanged)
-          "file mtime and length have changed according to the local database"
         else
           "programmer error: faulty logic in inferring the reason for upload"
       }

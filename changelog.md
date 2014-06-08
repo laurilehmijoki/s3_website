@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.3
+
+* Fix boolean logic in reason-for-upload
+
 ## 2.1.2
 
 * Show a more informative message if the jar file is corrupted.
