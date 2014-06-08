@@ -560,6 +560,15 @@ class S3WebsiteSpec extends Specification {
       sentDelete must equalTo("obsolete.txt")
     }
 
+    "delete the local db record for the file if the user deletes the file" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFileWithContent(("file.txt", "first run"))
+      push
+      setS3Files(S3File("file.txt", md5Hex("first run")))
+      FileUtils.deleteQuietly(new File(siteDirectory, "file.txt"))
+      push
+      FileUtils.readLines(localDatabase) must beEmpty
+    }
+
     "push new files to the bucket" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       push
       setLocalFile("newfile.txt")
