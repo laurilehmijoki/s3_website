@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.4
+
+* Fix reason-for-upload message
+
 ## 2.1.3
 
 * Fix boolean logic in reason-for-upload
