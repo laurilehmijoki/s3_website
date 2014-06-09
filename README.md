@@ -279,7 +279,7 @@ as key-value pairs under the `redirects` configuration option:
 ```yaml
 redirects:
   index.php: /
-  about.php: about.html
+  about.php: /about.html
   music-files/promo.mp4: http://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
 
