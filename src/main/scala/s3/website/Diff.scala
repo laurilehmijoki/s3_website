@@ -103,10 +103,11 @@ object Diff {
           case Right(f) => f
         }
 
+        val unchangedAccordingToLocalDiff = localDiffResult collect {
+          case Left(f) => f
+        }
+
         val uploadsAccordingToS3Diff: Future[Either[ErrorReport, Seq[Upload]]] = s3FilesFuture.map { errorOrS3Files =>
-          val unchangedAccordingToLocalDiff = localDiffResult collect {
-            case Left(f) => f
-          }
           for (s3Files <- errorOrS3Files.right) yield {
             val remoteS3Keys = s3Files.map(_.s3Key).toSet
             val localS3Keys = unchangedAccordingToLocalDiff.map(_.s3Key).toSet
@@ -130,11 +131,14 @@ object Diff {
         } yield
           for {
             uploadsAccordingToS3 <- errorOrUploadsAccordingToS3.right
-          } yield
-            persistUploads(uploadsAccordingToS3 ++ uploadsAccordingToLocalDiff) match {
+          } yield {
+            val uploads = uploadsAccordingToS3 ++ uploadsAccordingToLocalDiff
+            persist(unchangedAccordingToLocalDiff.map(Left(_)) ++ uploads.map(Right(_))) match {
               case Success(_) => Unit
               case Failure(err) => ErrorReport(err)
             }
+          }
+
         Diff(
           uploads = Future(Right(uploadsAccordingToLocalDiff)) :: uploadsAccordingToS3Diff :: Nil,
           persistenceError = persistenceError map (_.left.toOption)
@@ -235,20 +239,6 @@ object Diff {
           recordsOrUploads
         }
       }
-
-    def persistUploads(uploads: Seq[Upload])(implicit site: Site, logger: Logger): Try[Unit] =
-      (for {
-        dbFile <- getOrCreateDbFile
-        databaseIndices <- loadDbFromFile(dbFile)
-      } yield {
-        val changedRecords = uploads map (DbRecord(_))
-        val changedS3KeysIndex = changedRecords.map(_.s3Key).toSet
-        val unchangedRecords = databaseIndices.fullIndex.filterNot(changedS3KeysIndex contains _.s3Key)
-        val dbFileContents = (changedRecords ++ unchangedRecords).map(_.asString).mkString("\n")
-        Try(
-          write(dbFile, dbFileContents)
-        )
-      }).flatten
 
     case class TruncatedDbRecord(s3Key: String, fileLength: Long, fileModified: Long)
 
