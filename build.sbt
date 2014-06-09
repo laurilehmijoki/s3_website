@@ -12,6 +12,10 @@ scalacOptions += "-language:implicitConversions"
 
 scalacOptions += "-language:postfixOps"
 
+scalacOptions += "-target:jvm-1.6"
+
+javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6")
+
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.13"
 
 libraryDependencies += "org.jruby" % "jruby" % "1.7.11"
