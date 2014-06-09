@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.6
+
+* Automatically add slash to redirects if needed
+
 ## 2.1.5
 
 * Target JVM 1.6 in build.sbt

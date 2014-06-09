@@ -444,6 +444,33 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
 
+    "add slash to the redirect target" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      config = """
+                 |redirects:
+                 |  index.php: index.html
+               """.stripMargin
+      push
+      sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
+    }
+
+    "support external redirects" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      config = """
+                 |redirects:
+                 |  index.php: http://www.youtube.com/watch?v=dQw4w9WgXcQ
+               """.stripMargin
+      push
+      sentPutObjectRequest.getRedirectLocation must equalTo("http://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    }
+
+    "support external redirects that point to an HTTPS target" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      config = """
+                 |redirects:
+                 |  index.php: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+               """.stripMargin
+      push
+      sentPutObjectRequest.getRedirectLocation must equalTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    }
+
     "result in max-age=0 Cache-Control header on the object" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
       config = """
         |redirects:

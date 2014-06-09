@@ -155,8 +155,17 @@ object Redirect {
     config.redirects.fold(Nil: Seq[Redirect]) { sourcesToTargets =>
       sourcesToTargets.foldLeft(Seq(): Seq[Redirect]) {
         (redirects, sourceToTarget) =>
-          redirects :+ Redirect(sourceToTarget._1, sourceToTarget._2)
+          redirects :+ Redirect(sourceToTarget._1, applySlashIfNeeded(sourceToTarget._2))
       }
+  }
+
+  private def applySlashIfNeeded(redirectTarget: String) = {
+    val isExternalRedirect = redirectTarget.matches("https?:\\/\\/.*")
+    val isInSiteRedirect = redirectTarget.startsWith("/")
+    if (isInSiteRedirect || isExternalRedirect)
+      redirectTarget
+    else
+      "/" + redirectTarget // let the user have redirect settings like "index.php: index.html" in s3_website.ml
   }
 }
 
