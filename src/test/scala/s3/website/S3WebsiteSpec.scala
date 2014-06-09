@@ -578,65 +578,6 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
-  // Because of the local database, the first and second run are implemented differently.
-  "pushing files for the second time" should {
-    "delete the S3 objects that no longer exist on the local site" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      push
-      setS3Files(S3File("obsolete.txt", ""))
-      push
-      sentDelete must equalTo("obsolete.txt")
-    }
-
-    "delete the local db record for the file if the user deletes the file" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      setLocalFileWithContent(("file.txt", "first run"))
-      push
-      setS3Files(S3File("file.txt", md5Hex("first run")))
-      FileUtils.deleteQuietly(new File(siteDirectory, "file.txt"))
-      push
-      FileUtils.readLines(localDatabase) must beEmpty
-    }
-
-    "push new files to the bucket" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      push
-      setLocalFile("newfile.txt")
-      push
-      sentPutObjectRequest.getKey must equalTo("newfile.txt")
-    }
-
-    "push locally changed files" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      setLocalFileWithContent(("file.txt", "first run"))
-      push
-      setLocalFileWithContent(("file.txt", "second run"))
-      push
-      sentPutObjectRequests.length must equalTo(2)
-    }
-
-    "push locally changed files only once" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      setLocalFileWithContent(("file.txt", "first run"))
-      push
-      setS3Files(S3File("file.txt", md5Hex("first run")))
-      setLocalFileWithContent(("file.txt", "second run"))
-      push
-      sentPutObjectRequests.length must equalTo(2)
-    }
-
-    "detect files that someone else has changed on the S3 bucket" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      setLocalFileWithContent(("file.txt", "first run"))
-      push
-      setOutdatedS3Keys("file.txt")
-      push
-      sentPutObjectRequests.length must equalTo(2)
-    }
-
-    "push locally unchanged files that are missing from S3" in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
-      setLocalFileWithContent(("file.txt", "first run"))
-      push
-      removeAllFilesFromS3()
-      push
-      sentPutObjectRequests.length must equalTo(2) // Even though we use the local db, we should notice that someone else has deleted file.txt
-    }
-  }
-
   "Jekyll site" should {
     "be detected automatically" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
@@ -806,14 +747,13 @@ class S3WebsiteSpec extends Specification {
     implicit final val workingDirectory: File = new File(FileUtils.getTempDirectory, "s3_website_dir" + Random.nextLong())
     val siteDirectory: File // Represents the --site=X option
     val configDirectory: File = workingDirectory // Represents the --config-dir=X option
-    lazy val localDatabase: File = new File(FileUtils.getTempDirectory, "s3_website_local_db_" + sha256Hex(siteDirectory.getPath))
 
     def before {
       workingDirectory :: siteDirectory :: configDirectory :: Nil foreach forceMkdir
     }
 
     def after {
-      (workingDirectory :: siteDirectory :: configDirectory :: localDatabase :: Nil) foreach { dir =>
+      (workingDirectory :: siteDirectory :: configDirectory :: Nil) foreach { dir =>
         if (dir.exists) forceDelete(dir)
       }
     }

@@ -86,55 +86,49 @@ object Push {
     val s3FilesFuture = resolveS3Files()
     val redirectReports: PushReports = redirects.map(S3 uploadRedirect _) map (Right(_))
 
-    val errorsOrReports: Either[ErrorReport, PushReports] = for {
-      diff <- resolveDiff(s3FilesFuture).right
+    val pushReports: Future[PushReports] = for {
+      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveDiff(s3FilesFuture)
     } yield {
-      val newOrChangedReports: PushReports = diff.uploads.map { uploadBatch =>
-        uploadBatch.map(_.right.map(_.map(S3 uploadFile _)))
-      }.map (Await.result(_, 1 day)).foldLeft(Seq(): PushReports) { (memo: PushReports, res: Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]) =>
-        res.fold(
-          error => memo :+ Left(error),
-          (pushResults: Seq[Future[PushErrorOrSuccess]]) => memo ++ (pushResults map (Right(_)))
-        )
-      }
+      val uploadReports: PushReports = errorOrUploads.fold(
+        error => Left(error) :: Nil,
+        uploads => {
+          uploads.map(S3 uploadFile _).map(Right(_))
+        }
+      )
       val deleteReports =
-        Await.result(resolveDeletes(diff, s3FilesFuture, redirects), 1 day).right.map { keysToDelete =>
+        Await.result(resolveDeletes(s3FilesFuture, redirects), 1 day).right.map { keysToDelete =>
           keysToDelete map (S3 delete _)
         }.fold(
           error => Left(error) :: Nil,
           (pushResults: Seq[Future[PushErrorOrSuccess]]) => pushResults map (Right(_))
         )
-      val diffErrorReport: PushReports = Await.result(diff.persistenceError, 1 day).fold(Nil: PushReports)(Left(_) :: Nil)
-      newOrChangedReports ++ deleteReports ++ redirectReports ++ diffErrorReport
+      uploadReports ++ deleteReports ++ redirectReports
     }
-    val errorsOrFinishedPushOps = errorsOrReports.right map awaitForResults
-    val invalidationSucceeded = invalidateCloudFrontItems(errorsOrFinishedPushOps)
+    val finishedPushOps = awaitForResults(Await.result(pushReports, 1 day))
+    val invalidationSucceeded = invalidateCloudFrontItems(finishedPushOps)
     
-    afterPushFinished(errorsOrFinishedPushOps, invalidationSucceeded)
+    afterPushFinished(finishedPushOps, invalidationSucceeded)
   }
   
   def invalidateCloudFrontItems
-    (errorsOrFinishedPushOps: Either[ErrorReport, FinishedPushOperations])
+    (finishedPushOperations: FinishedPushOperations)
     (implicit config: Config, cloudFrontSettings: CloudFrontSetting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
   Option[InvalidationSucceeded] =
     config.cloudfront_distribution_id.map { distributionId =>
-      val pushSuccessReports = errorsOrFinishedPushOps.fold(
-        errors => Nil,
-        finishedPushOps =>
-          finishedPushOps.map {
-            ops =>
-              for {
-                failedOrSucceededPushes <- ops.right
-                successfulPush <- failedOrSucceededPushes.right
-              } yield successfulPush
-          }.foldLeft(Seq(): Seq[PushSuccessReport]) {
-            (reports, failOrSucc) =>
-              failOrSucc.fold(
-                _ => reports,
-                (pushSuccessReport: PushSuccessReport) => reports :+ pushSuccessReport
-              )
-          }
-      )
+      val pushSuccessReports = 
+        finishedPushOperations.map {
+          ops =>
+            for {
+              failedOrSucceededPushes <- ops.right
+              successfulPush <- failedOrSucceededPushes.right
+            } yield successfulPush
+        }.foldLeft(Seq(): Seq[PushSuccessReport]) {
+          (reports, failOrSucc) =>
+            failOrSucc.fold(
+              _ => reports,
+              (pushSuccessReport: PushSuccessReport) => reports :+ pushSuccessReport
+            )
+        }
       val invalidationResults: Seq[Either[FailedInvalidation, SuccessfulInvalidation]] =
         toInvalidationBatches(pushSuccessReports) map { invalidationBatch =>
           Await.result(
@@ -150,26 +144,25 @@ object Push {
 
   type InvalidationSucceeded = Boolean
 
-  def afterPushFinished(errorsOrFinishedUploads: Either[ErrorReport, FinishedPushOperations], invalidationSucceeded: Option[Boolean])
+  def afterPushFinished(finishedPushOps: FinishedPushOperations, invalidationSucceeded: Option[Boolean])
                        (implicit config: Config, logger: Logger, pushMode: PushMode): ExitCode = {
-    val pushCountsOption = errorsOrFinishedUploads.right.map(resolvePushCounts(_)).right.toOption
-    pushCountsOption.map(pushCountsToString).foreach(pushCounts => logger.info(s"Summary: $pushCounts"))
-    errorsOrFinishedUploads.left foreach (err => logger.fail(s"Encountered an error: ${err.reportMessage}"))
-    val exitCode = errorsOrFinishedUploads.fold(
-      _ => 1,
-      finishedUploads => finishedUploads.foldLeft(0) { (memo, finishedUpload) =>
-        memo + finishedUpload.fold(
-          (error: ErrorReport) => 1,
-          (failedOrSucceededUpload: Either[PushFailureReport, PushSuccessReport]) =>
-            if (failedOrSucceededUpload.isLeft) 1 else 0
-        )
-      } min 1
-    ) max invalidationSucceeded.fold(0)(allInvalidationsSucceeded =>
+    val pushCounts = resolvePushCounts(finishedPushOps)
+    logger.info(s"Summary: ${pushCountsToString(pushCounts)}")
+    val pushOpExitCode = finishedPushOps.foldLeft(0) { (memo, finishedUpload) =>
+      memo + finishedUpload.fold(
+        (error: ErrorReport) => 1,
+        (failedOrSucceededUpload: Either[PushFailureReport, PushSuccessReport]) =>
+          if (failedOrSucceededUpload.isLeft) 1 else 0
+      )
+    } min 1
+    val cloudFrontInvalidationExitCode = invalidationSucceeded.fold(0)(allInvalidationsSucceeded =>
       if (allInvalidationsSucceeded) 0 else 1
     )
 
+    val exitCode = (pushOpExitCode + cloudFrontInvalidationExitCode) min 1
+
     exitCode match {
-      case 0 if !pushMode.dryRun && pushCountsOption.exists(_.thereWasSomethingToPush) =>
+      case 0 if !pushMode.dryRun && pushCounts.thereWasSomethingToPush =>
         logger.info(s"Successfully pushed the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
       case 1 =>
         logger.fail(s"Failed to push the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")

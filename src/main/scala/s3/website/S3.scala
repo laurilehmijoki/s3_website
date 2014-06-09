@@ -35,7 +35,7 @@ object S3 {
       val report = SuccessfulUpload(
         source.fold(_.s3Key, _.s3Key),
         source.fold(
-          upload => Left(SuccessfulNewOrCreatedDetails(upload.uploadType, upload.uploadFile.get.length(), uploadDuration, upload.reasonForUpload)),
+          upload => Left(SuccessfulNewOrCreatedDetails(upload.uploadType, upload.uploadFile.get.length(), uploadDuration)),
           redirect  => Right(SuccessfulRedirectDetails(redirect.uploadType, redirect.redirectTarget))
         ),
         putObjectRequest
@@ -146,7 +146,7 @@ object S3 {
   }
 
   case class SuccessfulRedirectDetails(uploadType: UploadType, redirectTarget: String)
-  case class SuccessfulNewOrCreatedDetails(uploadType: UploadType, uploadSize: Long, uploadDuration: Option[Long], reasonForUpload: String)
+  case class SuccessfulNewOrCreatedDetails(uploadType: UploadType, uploadSize: Long, uploadDuration: Option[Long])
 
   case class SuccessfulUpload(s3Key: S3Key,
                               details: Either[SuccessfulNewOrCreatedDetails, SuccessfulRedirectDetails],
@@ -167,19 +167,11 @@ object S3 {
           md.getContentEncoding ::
           putObjectRequest.getStorageClass ::
           Nil map (Option(_)) // AWS SDK may return nulls
-        ) :+ uploadSizeForHumans :+ uploadSpeedForHumans :+ uploadReason
+        ) :+ uploadSizeForHumans :+ uploadSpeedForHumans
       detailFragments.collect {
         case Some(detailFragment) => detailFragment
       }.mkString(" | ")
     }
-
-    lazy val uploadReason =
-      details
-        .fold(uploadDetails => Some(uploadDetails.reasonForUpload), _ => None)
-        .collect {
-          case reasonForUpload if logger.verboseOutput =>
-            s"upload reason: $reasonForUpload"
-        }
 
     lazy val uploadSize = details.fold(
       newOrCreatedDetails => Some(newOrCreatedDetails.uploadSize),

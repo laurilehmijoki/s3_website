@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.7
+
+* Remove local db
+
+  It turned out to be too complex to maintain
+
 ## 2.1.6
 
 * Automatically add slash to redirects if needed
@@ -39,9 +45,6 @@ This project uses [Semantic Versioning](http://semver.org).
 ### New features
 
 * Faster uploads for extra large sites
-
-   Use a local database for calculating diffs. This removes the need to read all
-   the files of the website, when you call the `s3_website push` command.
 
    Use proper multithreading with JVM threads.
 
