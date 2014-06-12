@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.8
+
+* Remove unused code in the s3_website executable
+
 ## 2.1.7
 
 * Remove local db

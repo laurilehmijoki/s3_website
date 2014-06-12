@@ -70,20 +70,19 @@ class Cli < Thor
     also delete from S3 the files that you no longer have locally.
   LONGDESC
   def push
-    call_dir = Dir.pwd
     project_root = File.expand_path(File.dirname(__FILE__)+ '/..')
     logger = Logger.new(options[:verbose])
     # Find the jar
     jar_file = resolve_jar project_root, logger
     # Then run it
-    run_s3_website_jar(jar_file, call_dir, logger)
+    run_s3_website_jar(jar_file, logger)
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
   subcommand 'cfg', Cfg
 end
 
-def run_s3_website_jar(jar_file, call_dir, logger)
+def run_s3_website_jar(jar_file, logger)
   java_installed = resolve_exit_status('which java') or resolve_exit_status('java -version')
   unless java_installed
     logger.info_msg "Cannot find Java. s3_website push is implemented in Scala, and it needs Java to run."
