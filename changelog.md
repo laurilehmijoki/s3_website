@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.9
+
+* Separate development and production code more clearly in the s3_website
+  executable
+
 ## 2.1.8
 
 * Remove unused code in the s3_website executable

@@ -72,14 +72,37 @@ class Cli < Thor
   def push
     project_root = File.expand_path(File.dirname(__FILE__)+ '/..')
     logger = Logger.new(options[:verbose])
-    # Find the jar
-    jar_file = resolve_jar project_root, logger
-    # Then run it
-    run_s3_website_jar(jar_file, logger)
+    success =
+      if run_with_sbt(project_root)
+        Dir.chdir(project_root) {
+          system './sbt assembly' # Build the jar
+        }
+        system "java -cp #{project_root}/target/scala-2.11/s3_website.jar #{resolve_java_command 'push'}"
+      else
+        # Find the jar
+        jar_file = resolve_jar(project_root, logger)
+        # Then run it
+        run_s3_website_jar(jar_file, logger)
+      end
+
+    if success
+      exit 0
+    else
+      exit 1
+    end
   end
 
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
   subcommand 'cfg', Cfg
+end
+
+def run_with_sbt(project_root)
+  File.exists? (project_root + '/project/sbt-launch.jar')
+end
+
+def resolve_java_command(command_name)
+  args = ARGV.join(' ').sub(command_name, '')
+  "s3.website.#{command_name.capitalize} #{args}"
 end
 
 def run_s3_website_jar(jar_file, logger)
@@ -88,13 +111,8 @@ def run_s3_website_jar(jar_file, logger)
     logger.info_msg "Cannot find Java. s3_website push is implemented in Scala, and it needs Java to run."
     autoinstall_java_or_print_help_and_exit(logger)
   end
-  args = ARGV.join(' ').sub('push', '')
   logger.debug_msg "Using #{jar_file}"
-  if system("java -cp #{jar_file} s3.website.Push #{args}")
-    exit 0
-  else
-    exit 1
-  end
+  system("java -cp #{jar_file} #{resolve_java_command 'push'}")
 end
 
 def resolve_exit_status(cmd)
@@ -146,13 +164,11 @@ def autoinstall_java_or_print_help_and_exit(logger)
 end
 
 def resolve_jar(project_root, logger)
-  development_jar_path =
-    project_root + '/target/scala-2.11/s3_website.jar'
-  released_jar_lookup_paths = [
+  jar_lookup_paths = [
     project_root + "/s3_website-#{S3Website::VERSION}.jar",
     (ENV['TMPDIR'] || '/tmp') + "/s3_website-#{S3Website::VERSION}.jar"
   ]
-  found_jar = ([development_jar_path] + released_jar_lookup_paths).
+  found_jar = jar_lookup_paths.
     select { |jar_path|
       File.exists? jar_path
     }.
@@ -171,25 +187,17 @@ def resolve_jar(project_root, logger)
     if found_jar and jar_has_valid_checksum(found_jar, logger)
       found_jar
     else
-      is_development = File.exists?(project_root + '/.git')
-      if is_development
-        Dir.chdir(project_root) {
-          system "./sbt assembly"
-        }
-        development_jar_path
-      else
-        download_jar(released_jar_lookup_paths, logger)
-      end
+      download_jar(jar_lookup_paths, logger)
     end
 end
 
-def download_jar(released_jar_lookup_paths, logger)
+def download_jar(jar_lookup_paths, logger)
   tag_name = "v#{S3Website::VERSION}"
-  downloaded_jar = released_jar_lookup_paths.select { |jar_path|
+  downloaded_jar = jar_lookup_paths.select { |jar_path|
     File.writable? File.dirname(jar_path)
   }.first
   unless downloaded_jar
-    logger.fail_msg "Neither #{released_jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
+    logger.fail_msg "Neither #{jar_lookup_paths.join ' or '} is writable. Cannot download s3_website.jar."
     logger.fail_msg "Set either directory as writable to the current user and try again."
     exit 1
   end
