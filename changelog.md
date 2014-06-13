@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.10
+
+* Remove warning on Ruby 1.8
+
 ## 2.1.9
 
 * Separate development and production code more clearly in the s3_website
