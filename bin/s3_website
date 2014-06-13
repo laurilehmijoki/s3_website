@@ -97,7 +97,7 @@ class Cli < Thor
 end
 
 def run_with_sbt(project_root)
-  File.exists? (project_root + '/project/sbt-launch.jar')
+  File.exists?(project_root + '/project/sbt-launch.jar')
 end
 
 def resolve_java_command(command_name)
