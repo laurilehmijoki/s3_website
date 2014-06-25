@@ -413,6 +413,7 @@ Contributors (in alphabetical order)
 * Greg Karékinian
 * John Allison
 * Jordan White
+* Justin Latimer
 * László Bácsi
 * Mason Turner
 * Michael Bleigh
