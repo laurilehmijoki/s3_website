@@ -105,6 +105,10 @@ This project uses [Semantic Versioning](http://semver.org).
     At the time of writing, there does not exist a stable zopfli implementation
     for Java.
 
+### Other backward incompatible changes
+
+* The option `--config_dir` has changed to `--config-dir`
+
 ## 1.8.1
 
 * Do not push the *.env* file
