@@ -48,7 +48,7 @@ class Cli < Thor
     :desc => "The directory where your website files are. When not defined, s3_website will look for the site in either _site or public/output."
   )
   option(
-    :config_dir,
+    'config-dir'.to_sym,
     :type => :string,
     :desc => "The directory where your config file is. When not defined, s3_website will look in the current working directory."
   )
