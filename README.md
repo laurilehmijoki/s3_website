@@ -50,7 +50,7 @@ Let's say the contents you wish to upload to your S3 website bucket are in
 
 If you want to store the `s3_website.yml` file in a directory other than
 the project's root you can specify the directory.
-`s3_website push --config_dir config`.
+`s3_website push --config-dir config`.
 
 ### Using environment variables
 
