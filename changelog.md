@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.11
+
+* Fix documentation for the `--config-dir` option
+
+  The `--config_dir` option has changed to `--config-dir` in version 2 of this
+  gem.
+
 ## 2.1.10
 
 * Remove warning on Ruby 1.8
