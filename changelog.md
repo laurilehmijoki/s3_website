@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.12
+
+* Exit with status 1 when encountering an unrecognised CLI option
+
+  Fixes https://github.com/laurilehmijoki/s3_website/issues/103
+
 ## 2.1.11
 
 * Fix documentation for the `--config-dir` option

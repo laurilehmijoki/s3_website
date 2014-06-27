@@ -5,6 +5,10 @@ require 'colored'
 require 'digest/md5'
 
 class Cfg < Thor
+  def self.exit_on_failure?
+    true
+  end
+
   desc 'create', 'Create a config file with placeholder values'
   def create
     config_file_src = File.dirname(__FILE__) + '/../resources/configuration_file_template.yml'
@@ -42,6 +46,10 @@ class Cfg < Thor
 end
 
 class Cli < Thor
+  def self.exit_on_failure?
+    true
+  end
+
   option(
     :site,
     :type => :string,
