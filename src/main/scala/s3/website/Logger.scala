@@ -8,7 +8,7 @@ class Logger(val verboseOutput: Boolean) {
   def fail(msg: String) = log(Failure, msg)
 
   def info(report: SuccessReport) = log(Success, report.reportMessage)
-  def info(report: FailureReport) = fail(report.reportMessage)
+  def info(report: ErrorReport) = fail(report.reportMessage)
 
   def pending(msg: String) = log(Wait, msg)
 

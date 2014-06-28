@@ -1,5 +1,6 @@
 package s3.website
 
+import s3.website.ErrorReport.errorMessage
 import s3.website.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.services.s3.model._
@@ -140,7 +141,7 @@ object S3 {
   type UpdateFutures = Seq[Either[ErrorReport, Future[PushErrorOrSuccess]]]
   type ErrorOrS3Files = Either[ErrorReport, Seq[S3File]]
 
-  sealed trait PushFailureReport extends FailureReport
+  sealed trait PushFailureReport extends ErrorReport
   sealed trait PushSuccessReport extends SuccessReport {
     def s3Key: String
   }
@@ -208,12 +209,12 @@ object S3 {
     def reportMessage = s"${Deleted.renderVerb} $s3Key"
   }
 
-  case class FailedUpload(s3Key: String, error: Throwable) extends PushFailureReport {
-    def reportMessage = s"Failed to upload $s3Key (${error.getMessage})"
+  case class FailedUpload(s3Key: String, error: Throwable)(implicit logger: Logger) extends PushFailureReport {
+    def reportMessage = errorMessage(s"Failed to upload $s3Key", error)
   }
 
-  case class FailedDelete(s3Key: String, error: Throwable) extends PushFailureReport {
-    def reportMessage = s"Failed to delete $s3Key (${error.getMessage})"
+  case class FailedDelete(s3Key: String, error: Throwable)(implicit logger: Logger) extends PushFailureReport {
+    def reportMessage = errorMessage(s"Failed to delete $s3Key", error)
   }
 
   type S3ClientProvider = (Config) => AmazonS3

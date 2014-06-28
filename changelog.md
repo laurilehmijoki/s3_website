@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.13
+
+* Print JVM stack trace on error and `--verbose`
+
+  This eases debugging
+
 ## 2.1.12
 
 * Exit with status 1 when encountering an unrecognised CLI option

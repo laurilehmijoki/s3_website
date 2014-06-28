@@ -13,24 +13,26 @@ package object website {
   }
   trait SuccessReport extends Report
 
-  trait FailureReport extends Report
-
   trait ErrorReport extends Report
 
   object ErrorReport {
     def apply(t: Throwable)(implicit logger: Logger) = new ErrorReport {
-      override def reportMessage = {
-        val extendedReport =
-          if (logger.verboseOutput)
-            Some(t.getStackTrace take 5)
-          else
-            None
-        s"${t.getMessage}${extendedReport.fold("")(stackTraceElems => "\n" + stackTraceElems.mkString("\n"))}"
-      }
+      override def reportMessage = errorMessage(t)
     }
 
     def apply(msg: String) = new ErrorReport {
       override def reportMessage = msg
+    }
+
+    def errorMessage(msg: String, t: Throwable)(implicit logger: Logger): String = s"$msg (${errorMessage(t)})"
+
+    def errorMessage(t: Throwable)(implicit logger: Logger): String =  {
+      val extendedReport =
+        if (logger.verboseOutput)
+          Some(t.getStackTrace)
+        else
+          None
+      s"${t.getMessage}${extendedReport.fold("")(stackTraceElems => "\n" + stackTraceElems.mkString("\n"))}"
     }
   }
 

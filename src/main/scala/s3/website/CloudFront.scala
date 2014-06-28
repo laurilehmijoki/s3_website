@@ -1,5 +1,6 @@
 package s3.website
 
+import s3.website.ErrorReport._
 import s3.website.model.{FileUpdate, Config}
 import com.amazonaws.services.cloudfront.{AmazonCloudFrontClient, AmazonCloudFront}
 import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressException, Paths, InvalidationBatch, CreateInvalidationRequest}
@@ -60,8 +61,8 @@ object CloudFront {
     def reportMessage = s"${Invalidated.renderVerb} ${invalidatedItemsCount ofType "item"} on CloudFront"
   }
 
-  case class FailedInvalidation(error: Throwable) extends FailureReport {
-    def reportMessage = s"Failed to invalidate the CloudFront distribution (${error.getMessage})"
+  case class FailedInvalidation(error: Throwable)(implicit logger: Logger) extends ErrorReport {
+    def reportMessage = errorMessage(s"Failed to invalidate the CloudFront distribution", error)
   }
 
   def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient(awsCredentials(config))
