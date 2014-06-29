@@ -22,6 +22,8 @@ libraryDependencies += "org.jruby" % "jruby" % "1.7.11"
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.7.7"
 
+libraryDependencies += "log4j" % "log4j" % "1.2.17"
+
 libraryDependencies += "commons-codec" % "commons-codec" % "1.9"
 
 libraryDependencies += "commons-io" % "commons-io" % "2.4"

@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.14
+
+* Fix https://github.com/laurilehmijoki/s3_website/issues/104
+
 ## 2.1.13
 
 * Print JVM stack trace on error and `--verbose`
