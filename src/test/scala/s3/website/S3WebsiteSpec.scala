@@ -400,6 +400,15 @@ class S3WebsiteSpec extends Specification {
       push
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache; max-age=0")
     }
+
+    "support non-US-ASCII directory names"  in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      config = """
+        |max_age:
+        |  "*": 21600
+      """.stripMargin
+      setLocalFile("tags/笔记/index.html")
+      push must equalTo(0)
+    }
   }
 
   "max-age in config" should {

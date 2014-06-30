@@ -81,7 +81,9 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
           (seconds: Int) => Some(seconds),
           (globs: GlobsSeq) =>
             globs.find { globAndInt =>
-              (rubyRuntime evalScriptlet s"File.fnmatch('${globAndInt._1}', '$s3Key')")
+              (rubyRuntime evalScriptlet
+                s"""|# encoding: utf-8
+                    |File.fnmatch('${globAndInt._1}', '$s3Key')""".stripMargin)
                 .toJava(classOf[Boolean])
                 .asInstanceOf[Boolean]
             } map (_._2)
