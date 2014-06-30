@@ -10,7 +10,9 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ## 2.1.14
 
-* Fix https://github.com/laurilehmijoki/s3_website/issues/104
+* Hide false AWS SDK alarms
+
+  Fixes https://github.com/laurilehmijoki/s3_website/issues/104
 
 ## 2.1.13
 
