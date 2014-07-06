@@ -157,7 +157,7 @@ object Config {
   def erbEval(erbString: String, yamlConfigPath: String): Try[String] = Try {
     val erbStringWithoutComments = erbString.replaceAll("^\\s*#.*", "")
     rubyRuntime.evalScriptlet(
-      s"""
+      s"""|# encoding: utf-8
         |require 'erb'
         |
         |str = <<-ERBSTR

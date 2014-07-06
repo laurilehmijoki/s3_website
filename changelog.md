@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.1.16
+
+* Support non-US-ASCII files when using `ignore_on_server`
+
+  Fixes https://github.com/laurilehmijoki/s3_website/issues/102
+
 ## 2.1.15
 
 * Support non-US-ASCII files when using `max_age`

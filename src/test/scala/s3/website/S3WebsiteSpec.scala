@@ -338,6 +338,13 @@ class S3WebsiteSpec extends Specification {
       push
       noDeletesOccurred must beTrue
     }
+
+    "support non-US-ASCII files"  in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setS3Files(S3File("tags/笔记/test.html", ""))
+      config = "ignore_on_server: tags/笔记/test.html"
+      push
+      noDeletesOccurred must beTrue
+    }
   }
 
   """
@@ -351,6 +358,16 @@ class S3WebsiteSpec extends Specification {
         |  - .*txt
       """.stripMargin
       setS3Files(S3File("logs/log.txt", ""))
+      push
+      noDeletesOccurred must beTrue
+    }
+
+    "support non-US-ASCII files"  in new AllInSameDirectory with EmptySite with MockAWS with DefaultRunMode {
+      setS3Files(S3File("tags/笔记/test.html", ""))
+      config = """
+                 |ignore_on_server:
+                 |  - tags/笔记/test.html
+               """.stripMargin
       push
       noDeletesOccurred must beTrue
     }
