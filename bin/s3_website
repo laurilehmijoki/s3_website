@@ -149,8 +149,6 @@ def autoinstall_java_or_print_help_and_exit(logger)
     exit 1
   end
 
-  manual_method_help =
-
   automatic_method = automatic_methods.find { |automatic_method|
     resolve_exit_status automatic_method.fetch(:package_manager_lookup)
   }
