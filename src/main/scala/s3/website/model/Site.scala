@@ -1,6 +1,9 @@
 package s3.website.model
 
 import java.io.File
+import s3.website.Push.CliArgs
+import s3.website.model.Ssg.autodetectSiteDir
+
 import scala.util.Try
 import org.yaml.snakeyaml.Yaml
 import s3.website.model.Config._
@@ -11,8 +14,8 @@ import scala.util.Failure
 import s3.website.model.Config.UnsafeYaml
 import scala.util.Success
 
-case class Site(rootDirectory: String, config: Config) {
-  def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory, "").replaceFirst("^/", "")
+case class Site(rootDirectory: File, config: Config) {
+  def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory.getAbsolutePath, "").replaceFirst("^/", "")
 
   def resolveFile(s3File: S3File): File = resolveFile(s3File.s3Key)
 
@@ -20,21 +23,22 @@ case class Site(rootDirectory: String, config: Config) {
 }
 
 object Site {
-  def loadSite(yamlConfigPath: String, siteRootDirectory: String)
-              (implicit logger: Logger): Either[ErrorReport, Site] = {
+  def parseConfig(implicit logger: Logger, yamlConfig: S3_website_yml): Either[ErrorReport, Config] = {
     val yamlObjectTry = for {
-      yamlString <- Try(fromFile(new File(yamlConfigPath)).mkString)
-      yamlWithErbEvaluated <- erbEval(yamlString, yamlConfigPath)
+      yamlString <- Try(fromFile(yamlConfig.file).mkString)
+      yamlWithErbEvaluated <- erbEval(yamlString, yamlConfig)
       yamlObject <- Try(new Yaml() load yamlWithErbEvaluated)
     } yield yamlObject
+
     yamlObjectTry match {
       case Success(yamlObject) =>
         implicit val unsafeYaml = UnsafeYaml(yamlObject)
-        val config: Either[ErrorReport, Config] = for {
+        for {
           s3_id <- loadOptionalString("s3_id").right
           s3_secret <- loadOptionalString("s3_secret").right
           s3_bucket <- loadRequiredString("s3_bucket").right
           s3_endpoint <- loadEndpoint.right
+          site <- loadOptionalString("site").right
           max_age <- loadMaxAge.right
           gzip <- loadOptionalBooleanOrStringSeq("gzip").right
           gzip_zopfli <- loadOptionalBoolean("gzip_zopfli").right
@@ -49,16 +53,17 @@ object Site {
         } yield {
           gzip_zopfli.foreach(_ => logger.info(
             """|Zopfli is not currently supported. Falling back to regular gzip.
-               |If you find a stable Java implementation for zopfli, please send an email to lauri.lehmijoki@iki.fi about it."""
-            .stripMargin))
+              |If you find a stable Java implementation for zopfli, please send an email to lauri.lehmijoki@iki.fi about it."""
+              .stripMargin))
           extensionless_mime_type.foreach(_ => logger.info(
-            s"Ignoring the extensionless_mime_type setting in $yamlConfigPath. Counting on Apache Tika to infer correct mime types.")
+            s"Ignoring the extensionless_mime_type setting in $yamlConfig. Counting on Apache Tika to infer correct mime types.")
           )
           Config(
             s3_id,
             s3_secret,
             s3_bucket,
             s3_endpoint getOrElse S3Endpoint.defaultEndpoint,
+            site,
             max_age,
             gzip,
             gzip_zopfli,
@@ -71,10 +76,38 @@ object Site {
             concurrency_level.fold(20)(_ max 20) // At minimum, run 20 concurrent operations
           )
         }
-
-        config.right.map(Site(siteRootDirectory, _))
       case Failure(error) =>
         Left(ErrorReport(error))
     }
   }
+
+  def loadSite(implicit yamlConfig: S3_website_yml, cliArgs: CliArgs, workingDirectory: File, logger: Logger): Either[ErrorReport, Site] =
+    parseConfig.right.flatMap { cfg =>
+      implicit val config: Config = cfg
+      val errorOrSiteDir = resolveSiteDir.fold(Left(ErrorReport(noSiteFound)): Either[ErrorReport, File])(Right(_))
+      errorOrSiteDir.right.map(Site(_, config))
+    }
+
+  val noSiteFound =
+    """|Could not find a website.
+       |Either use the --site=DIR command-line argument or define the location of the site in s3_website.yml.
+       |
+       |Here's an example of how you can define the site directory in s3_website.yml:
+       |   site: dist/website""".stripMargin
+
+  def resolveSiteDir(implicit yamlConfig: S3_website_yml, config: Config, cliArgs: CliArgs, workingDirectory: File): Option[File] = {
+    val siteFromAutoDetect = autodetectSiteDir(workingDirectory)
+    val siteFromCliArgs = Option(cliArgs.site).map(new File(_))
+
+    siteFromCliArgs orElse siteFromConfig orElse siteFromAutoDetect
+  }
+
+  def siteFromConfig(implicit yamlConfig: S3_website_yml, config: Config, workingDirectory: File): Option[File] =
+    config
+      .site
+      .map(new File(_))
+      .map { siteDir =>
+        if (siteDir.isAbsolute) siteDir
+        else new File(yamlConfig.file.getParentFile, siteDir.getPath)
+      }
 }

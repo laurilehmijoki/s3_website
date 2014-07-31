@@ -1,5 +1,6 @@
 package s3.website
 
+import s3.website.model.Config.S3_website_yml
 import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
@@ -21,7 +22,6 @@ import s3.website.S3.S3Setting
 import s3.website.CloudFront.CloudFrontSetting
 import s3.website.S3.SuccessfulUpload
 import s3.website.CloudFront.FailedInvalidation
-import scala.Int
 import java.io.File
 import com.lexicalscope.jewel.cli.CliFactory.parseArguments
 import s3.website.ByteHelper.humanReadableByteCount
@@ -52,15 +52,11 @@ object Push {
       def dryRun = cliArgs.dryRun
     }
 
-    val errorOrSiteDir: ErrorOrFile =
-      Option(cliArgs.site).fold(Ssg.findSiteDirectory(workingDirectory))(siteDirFromCli => Right(new File(siteDirFromCli)))
-    def errorOrSite(siteInDirectory: File): Either[ErrorReport, Site] =
-      loadSite(Option(cliArgs.configDir).getOrElse(workingDirectory.getPath) + "/s3_website.yml", siteInDirectory.getAbsolutePath)
+    implicit val yamlConfig = S3_website_yml(new File(Option(cliArgs.configDir).getOrElse(workingDirectory.getPath) + "/s3_website.yml"))
 
-    val errorOrPushStatus = for {
-      siteInDirectory <- errorOrSiteDir.right
-      loadedSite <- errorOrSite(siteInDirectory).right
-    } yield {
+    val errorOrPushStatus = for (
+      loadedSite <- loadSite.right
+    ) yield {
       implicit val site = loadedSite
       val threadPool = newFixedThreadPool(site.config.concurrency_level)
       implicit val executor = fromExecutor(threadPool)

@@ -33,23 +33,19 @@ Here's how you can get started:
   S3 website. If the bucket does not exist, the command will create it for you.
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
 
-### For Jekyll users
+### Specifying the location of your website
 
-S3_website will automatically discover your website in the *_site* directory.
+S3_website will automatically discover websites in the *_site* and
+*public/output* directories.
 
-### For Nanoc users
+If your website is not in either of those directories, you can
+point the location of your website in two ways:
 
-S3_website will automatically discover your website in the *public/output* directory.
-
-### For others
-
-It's a good idea to store the `s3_website.yml` file in your project's root.
-Let's say the contents you wish to upload to your S3 website bucket are in
-*my_website_output*. You can upload the contents of that directory with
-`s3_website push --site my_website_output`.
+1. Add the line `site: path-to-your-website` into the `s3_website.yml` file
+2. Or, use the `--site=path-to-your-site` command-line argument
 
 If you want to store the `s3_website.yml` file in a directory other than
-the project's root you can specify the directory.
+the project's root you can specify the directory like so:
 `s3_website push --config-dir config`.
 
 ### Using environment variables

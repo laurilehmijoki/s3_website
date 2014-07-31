@@ -1,5 +1,7 @@
 package s3.website.model
 
+import java.io.File
+
 import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
@@ -11,6 +13,7 @@ case class Config(
   s3_secret:                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
   s3_bucket:                  String,
   s3_endpoint:                S3Endpoint,
+  site:                       Option[String],
   max_age:                    Option[Either[Int, Map[String, Int]]],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
@@ -154,7 +157,7 @@ object Config {
       unsafeYaml.yamlObject.asInstanceOf[java.util.Map[String, _]].toMap get key
     }
 
-  def erbEval(erbString: String, yamlConfigPath: String): Try[String] = Try {
+  def erbEval(erbString: String, yamlConfig: S3_website_yml): Try[String] = Try {
     val erbStringWithoutComments = erbString.replaceAll("^\\s*#.*", "")
     rubyRuntime.evalScriptlet(
       s"""|# encoding: utf-8
@@ -167,9 +170,13 @@ object Config {
       """.stripMargin
     ).asJavaString()
   } match {
-    case Failure(err) => Failure(new RuntimeException(s"Failed to parse ERB in $yamlConfigPath:\n${err.getMessage}"))
+    case Failure(err) => Failure(new RuntimeException(s"Failed to parse ERB in $yamlConfig:\n${err.getMessage}"))
     case x => x
   }
 
   case class UnsafeYaml(yamlObject: AnyRef)
+
+  case class S3_website_yml(file: File) {
+    override def toString = file.getPath
+  }
 }

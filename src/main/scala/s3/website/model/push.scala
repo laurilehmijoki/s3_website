@@ -142,7 +142,7 @@ object Files {
       if (doNotUpload) logger.debug(s"Excluded $s3Key from upload")
       doNotUpload
     }
-    recursiveListFiles(new File(site.rootDirectory))
+    recursiveListFiles(site.rootDirectory)
       .filterNot(_.isDirectory)
       .filterNot(f => excludeFromUpload(site.resolveS3Key(f)))
   }

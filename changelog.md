@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.2.0
+
+* Specify the location of the website in the *s3_website.yml* file
+
+  Just add the setting `site: path-to-your-website` into the file.
+
 ## 2.1.16
 
 * Support non-US-ASCII files when using `ignore_on_server`

@@ -5,6 +5,8 @@ s3_bucket: your.blog.bucket.com
 # Below are examples of all the available configurations.
 # See README for more detailed info on each of them.
 
+# site: path-to-your-website
+
 # max_age:
 #   "assets/*": 6000
 #   "*": 300
