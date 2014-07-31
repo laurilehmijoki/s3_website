@@ -8,6 +8,10 @@ This project uses [Semantic Versioning](http://semver.org).
 
   Just add the setting `site: path-to-your-website` into the file.
 
+* Fix Nanoc auto detection
+
+  Previously, a website in *public/output* was not automatically detected.
+
 ## 2.1.16
 
 * Support non-US-ASCII files when using `ignore_on_server`
