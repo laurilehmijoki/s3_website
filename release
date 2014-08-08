@@ -6,6 +6,7 @@ require_relative 'lib/s3_website/version'
 version = S3Website::VERSION
 unless ENV['S3_WEBSITE_RELEASE_KEY']
   puts "Set the S3_WEBSITE_RELEASE_KEY environmental variable. It should be your personal GitHub access token."
+  puts "Go to https://github.com/settings/applications#personal-access-tokens."
   exit 1
 end
 
