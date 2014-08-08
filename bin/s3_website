@@ -23,6 +23,16 @@ class Cfg < Thor
     exit 1
   end
 
+  option(
+    :headless,
+    :type => :boolean,
+    :desc => "Apply the settings headlessly. See --autocreate-cloudfront-distribution for more info."
+  )
+  option(
+    'autocreate-cloudfront-dist',
+    :type => :boolean,
+    :desc => "When used with --headless, automatically create a CloudFront distribution for your S3 website."
+  )
   desc 'apply', 'Apply the configuration on the AWS services'
   long_desc <<-LONGDESC
     `s3_website cfg apply` will apply the configuration the S3 bucket.
@@ -37,7 +47,9 @@ class Cfg < Thor
     require 'configure-s3-website'
     config_source = ConfigureS3Website::FileConfigSource.new 's3_website.yml'
     ConfigureS3Website::Runner.run({
-      :config_source => config_source
+      :config_source => config_source,
+      :headless => options[:headless],
+      'autocreate-cloudfront-dist' => options['autocreate-cloudfront-dist']
     })
   rescue Exception => error
     puts "#{error.message} (#{error.class})"

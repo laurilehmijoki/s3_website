@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.3.0
+
+* The command `s3_website cfg apply` now supports `--headless` and
+  `--autocreate-cloudfront-dist`
+
 ## 2.2.0
 
 * Specify the location of the website in the *s3_website.yml* file
