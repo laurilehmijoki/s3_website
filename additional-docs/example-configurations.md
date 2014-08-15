@@ -10,7 +10,7 @@ s3_secret: 2s+x92
 s3_bucket: your.domain.net
 ````
 
-## Minimal with EC2 AIM roles
+## Minimal with EC2 IAM roles
 
 ````yaml
 s3_bucket: your.domain.net
