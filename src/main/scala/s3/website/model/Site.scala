@@ -15,7 +15,7 @@ import s3.website.model.Config.UnsafeYaml
 import scala.util.Success
 
 case class Site(rootDirectory: File, config: Config) {
-  def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory.getAbsolutePath, "").replaceFirst("^/", "")
+  def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory.getAbsolutePath, "").replace(File.separator,"/").replaceFirst("^/", "")
 
   def resolveFile(s3File: S3File): File = resolveFile(s3File.s3Key)
 
