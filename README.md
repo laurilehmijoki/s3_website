@@ -414,6 +414,7 @@ Contributors (in alphabetical order)
 * László Bácsi
 * Mason Turner
 * Michael Bleigh
+* maxberger
 * Philip I. Thomas
 * Philippe Creux
 * Piotr Janik
