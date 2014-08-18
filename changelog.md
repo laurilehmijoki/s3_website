@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.3.1
+
+* Add Windows support
+
 ## 2.3.0
 
 * The command `s3_website cfg apply` now supports `--headless` and
