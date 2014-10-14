@@ -169,6 +169,9 @@ ignore_on_server:
   - file_managed_by_somebody_else
 ```
 
+If you add the magic word `ignore_on_server: _DELETE_NOTHING_ON_THE_S3_BUCKET_`,
+`s3_website push` will never delete any objects on the bucket.
+
 ### Excluding files from upload
 
 You can instruct `s3_website` not to push certain files:

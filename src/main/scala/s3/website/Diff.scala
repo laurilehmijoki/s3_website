@@ -39,23 +39,29 @@ object Diff {
     }
 
   def resolveDeletes(s3Files: Future[Either[ErrorReport, Seq[S3File]]], redirects: Seq[Redirect])
-                    (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] = {
-    val localS3Keys = Files.listSiteFiles.map(site resolveS3Key)
+                    (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] =
+    if (site.config.ignore_on_server.contains(Left(DELETE_NOTHING_MAGIC_WORD))) {
+      logger.debug(s"Ignoring all files on the bucket, since the setting $DELETE_NOTHING_MAGIC_WORD is on.")
+      Future(Right(Nil))
+    } else {
+      val localS3Keys = Files.listSiteFiles.map(site resolveS3Key)
 
-    s3Files map { s3Files: Either[ErrorReport, Seq[S3File]] =>
-      for {
-        remoteS3Keys <- s3Files.right.map(_ map (_.s3Key)).right
-      } yield {
-        val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
-        remoteS3Keys filterNot { s3Key =>
-          val ignoreOnServer = site.config.ignore_on_server.exists(_.fold(
-            (ignoreRegex: String) => rubyRegexMatches(s3Key, ignoreRegex),
-            (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3Key, _))
-          ))
-          if (ignoreOnServer) logger.debug(s"Ignoring $s3Key on server")
-          (keysToRetain contains s3Key) || ignoreOnServer
+      s3Files map { s3Files: Either[ErrorReport, Seq[S3File]] =>
+        for {
+          remoteS3Keys <- s3Files.right.map(_ map (_.s3Key)).right
+        } yield {
+          val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
+          remoteS3Keys filterNot { s3Key =>
+            val ignoreOnServer = site.config.ignore_on_server.exists(_.fold(
+              (ignoreRegex: String) => rubyRegexMatches(s3Key, ignoreRegex),
+              (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3Key, _))
+            ))
+            if (ignoreOnServer) logger.debug(s"Ignoring $s3Key on server")
+            (keysToRetain contains s3Key) || ignoreOnServer
+          }
         }
       }
     }
-  }
+
+  val DELETE_NOTHING_MAGIC_WORD = "_DELETE_NOTHING_ON_THE_S3_BUCKET_"
 }

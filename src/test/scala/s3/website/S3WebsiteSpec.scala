@@ -18,6 +18,7 @@ import org.mockito.{ArgumentCaptor, Matchers, Mockito}
 import org.specs2.mutable.{BeforeAfter, Specification}
 import org.specs2.specification.Scope
 import s3.website.CloudFront.CloudFrontSetting
+import s3.website.Diff.DELETE_NOTHING_MAGIC_WORD
 import s3.website.Push.{CliArgs}
 import s3.website.S3.S3Setting
 import s3.website.model.Config.S3_website_yml
@@ -341,6 +342,17 @@ class S3WebsiteSpec extends Specification {
       config = "ignore_on_server: tags/笔记/test.html"
       push
       noDeletesOccurred must beTrue
+    }
+  }
+
+  "ignore_on_server: _DELETE_NOTHING_ON_THE_S3_BUCKET_" should {
+    "result in no files being deleted on the S3 bucket" in new BasicSetup {
+      config = s"""
+        |ignore_on_server: $DELETE_NOTHING_MAGIC_WORD
+      """.stripMargin
+      setS3Files(S3File("file.txt", ""))
+      push
+      noDeletesOccurred
     }
   }
 

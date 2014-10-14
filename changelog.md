@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.4.0
+
+* Add `ignore_on_server: _DELETE_NOTHING_ON_THE_S3_BUCKET_` for the sake of convenience
+
+  See https://github.com/laurilehmijoki/s3_website/issues/121 for discussion.
+
 ## 2.3.1
 
 * Add Windows support
