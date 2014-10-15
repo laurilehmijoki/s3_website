@@ -2,7 +2,7 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## NEXT
+## 2.5.0
 
 * Add `push --force` option
 
