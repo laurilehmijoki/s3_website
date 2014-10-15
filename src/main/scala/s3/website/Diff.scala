@@ -1,5 +1,6 @@
 package s3.website
 
+import s3.website.model.Files.listSiteFiles
 import s3.website.model._
 import s3.website.Ruby.rubyRegexMatches
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -21,7 +22,7 @@ object Diff {
         Try {
           val s3KeyIndex = s3Files.map(_.s3Key).toSet
           val s3Md5Index = s3Files.map(_.md5).toSet
-          val siteFiles = Files.listSiteFiles
+          val siteFiles = listSiteFiles
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
           val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains upload.md5.get)
           val newUploads = siteFiles collect {
@@ -44,7 +45,7 @@ object Diff {
       logger.debug(s"Ignoring all files on the bucket, since the setting $DELETE_NOTHING_MAGIC_WORD is on.")
       Future(Right(Nil))
     } else {
-      val localS3Keys = Files.listSiteFiles.map(site resolveS3Key)
+      val localS3Keys = listSiteFiles.map(site resolveS3Key)
 
       s3Files map { s3Files: Either[ErrorReport, Seq[S3File]] =>
         for {
