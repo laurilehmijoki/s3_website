@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## NEXT
+
+* Add `push --force` option
+
+  When the user pushes with force, s3_website skips the diff. This is helpful for the
+  users who wish to update the S3 object metadata.
+
 ## 2.4.0
 
 * Add `ignore_on_server: _DELETE_NOTHING_ON_THE_S3_BUCKET_` for the sake of convenience

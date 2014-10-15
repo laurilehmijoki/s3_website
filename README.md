@@ -110,6 +110,9 @@ max_age:
 
 Place the configuration into the file `s3_website.yml`.
 
+After changing the `max_age` setting, push with the `--force` option.
+Force-pushing allows you to update the S3 object metadata of existing files.
+
 ### Gzip Compression
 
 If you choose, you can use compress certain file types before uploading them to
@@ -135,6 +138,8 @@ gzip:
 
 Remember that the extensions here are referring to the *compiled* extensions,
 not the pre-processed extensions.
+
+After changing the `gzip` setting, push with the `--force` option.
 
 ### Using non-standard AWS regions
 
@@ -195,6 +200,9 @@ You can reduce the cost of hosting your blog on S3 by using Reduced Redundancy S
   * In `s3_website.yml`, set `s3_reduced_redundancy: true`
   * All objects uploaded after this change will use the Reduced Redundancy Storage.
   * If you want to change all of the files in the bucket, you can change them through the AWS console, or update the timestamp on the files before running `s3_website` again
+
+After changing the `s3_reduced_redundancy` setting, push with the `--force`
+option.
 
 ### How to use Cloudfront to deliver your blog
 

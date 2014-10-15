@@ -79,6 +79,12 @@ class Cli < Thor
     :desc => "Print verbose output"
   )
   option(
+    :force,
+    :type => :boolean,
+    :default => false,
+    :desc => "Skip diff calculation and push all the files. This option is useful when you need to update metadata on the S3 objects."
+  )
+  option(
     :dry_run,
     :type => :boolean,
     :default => false,

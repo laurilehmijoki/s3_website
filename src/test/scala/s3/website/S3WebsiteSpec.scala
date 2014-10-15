@@ -611,6 +611,15 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "push --force" should {
+    "push all the files whether they have changed or not" in new ForcePush {
+      setLocalFileWithContent(("index.html", "<h1>hi</h1>"))
+      setS3Files(S3File("index.html", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      push
+      sentPutObjectRequest.getKey must equalTo("index.html")
+    }
+  }
+
   "dry run" should {
     "not push updates" in new SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode {
       setLocalFileWithContent(("index.html", "<div>new</div>"))
@@ -667,17 +676,29 @@ class S3WebsiteSpec extends Specification {
   
   trait BasicSetup extends SiteLocationFromCliArg with EmptySite with MockAWS with DefaultRunMode
 
+  trait ForcePush extends SiteLocationFromCliArg with EmptySite with MockAWS with ForcePushMode
+
   trait DefaultRunMode {
-    implicit def pushMode: PushMode = new PushMode {
+    implicit def pushOptions: PushOptions = new PushOptions {
       def dryRun = false
+      def force = false
     }
   }
 
   trait DryRunMode {
-    implicit def pushMode: PushMode = new PushMode {
+    implicit def pushOptions: PushOptions = new PushOptions {
       def dryRun = true
+      def force = false
     }
   }
+
+  trait ForcePushMode {
+    implicit def pushOptions: PushOptions = new PushOptions {
+      def dryRun = false
+      def force = true
+    }
+  }
+
 
   trait MockAWS extends MockS3 with MockCloudFront with Scope
 
@@ -895,6 +916,8 @@ class S3WebsiteSpec extends Specification {
         def site = if (siteDirFromCLIArg) siteDirectory.getAbsolutePath else null
 
         def configDir = configDirectory.getAbsolutePath
+
+        def force = pushOptions.force
       }
   }
 

@@ -44,12 +44,14 @@ object Push {
     @Option(longName = Array("config-dir"), defaultToNull = true) def configDir: String
     @Option def verbose: Boolean
     @Option(longName = Array("dry-run")) def dryRun: Boolean
+    @Option(longName = Array("force")) def force: Boolean
   }
 
   def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File): ExitCode = {
     implicit val logger: Logger = new Logger(cliArgs.verbose)
     implicit val pushOptions = new PushOptions {
       def dryRun = cliArgs.dryRun
+      def force  = cliArgs.force
     }
 
     implicit val yamlConfig = S3_website_yml(new File(Option(cliArgs.configDir).getOrElse(workingDirectory.getPath) + "/s3_website.yml"))

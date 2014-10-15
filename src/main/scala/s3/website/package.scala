@@ -41,7 +41,15 @@ package object website {
   }
   
   trait PushOptions {
+    /**
+     * @return true if the CLI option --dry-run is on
+     */
     def dryRun: Boolean
+
+    /**
+     * @return true if the CLI option --force is on
+     */
+    def force: Boolean
   }
 
   type S3Key = String

@@ -33,7 +33,7 @@ object Diff {
           }
           val changedUploads = siteFiles collect {
             case file if existsOnS3(file) => Upload(file, FileUpdate)
-          } filter isChangedOnS3
+          } filter (if (pushOptions.force) selectAllFiles else isChangedOnS3)
           newUploads ++ changedUploads
         } match {
           case Success(ok) => Right(ok)
@@ -41,6 +41,8 @@ object Diff {
         }
       }
     }
+
+  val selectAllFiles = (upload: Upload) => true
 
   def resolveDeletes(s3Files: Future[Either[ErrorReport, Seq[S3File]]], redirects: Seq[Redirect])
                     (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] =
