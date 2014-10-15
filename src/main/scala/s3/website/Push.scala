@@ -5,7 +5,7 @@ import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import s3.website.Diff.{resolveDeletes, resolveDiff}
+import s3.website.UploadHelper.{resolveDeletes, resolveUploads}
 import s3.website.S3._
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
@@ -85,7 +85,7 @@ object Push {
     val redirectReports: PushReports = redirects.map(S3 uploadRedirect _) map (Right(_))
 
     val pushReports: Future[PushReports] = for {
-      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveDiff(s3FilesFuture)
+      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveUploads(s3FilesFuture)
     } yield {
       val uploadReports: PushReports = errorOrUploads.fold(
         error => Left(error) :: Nil,

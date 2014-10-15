@@ -18,7 +18,7 @@ import org.mockito.{ArgumentCaptor, Matchers, Mockito}
 import org.specs2.mutable.{BeforeAfter, Specification}
 import org.specs2.specification.Scope
 import s3.website.CloudFront.CloudFrontSetting
-import s3.website.Diff.DELETE_NOTHING_MAGIC_WORD
+import s3.website.UploadHelper.DELETE_NOTHING_MAGIC_WORD
 import s3.website.Push.{CliArgs}
 import s3.website.S3.S3Setting
 import s3.website.model.Config.S3_website_yml

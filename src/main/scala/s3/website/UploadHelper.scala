@@ -7,15 +7,15 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success, Try}
 import java.io.File
 
-object Diff {
+object UploadHelper {
 
   type FutureUploads = Future[Either[ErrorReport, Seq[Upload]]]
 
-  def resolveDiff(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
+  def resolveUploads(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
                  (implicit site: Site, pushOptions: PushOptions, logger: Logger, executor: ExecutionContextExecutor): FutureUploads =
-    resolveDiffAgainstGetBucketResponse(s3FilesFuture)
+    resolveUploadsAgainstGetBucketResponse(s3FilesFuture)
 
-  private def resolveDiffAgainstGetBucketResponse(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
+  private def resolveUploadsAgainstGetBucketResponse(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
                                                     (implicit site: Site,
                                                      pushOptions: PushOptions,
                                                      logger: Logger,
