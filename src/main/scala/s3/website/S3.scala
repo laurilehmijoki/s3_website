@@ -155,8 +155,8 @@ object S3 {
                              (implicit pushOptions: PushOptions, logger: Logger) extends PushSuccessReport {
     def reportMessage =
       details.fold(
-        newOrCreatedDetails => s"${newOrCreatedDetails.uploadType.pushAction} $s3Key ($reportDetails)",
-        redirectDetails     => s"${redirectDetails.uploadType.pushAction} $s3Key to ${redirectDetails.redirectTarget}"
+        newOrCreatedDetails => s"${newOrCreatedDetails.uploadType.pushAction.renderVerb} $s3Key ($reportDetails)",
+        redirectDetails     => s"${redirectDetails.uploadType.pushAction.renderVerb} $s3Key to ${redirectDetails.redirectTarget}"
       )
 
     def reportDetails = {

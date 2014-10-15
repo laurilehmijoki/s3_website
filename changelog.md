@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.5.1
+
+* Print **Would have updated|redirected|created** when running with `--dry-run`
+
 ## 2.5.0
 
 * Add `push --force` option
