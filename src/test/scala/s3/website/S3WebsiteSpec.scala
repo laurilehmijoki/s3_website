@@ -884,13 +884,13 @@ class S3WebsiteSpec extends Specification {
         """.stripMargin
       )
 
-    def pushMode: PushMode // Represents the --dry-run switch
+    def pushOptions: PushOptions
 
     implicit def cliArgs: CliArgs =
       new CliArgs {
         def verbose = true
 
-        def dryRun = pushMode.dryRun
+        def dryRun = pushOptions.dryRun
 
         def site = if (siteDirFromCLIArg) siteDirectory.getAbsolutePath else null
 

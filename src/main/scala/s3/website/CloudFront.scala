@@ -14,9 +14,9 @@ import s3.website.model.Config.awsCredentials
 
 object CloudFront {
   def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
-                (implicit ec: ExecutionContextExecutor, cloudFrontSettings: CloudFrontSetting, config: Config, logger: Logger, pushMode: PushMode): InvalidationResult =
+                (implicit ec: ExecutionContextExecutor, cloudFrontSettings: CloudFrontSetting, config: Config, logger: Logger, pushOptions: PushOptions): InvalidationResult =
     Future {
-      if (!pushMode.dryRun) cloudFront createInvalidation new CreateInvalidationRequest(distributionId, invalidationBatch)
+      if (!pushOptions.dryRun) cloudFront createInvalidation new CreateInvalidationRequest(distributionId, invalidationBatch)
       val result = SuccessfulInvalidation(invalidationBatch.getPaths.getItems.size())
       logger.debug(invalidationBatch.getPaths.getItems.map(item => s"${Invalidated.renderVerb} $item") mkString "\n")
       logger.info(result)
@@ -27,7 +27,7 @@ object CloudFront {
     ))
 
   def tooManyInvalidationsRetry(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt)
-                               (implicit ec: ExecutionContextExecutor, logger: Logger, cloudFrontSettings: CloudFrontSetting, config: Config, pushMode: PushMode):
+                               (implicit ec: ExecutionContextExecutor, logger: Logger, cloudFrontSettings: CloudFrontSetting, config: Config, pushOptions: PushOptions):
   PartialFunction[Throwable, InvalidationResult] = {
     case e: TooManyInvalidationsInProgressException =>
       val duration: Duration = Duration(
@@ -57,7 +57,7 @@ object CloudFront {
 
   type CloudFrontClientProvider = (Config) => AmazonCloudFront
 
-  case class SuccessfulInvalidation(invalidatedItemsCount: Int)(implicit pushMode: PushMode) extends SuccessReport {
+  case class SuccessfulInvalidation(invalidatedItemsCount: Int)(implicit pushOptions: PushOptions) extends SuccessReport {
     def reportMessage = s"${Invalidated.renderVerb} ${invalidatedItemsCount ofType "item"} on CloudFront"
   }
 

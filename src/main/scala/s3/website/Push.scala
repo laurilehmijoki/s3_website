@@ -48,7 +48,7 @@ object Push {
 
   def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File): ExitCode = {
     implicit val logger: Logger = new Logger(cliArgs.verbose)
-    implicit val pushMode = new PushMode {
+    implicit val pushOptions = new PushOptions {
       def dryRun = cliArgs.dryRun
     }
 
@@ -75,7 +75,7 @@ object Push {
                 s3Settings: S3Setting,
                 cloudFrontSettings: CloudFrontSetting,
                 logger: Logger,
-                pushMode: PushMode
+                pushOptions: PushOptions
                 ): ExitCode = {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val redirects = Redirect.resolveRedirects
@@ -108,7 +108,7 @@ object Push {
   
   def invalidateCloudFrontItems
     (finishedPushOperations: FinishedPushOperations)
-    (implicit config: Config, cloudFrontSettings: CloudFrontSetting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
+    (implicit config: Config, cloudFrontSettings: CloudFrontSetting, ec: ExecutionContextExecutor, logger: Logger, pushOptions: PushOptions):
   Option[InvalidationSucceeded] =
     config.cloudfront_distribution_id.map { distributionId =>
       val pushSuccessReports = 
@@ -141,7 +141,7 @@ object Push {
   type InvalidationSucceeded = Boolean
 
   def afterPushFinished(finishedPushOps: FinishedPushOperations, invalidationSucceeded: Option[Boolean])
-                       (implicit config: Config, logger: Logger, pushMode: PushMode): ExitCode = {
+                       (implicit config: Config, logger: Logger, pushOptions: PushOptions): ExitCode = {
     val pushCounts = resolvePushCounts(finishedPushOps)
     logger.info(s"Summary: ${pushCountsToString(pushCounts)}")
     val pushOpExitCode = finishedPushOps.foldLeft(0) { (memo, finishedUpload) =>
@@ -158,7 +158,7 @@ object Push {
     val exitCode = (pushOpExitCode + cloudFrontInvalidationExitCode) min 1
 
     exitCode match {
-      case 0 if !pushMode.dryRun && pushCounts.thereWasSomethingToPush =>
+      case 0 if !pushOptions.dryRun && pushCounts.thereWasSomethingToPush =>
         logger.info(s"Successfully pushed the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
       case 1 =>
         logger.fail(s"Failed to push the website to http://${config.s3_bucket}.${config.s3_endpoint.s3WebsiteHostname}")
@@ -191,7 +191,7 @@ object Push {
       )
   }
 
-  def pushCountsToString(pushCounts: PushCounts)(implicit pushMode: PushMode): String =
+  def pushCountsToString(pushCounts: PushCounts)(implicit pushOptions: PushOptions): String =
     pushCounts match {
       case PushCounts(updates, newFiles, failures, redirects, deletes, _, _)
         if updates == 0 && newFiles == 0 && failures == 0 && redirects == 0 && deletes == 0 =>

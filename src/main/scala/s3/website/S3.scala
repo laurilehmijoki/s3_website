@@ -18,20 +18,20 @@ import scala.util.Try
 object S3 {
 
   def uploadRedirect(redirect: Redirect, a: Attempt = 1)
-            (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
+            (implicit config: Config, s3Settings: S3Setting, pushOptions: PushOptions, executor: ExecutionContextExecutor, logger: Logger) =
     uploadToS3(Right(redirect))
 
   def uploadFile(up: Upload, a: Attempt = 1)
-                    (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger) =
+                    (implicit config: Config, s3Settings: S3Setting, pushOptions: PushOptions, executor: ExecutionContextExecutor, logger: Logger) =
     uploadToS3(Left(up))
 
   def uploadToS3(source: Either[Upload, Redirect], a: Attempt = 1)
-            (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
+            (implicit config: Config, s3Settings: S3Setting, pushOptions: PushOptions, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedUpload, SuccessfulUpload]] =
     Future {
       val putObjectRequest = toPutObjectRequest(source).get
       val uploadDuration =
-        if (pushMode.dryRun) None
+        if (pushOptions.dryRun) None
         else Some(recordUploadDuration(putObjectRequest, s3Settings.s3Client(config) putObject putObjectRequest))
       val report = SuccessfulUpload(
         source.fold(_.s3Key, _.s3Key),
@@ -49,10 +49,10 @@ object S3 {
     )
 
   def delete(s3Key: S3Key,  a: Attempt = 1)
-            (implicit config: Config, s3Settings: S3Setting, pushMode: PushMode, executor: ExecutionContextExecutor, logger: Logger):
+            (implicit config: Config, s3Settings: S3Setting, pushOptions: PushOptions, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
-      if (!pushMode.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
+      if (!pushOptions.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
       val report = SuccessfulDelete(s3Key)
       logger.info(report)
       Right(report)
@@ -110,7 +110,7 @@ object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(awsCredentials(config))
 
   def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
-                              (implicit config: Config, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushMode: PushMode):
+                              (implicit config: Config, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushOptions: PushOptions):
   Future[Either[ErrorReport, Seq[S3File]]] = Future {
     logger.debug(nextMarker.fold
       ("Querying S3 files")
@@ -152,7 +152,7 @@ object S3 {
   case class SuccessfulUpload(s3Key: S3Key,
                               details: Either[SuccessfulNewOrCreatedDetails, SuccessfulRedirectDetails],
                               putObjectRequest: PutObjectRequest)
-                             (implicit pushMode: PushMode, logger: Logger) extends PushSuccessReport {
+                             (implicit pushOptions: PushOptions, logger: Logger) extends PushSuccessReport {
     def reportMessage =
       details.fold(
         newOrCreatedDetails => s"${newOrCreatedDetails.uploadType.pushAction} $s3Key ($reportDetails)",
@@ -205,7 +205,7 @@ object S3 {
     }
   }
 
-  case class SuccessfulDelete(s3Key: String)(implicit pushMode: PushMode) extends PushSuccessReport {
+  case class SuccessfulDelete(s3Key: String)(implicit pushOptions: PushOptions) extends PushSuccessReport {
     def reportMessage = s"${Deleted.renderVerb} $s3Key"
   }
 

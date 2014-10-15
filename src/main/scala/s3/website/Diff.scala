@@ -12,11 +12,14 @@ object Diff {
   type FutureUploads = Future[Either[ErrorReport, Seq[Upload]]]
 
   def resolveDiff(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
-                 (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): FutureUploads =
+                 (implicit site: Site, pushOptions: PushOptions, logger: Logger, executor: ExecutionContextExecutor): FutureUploads =
     resolveDiffAgainstGetBucketResponse(s3FilesFuture)
 
   private def resolveDiffAgainstGetBucketResponse(s3FilesFuture: Future[Either[ErrorReport, Seq[S3File]]])
-                                                 (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): FutureUploads =
+                                                    (implicit site: Site,
+                                                     pushOptions: PushOptions,
+                                                     logger: Logger,
+                                                     executor: ExecutionContextExecutor): FutureUploads =
     s3FilesFuture.map { errorOrS3Files =>
       errorOrS3Files.right.flatMap { s3Files =>
         Try {

@@ -40,7 +40,7 @@ package object website {
     def retryTimeUnit: TimeUnit
   }
   
-  trait PushMode {
+  trait PushOptions {
     def dryRun: Boolean
   }
 
@@ -51,8 +51,8 @@ package object website {
   trait PushAction {
     def actionName = getClass.getSimpleName.replace("$", "") // case object class names contain the '$' char
 
-    def renderVerb(implicit pushMode: PushMode): String =
-      if (pushMode.dryRun)
+    def renderVerb(implicit pushOptions: PushOptions): String =
+      if (pushOptions.dryRun)
         s"Would have ${actionName.toLowerCase}"
       else
         s"$actionName"
@@ -65,15 +65,15 @@ package object website {
   case object Invalidated extends PushAction
   case object Applied     extends PushAction
   case object PushNothing extends PushAction {
-    override def renderVerb(implicit pushMode: PushMode) =
-      if (pushMode.dryRun)
+    override def renderVerb(implicit pushOptions: PushOptions) =
+      if (pushOptions.dryRun)
         s"Would have pushed nothing"
       else
         s"There was nothing to push"
   }
   case object Deploy      extends PushAction {
-    override def renderVerb(implicit pushMode: PushMode) =
-      if (pushMode.dryRun)
+    override def renderVerb(implicit pushOptions: PushOptions) =
+      if (pushOptions.dryRun)
         s"Simulating the deployment of"
       else
         s"Deploying"
