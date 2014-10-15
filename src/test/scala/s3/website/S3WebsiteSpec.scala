@@ -621,14 +621,14 @@ class S3WebsiteSpec extends Specification {
   }
 
   "dry run" should {
-    "not push updates" in new SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode {
+    "not push updates" in new DryRun {
       setLocalFileWithContent(("index.html", "<div>new</div>"))
       setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
       push
       noUploadsOccurred must beTrue
     }
 
-    "not push redirects" in new SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode {
+    "not push redirects" in new DryRun {
       config =
         """
           |redirects:
@@ -638,19 +638,19 @@ class S3WebsiteSpec extends Specification {
       noUploadsOccurred must beTrue
     }
 
-    "not push deletes" in new SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode {
+    "not push deletes" in new DryRun {
       setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
       push
       noUploadsOccurred must beTrue
     }
 
-    "not push new files" in new SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode {
+    "not push new files" in new DryRun {
       setLocalFile("index.html")
       push
       noUploadsOccurred must beTrue
     }
 
-    "not invalidate files" in new SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode {
+    "not invalidate files" in new DryRun {
       config = "cloudfront_invalidation_id: AABBCC"
       setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
       push
@@ -677,6 +677,8 @@ class S3WebsiteSpec extends Specification {
   trait BasicSetup extends SiteLocationFromCliArg with EmptySite with MockAWS with DefaultRunMode
 
   trait ForcePush extends SiteLocationFromCliArg with EmptySite with MockAWS with ForcePushMode
+  
+  trait DryRun extends SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode
 
   trait DefaultRunMode {
     implicit def pushOptions: PushOptions = new PushOptions {
