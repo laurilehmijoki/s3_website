@@ -44,6 +44,28 @@ environment variables. It's convenient, since you can keep the `s3_website.yml`
 in a public Git repo, and thus have your deployment configurations
 version-controlled.
 
+Sometimes you want to use multiple CNAMEs aliases in your CloudFront distribution:
+
+````yaml
+s3_id: <%= ENV['your_domain_net_aws_key'] %>
+s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
+s3_bucket: your.domain.net
+cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
+cloudfront_distribution_config:
+  default_cache_behavior:
+    min_TTL: <%= 60 * 60 * 24 %>
+  aliases:
+    quantity: 3
+    items:
+      CNAME0: your1.domain.net
+      CNAME1: your2.domain.net
+      CNAME2: your3.domain.net
+max_age: 120
+gzip: true
+````
+
+Always remember to set the 'quantity' property to match the number of items you have.
+
 ## Using redirects
 
 ````yaml
