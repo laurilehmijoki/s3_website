@@ -429,6 +429,7 @@ Contributors (in alphabetical order)
 * Philip I. Thomas
 * Philippe Creux
 * Piotr Janik
+* Rodrigo Reis
 * Shigeaki Matsumura
 * stanislas
 * Tate Johnson
