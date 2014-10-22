@@ -33,6 +33,12 @@ class Cfg < Thor
     :type => :boolean,
     :desc => "When used with --headless, automatically create a CloudFront distribution for your S3 website."
   )
+  option(
+    'config-dir',
+    :type => :string,
+    :desc => "The directory where your config file is. When not defined, s3_website will look in the current working directory.",
+    :default => "."
+  )
   desc 'apply', 'Apply the configuration on the AWS services'
   long_desc <<-LONGDESC
     `s3_website cfg apply` will apply the configuration the S3 bucket.
@@ -45,7 +51,7 @@ class Cfg < Thor
   def apply
     puts 'Applying the configurations in s3_website.yml on the AWS services ...'
     require 'configure-s3-website'
-    config_source = ConfigureS3Website::FileConfigSource.new 's3_website.yml'
+    config_source = ConfigureS3Website::FileConfigSource.new "#{options['config-dir']}/s3_website.yml"
     ConfigureS3Website::Runner.run({
       :config_source => config_source,
       :headless => options[:headless],
