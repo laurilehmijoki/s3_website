@@ -11,7 +11,8 @@ object S3Endpoint {
   val defaultEndpoint = S3Endpoint("s3-website-us-east-1.amazonaws.com", "s3.amazonaws.com")
 
   def forString(locationConstraint: String): Either[ErrorReport, S3Endpoint] = locationConstraint match {
-    case "EU" | "eu-west-1" => Right(S3Endpoint("s3-website-eu-west-1.amazonaws.com",      "s3-eu-west-1.amazonaws.com"))
+    case "eu-west-1" => Right(S3Endpoint("s3-website-eu-west-1.amazonaws.com",      "s3-eu-west-1.amazonaws.com"))
+    case "eu-central-1" => Right(S3Endpoint("s3-website-eu-central-1.amazonaws.com",      "s3-eu-central-1.amazonaws.com"))
     case "us-east-1" =>        Right(defaultEndpoint)
     case "us-west-1" =>        Right(S3Endpoint("s3-website-us-west-1.amazonaws.com",      "s3-us-west-1.amazonaws.com"))
     case "us-west-2" =>        Right(S3Endpoint("s3-website-us-west-2.amazonaws.com",      "s3-us-west-2.amazonaws.com"))
