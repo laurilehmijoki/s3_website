@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## NEXT
+
+* Add support for **eu-central-1** region
+
 ## 2.5.1
 
 * Print **Would have updated|redirected|created** when running with `--dry-run`
