@@ -430,6 +430,7 @@ Contributors (in alphabetical order)
 * Philippe Creux
 * Piotr Janik
 * Rodrigo Reis
+* Ross Hunter
 * Shigeaki Matsumura
 * stanislas
 * Tate Johnson
