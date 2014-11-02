@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.6.0
+
+* Support `--config-dir` in `cfg apply`
+
 ## 2.5.1
 
 * Print **Would have updated|redirected|created** when running with `--dry-run`
