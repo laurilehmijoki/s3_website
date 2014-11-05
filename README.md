@@ -435,6 +435,7 @@ Contributors (in alphabetical order)
 * stanislas
 * Tate Johnson
 * Toby Marsden
+* Tom Bell
 * Trevor Fitzgerald
 * Zee Spencer
 
