@@ -215,7 +215,18 @@ class S3WebsiteSpec extends Specification {
       setLocalFile("articles/index.html")
       setOutdatedS3Keys("articles/index.html")
       push
-      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/" :: "/index.html" :: Nil).sorted)
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq must contain("/articles/")
+    }
+
+    "always invalidate the root path" in new BasicSetup {
+      config = """
+        |cloudfront_distribution_id: EGM1J2JJX9Z
+        |cloudfront_invalidate_root: true
+      """.stripMargin
+      setLocalFile("articles/index.html")
+      setOutdatedS3Keys("articles/index.html")
+      push
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq must contain("/index.html")
     }
   }
 
