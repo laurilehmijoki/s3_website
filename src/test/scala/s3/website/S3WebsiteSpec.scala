@@ -215,7 +215,7 @@ class S3WebsiteSpec extends Specification {
       setLocalFile("articles/index.html")
       setOutdatedS3Keys("articles/index.html")
       push
-      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/" :: Nil).sorted)
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/" :: "/index.html" :: Nil).sorted)
     }
   }
 

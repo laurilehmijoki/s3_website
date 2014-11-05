@@ -66,7 +66,7 @@ object CloudFront {
   }
 
   def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient(awsCredentials(config))
-  
+
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
     val invalidationPaths: Seq[String] = {
       def withDefaultPathIfNeeded(paths: Seq[String]) = {
@@ -81,11 +81,14 @@ object CloudFront {
           )
         if (containsPotentialDefaultRootObject) paths :+ "/" else paths
       }
+      def withIndexPathIfNeeded(paths: Seq[String]) = {
+        if (config.cloudfront_invalidate_root.exists(_ == true)) paths :+ "/index.html" else paths
+      }
       val paths = pushSuccessReports
         .filter(needsInvalidation) // Assume that redirect objects are never cached.
         .map(toInvalidationPath)
-        .map (applyInvalidateRootSetting)
-      withDefaultPathIfNeeded(paths)
+        .map(applyInvalidateRootSetting)
+      withIndexPathIfNeeded(withDefaultPathIfNeeded(paths))
     }
 
     invalidationPaths
