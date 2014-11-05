@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.6.1
+
+* Always invalidate the object */index.html* if the setting `cloudfront_invalidate_root` is on
+
+  See https://github.com/laurilehmijoki/s3_website/pull/130 for discussion
+
 ## 2.6.0
 
 * Support `--config-dir` in `cfg apply`
