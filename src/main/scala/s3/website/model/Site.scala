@@ -73,7 +73,7 @@ object Site {
             cloudfront_distribution_id,
             cloudfront_invalidate_root,
             redirects,
-            concurrency_level.fold(20)(_ max 20) // At minimum, run 20 concurrent operations
+            concurrency_level.fold(20)(_ max 20)
           )
         }
       case Failure(error) =>
