@@ -35,7 +35,7 @@ class S3WebsiteSpec extends Specification {
     "update a gzipped S3 object if the contents has changed" in new BasicSetup {
       config = "gzip: true"
       setLocalFileWithContent(("styles.css", "<h1>hi again</h1>"))
-      setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
       push
       sentPutObjectRequest.getKey must equalTo("styles.css")
     }
@@ -43,7 +43,7 @@ class S3WebsiteSpec extends Specification {
     "not update a gzipped S3 object if the contents has not changed" in new BasicSetup {
       config = "gzip: true"
       setLocalFileWithContent(("styles.css", "<h1>hi</h1>"))
-      setS3Files(S3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
       push
       noUploadsOccurred must beTrue
     }
@@ -59,7 +59,7 @@ class S3WebsiteSpec extends Specification {
         |  - .xml
       """.stripMargin
       setLocalFileWithContent(("file.xml", "<h1>hi again</h1>"))
-      setS3Files(S3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      setS3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
       push
       sentPutObjectRequest.getKey must equalTo("file.xml")
     }
@@ -68,14 +68,14 @@ class S3WebsiteSpec extends Specification {
   "push" should {
     "not upload a file if it has not changed" in new BasicSetup {
       setLocalFileWithContent(("index.html", "<div>hello</div>"))
-      setS3Files(S3File("index.html", md5Hex("<div>hello</div>")))
+      setS3File("index.html", md5Hex("<div>hello</div>"))
       push
       noUploadsOccurred must beTrue
     }
 
     "update a file if it has changed" in new BasicSetup {
       setLocalFileWithContent(("index.html", "<h1>old text</h1>"))
-      setS3Files(S3File("index.html", md5Hex("<h1>new text</h1>")))
+      setS3File("index.html", md5Hex("<h1>new text</h1>"))
       push
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
@@ -87,7 +87,7 @@ class S3WebsiteSpec extends Specification {
     }
 
     "delete files that are on S3 but not on local file system" in new BasicSetup {
-      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      setS3File("old.html", md5Hex("<h1>old text</h1>"))
       push
       sentDelete must equalTo("old.html")
     }
@@ -131,14 +131,14 @@ class S3WebsiteSpec extends Specification {
     }
 
     "try again if the delete fails" in new BasicSetup {
-      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      setS3File("old.html", md5Hex("<h1>old text</h1>"))
       deleteFailsAndThenSucceeds(howManyFailures = 5)
       push
       verify(amazonS3Client, times(6)).deleteObject(Matchers.anyString(), Matchers.anyString())
     }
 
     "try again if the object listing fails" in new BasicSetup {
-      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      setS3File("old.html", md5Hex("<h1>old text</h1>"))
       objectListingFailsAndThenSucceeds(howManyFailures = 5)
       push
       verify(amazonS3Client, times(6)).listObjects(Matchers.any(classOf[ListObjectsRequest]))
@@ -292,7 +292,7 @@ class S3WebsiteSpec extends Specification {
     }
 
     "be 1 if an object listing fails" in new BasicSetup {
-      setS3Files(S3File("old.html", md5Hex("<h1>old text</h1>")))
+      setS3File("old.html", md5Hex("<h1>old text</h1>"))
       objectListingFailsAndThenSucceeds(howManyFailures = 6)
       push must equalTo(1)
     }
@@ -343,13 +343,13 @@ class S3WebsiteSpec extends Specification {
   "ignore_on_server: value" should {
     "not delete the S3 objects that match the ignore value" in new BasicSetup {
       config = "ignore_on_server: logs"
-      setS3Files(S3File("logs/log.txt", ""))
+      setS3File("logs/log.txt")
       push
       noDeletesOccurred must beTrue
     }
 
     "support non-US-ASCII files"  in new BasicSetup {
-      setS3Files(S3File("tags/笔记/test.html", ""))
+      setS3File("tags/笔记/test.html", "")
       config = "ignore_on_server: tags/笔记/test.html"
       push
       noDeletesOccurred must beTrue
@@ -361,7 +361,7 @@ class S3WebsiteSpec extends Specification {
       config = s"""
         |ignore_on_server: $DELETE_NOTHING_MAGIC_WORD
       """.stripMargin
-      setS3Files(S3File("file.txt", ""))
+      setS3File("file.txt")
       push
       noDeletesOccurred
     }
@@ -377,13 +377,13 @@ class S3WebsiteSpec extends Specification {
         |ignore_on_server:
         |  - .*txt
       """.stripMargin
-      setS3Files(S3File("logs/log.txt", ""))
+      setS3File("logs/log.txt", "")
       push
       noDeletesOccurred must beTrue
     }
 
     "support non-US-ASCII files" in new BasicSetup {
-      setS3Files(S3File("tags/笔记/test.html", ""))
+      setS3File("tags/笔记/test.html", "")
       config = """
                  |ignore_on_server:
                  |  - tags/笔记/test.html
@@ -570,7 +570,7 @@ class S3WebsiteSpec extends Specification {
         |  index.php: /index.html
       """.stripMargin
       setLocalFile("index.php")
-      setS3Files(S3File("index.php", "md5"))
+      setS3File("index.php", "md5")
       push
       noDeletesOccurred must beTrue
     }
@@ -625,7 +625,7 @@ class S3WebsiteSpec extends Specification {
   "push --force" should {
     "push all the files whether they have changed or not" in new ForcePush {
       setLocalFileWithContent(("index.html", "<h1>hi</h1>"))
-      setS3Files(S3File("index.html", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */))
+      setS3File("index.html", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
       push
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
@@ -634,7 +634,7 @@ class S3WebsiteSpec extends Specification {
   "dry run" should {
     "not push updates" in new DryRun {
       setLocalFileWithContent(("index.html", "<div>new</div>"))
-      setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
+      setS3File("index.html", md5Hex("<div>old</div>"))
       push
       noUploadsOccurred must beTrue
     }
@@ -650,7 +650,7 @@ class S3WebsiteSpec extends Specification {
     }
 
     "not push deletes" in new DryRun {
-      setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
+      setS3File("index.html", md5Hex("<div>old</div>"))
       push
       noUploadsOccurred must beTrue
     }
@@ -663,7 +663,7 @@ class S3WebsiteSpec extends Specification {
 
     "not invalidate files" in new DryRun {
       config = "cloudfront_invalidation_id: AABBCC"
-      setS3Files(S3File("index.html", md5Hex("<div>old</div>")))
+      setS3File("index.html", md5Hex("<div>old</div>"))
       push
       noInvalidationsOccurred must beTrue
     }
@@ -768,22 +768,23 @@ class S3WebsiteSpec extends Specification {
     val s3ObjectListing = new ObjectListing
     when(amazonS3Client.listObjects(Matchers.any(classOf[ListObjectsRequest]))).thenReturn(s3ObjectListing)
 
+    // Simulate the situation where the file on S3 is outdated (as compared to the local file)
     def setOutdatedS3Keys(s3Keys: String*) {
-      s3Keys
-        .map(key =>
-          S3File(key, md5Hex(Random.nextLong().toString)) // Simulate the situation where the file on S3 is outdated (as compared to the local file)
-        )
-        .foreach (setS3Files(_))
+      s3Keys.map(setS3File(_))
+    }
+
+    def setS3File(s3Key: String, md5: String = "") {
+      s3ObjectListing.getObjectSummaries.add({
+        val summary = new S3ObjectSummary
+        summary.setETag(md5)
+        summary.setKey(s3Key)
+        summary
+      })
     }
 
     def setS3Files(s3Files: S3File*) {
       s3Files.foreach { s3File =>
-        s3ObjectListing.getObjectSummaries.add({
-          val summary = new S3ObjectSummary
-          summary.setETag(s3File.md5)
-          summary.setKey(s3File.s3Key)
-          summary
-        })
+        setS3File(s3File.s3Key, s3File.md5)
       }
     }
 
