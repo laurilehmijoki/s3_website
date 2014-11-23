@@ -2,6 +2,16 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.0
+
+* Add setting `treat_zero_length_objects_as_redirects`
+
+  Before, `s3_website push` always uploaded one zero-length object for each
+  configured redirect. From now on, you can instruct s3\_website to treat
+  zero-length S3 objects as existing redirects. If you have a large amount of
+  redirects on your site, you may find that this feature decreases the duration
+  of `s3_website push`.
+
 ## 2.6.1
 
 * Always invalidate the object */index.html* if the setting `cloudfront_invalidate_root` is on
