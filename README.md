@@ -254,7 +254,9 @@ You can instruct the push command to invalidate the root resource instead of the
 *index.html* resource by adding the following setting into the configuration
 file:
 
-    cloudfront_invalidate_root: true
+```yaml
+cloudfront_invalidate_root: true
+```
 
 To recap, this setting instructs s3_website to invalidate the root resource
 (e.g., *article/*) instead of the filename'd resource (e.g.,
@@ -318,7 +320,9 @@ command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
 If your website has a lot of redirects, you may find the following setting
 helpful:
 
-    treat_zero_length_objects_as_redirects: true
+```yaml
+treat_zero_length_objects_as_redirects: true
+```
 
 The setting allows `s3_website push` to infer whether a redirect exists or not.
 You will experience faster `push` performance when this setting is `true`.
@@ -335,7 +339,7 @@ HTTP PUT operation against the S3 API, for example.
 You can increase the concurrency level by adding the following setting into the
 `s3_website.yml` file:
 
-```
+```yaml
 concurrency_level: <integer>
 ```
 
