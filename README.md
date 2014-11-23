@@ -334,7 +334,7 @@ If this setting is enabled and you modify the `redirects` setting in
 
 For backward-compatibility reasons, this setting is `false` by default.
 
-In this context, the word *object* refers to object on S3, not a file on the file system.
+In this context, the word *object* refers to object on S3, not file-system file.
 
 ### Specifying custom concurrency level
 
