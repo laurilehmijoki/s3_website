@@ -12,6 +12,8 @@ This project uses [Semantic Versioning](http://semver.org).
   redirects on your site, you may find that this feature decreases the duration
   of `s3_website push`.
 
+  See <https://github.com/laurilehmijoki/s3_website/issues/132> for discussion.
+
 ## 2.6.1
 
 * Always invalidate the object */index.html* if the setting `cloudfront_invalidate_root` is on
