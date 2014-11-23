@@ -11,6 +11,7 @@ import s3.website.model.Upload.tika
 import s3.website.model.Encoding.encodingOnS3
 import java.io.File.createTempFile
 import org.apache.commons.io.IOUtils.copy
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
 
 object Encoding {
@@ -148,17 +149,39 @@ object Files {
   }
 }
 
-case class Redirect(s3Key: String, redirectTarget: String) {
+case class Redirect(s3Key: String, redirectTarget: String, needsUpload: Boolean) {
   def uploadType = RedirectFile
 }
 
+private case class RedirectSetting(source: String, target: String)
+
 object Redirect {
-  def resolveRedirects(implicit config: Config): Seq[Redirect] =
-    config.redirects.fold(Nil: Seq[Redirect]) { sourcesToTargets =>
-      sourcesToTargets.foldLeft(Seq(): Seq[Redirect]) {
+  type Redirects = Future[Either[ErrorReport, Seq[Redirect]]]
+
+  def resolveRedirects(s3FileFutures: Future[Either[ErrorReport, Seq[S3File]]])
+                      (implicit config: Config, executor: ExecutionContextExecutor, pushOptions: PushOptions): Redirects = {
+    val redirectSettings = config.redirects.fold(Nil: Seq[RedirectSetting]) { sourcesToTargets =>
+      sourcesToTargets.foldLeft(Seq(): Seq[RedirectSetting]) {
         (redirects, sourceToTarget) =>
-          redirects :+ Redirect(sourceToTarget._1, applySlashIfNeeded(sourceToTarget._2))
+          redirects :+ RedirectSetting(sourceToTarget._1, applySlashIfNeeded(sourceToTarget._2))
       }
+    }
+    def redirectsWithExistsOnS3Info =
+      s3FileFutures.map(_.right.map { s3Files =>
+        val existingRedirectKeys = s3Files.filter(_.size == 0).map(_.s3Key).toSet
+        redirectSettings.map(redirectSetting => 
+          Redirect(redirectSetting, needsUpload = !existingRedirectKeys.contains(redirectSetting.source))
+        )
+      })
+    val uploadOnlyMissingRedirects =
+      config.treat_zero_length_objects_as_redirects.contains(true) && !pushOptions.force
+    val allConfiguredRedirects = Future(Right(redirectSettings.map(redirectSetting =>
+      Redirect(redirectSetting, needsUpload = true)
+    )))
+    if (uploadOnlyMissingRedirects) 
+      redirectsWithExistsOnS3Info 
+    else 
+      allConfiguredRedirects
   }
 
   private def applySlashIfNeeded(redirectTarget: String) = {
@@ -169,10 +192,13 @@ object Redirect {
     else
       "/" + redirectTarget // let the user have redirect settings like "index.php: index.html" in s3_website.ml
   }
+
+  def apply(redirectSetting: RedirectSetting, needsUpload: Boolean): Redirect =
+      Redirect(redirectSetting.source, redirectSetting.target, needsUpload)
 }
 
-case class S3File(s3Key: String, md5: MD5)
+case class S3File(s3Key: String, md5: MD5, size: Long)
 
 object S3File {
-  def apply(summary: S3ObjectSummary): S3File = S3File(summary.getKey, summary.getETag)
+  def apply(summary: S3ObjectSummary): S3File = S3File(summary.getKey, summary.getETag, summary.getSize)
 }

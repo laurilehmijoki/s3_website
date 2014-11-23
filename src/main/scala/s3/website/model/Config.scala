@@ -23,7 +23,8 @@ case class Config(
   cloudfront_distribution_id: Option[String],
   cloudfront_invalidate_root: Option[Boolean],
   redirects:                  Option[Map[String, String]],
-  concurrency_level:          Int
+  concurrency_level:          Int,
+  treat_zero_length_objects_as_redirects: Option[Boolean]
 )
 
 object Config {

@@ -1,11 +1,12 @@
 package s3.website
 
 import s3.website.model.Config.S3_website_yml
+import s3.website.model.Redirect.{Redirects, resolveRedirects}
 import s3.website.model.Site._
 import scala.concurrent.{ExecutionContextExecutor, Future, Await}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import s3.website.UploadHelper.{resolveDeletes, resolveUploads}
+import s3.website.UploadHelper.{FutureUploads, resolveDeletes, resolveUploads}
 import s3.website.S3._
 import scala.concurrent.ExecutionContext.fromExecutor
 import java.util.concurrent.Executors.newFixedThreadPool
@@ -80,29 +81,42 @@ object Push {
                 pushOptions: PushOptions
                 ): ExitCode = {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
-    val redirects = Redirect.resolveRedirects
     val s3FilesFuture = resolveS3Files()
-    val redirectReports: PushReports = redirects.map(S3 uploadRedirect _) map (Right(_))
+    val redirectsFuture: Redirects = resolveRedirects(s3FilesFuture)
+    val redirectReports: Future[Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]] =
+      redirectsFuture.map { (errOrRedirects: Either[ErrorReport, Seq[Redirect]]) =>
+        errOrRedirects.right.map(_.filter(_.needsUpload).map(S3 uploadRedirect _))
+      }
 
-    val pushReports: Future[PushReports] = for {
-      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveUploads(s3FilesFuture)
+    val uploadFutures: FutureUploads = resolveUploads(s3FilesFuture)
+    val uploadReports: Future[Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]] = for {
+      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- uploadFutures
+    } yield errorOrUploads.right.map(_.map(S3 uploadFile _))
+
+    val deleteReports: Future[Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]] = for {
+      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- uploadFutures
     } yield {
-      val uploadReports: PushReports = errorOrUploads.fold(
-        error => Left(error) :: Nil,
-        uploads => {
-          uploads.map(S3 uploadFile _).map(Right(_))
-        }
-      )
-      val deleteReports =
-        Await.result(resolveDeletes(s3FilesFuture, redirects), 1 day).right.map { keysToDelete =>
-          keysToDelete map (S3 delete _)
-        }.fold(
-          error => Left(error) :: Nil,
-          (pushResults: Seq[Future[PushErrorOrSuccess]]) => pushResults map (Right(_))
+      val errorsOrDeleteReports = redirectsFuture.flatMap { (errOrRedirects: Either[ErrorReport, Seq[Redirect]]) =>
+        errOrRedirects.fold(
+          err => Future(Left(err)),
+          redirects => resolveDeletes(s3FilesFuture, redirects)
         )
-      uploadReports ++ deleteReports ++ redirectReports
+      }.map { (deletes: Either[ErrorReport, Seq[S3Key]]) =>
+        deletes.right.map(keysToDelete => keysToDelete.map(S3 delete _))
+      }
+      Await.result(errorsOrDeleteReports, 1 day)
     }
-    val finishedPushOps = awaitForResults(Await.result(pushReports, 1 day))
+    val allReports = Future.sequence(redirectReports :: uploadReports :: deleteReports :: Nil) map { reports =>
+      reports.foldLeft(Nil: PushReports) { (memo, report: Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]) =>
+        report match {
+          case Left(err) =>
+            memo :+ Left(err)
+          case Right(pushResults: Seq[Future[PushErrorOrSuccess]]) =>
+            memo ++ pushResults.map(Right(_))
+        }
+      }
+    }
+    val finishedPushOps = awaitForResults(Await.result(allReports, 1 day))
     val invalidationSucceeded = invalidateCloudFrontItems(finishedPushOps)
     
     afterPushFinished(finishedPushOps, invalidationSucceeded)

@@ -50,6 +50,7 @@ object Site {
           cloudfront_invalidate_root <- loadOptionalBoolean("cloudfront_invalidate_root").right
           concurrency_level <- loadOptionalInt("concurrency_level").right
           redirects <- loadRedirects.right
+          treat_zero_length_objects_as_redirects <- loadOptionalBoolean("treat_zero_length_objects_as_redirects").right
         } yield {
           gzip_zopfli.foreach(_ => logger.info(
             """|Zopfli is not currently supported. Falling back to regular gzip.
@@ -73,7 +74,8 @@ object Site {
             cloudfront_distribution_id,
             cloudfront_invalidate_root,
             redirects,
-            concurrency_level.fold(20)(_ max 20)
+            concurrency_level.fold(20)(_ max 20),
+            treat_zero_length_objects_as_redirects
           )
         }
       case Failure(error) =>

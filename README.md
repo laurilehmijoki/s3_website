@@ -313,6 +313,20 @@ For more information on configuring redirects, see the documentation of the
 gem, which comes as a transitive dependency of the `s3_website` gem. (The
 command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
 
+#### On skipping application of redirects
+
+If your website has a lot of redirects, you may find the following setting
+helpful:
+
+    treat_zero_length_objects_as_redirects: true
+
+The setting allows `s3_website push` to infer whether a redirect exists or not.
+You will experience faster `push` performance when this setting is `true`.
+However, if this setting is enabled and you modify the `redirects` setting in
+*s3_website.yml*, use `push --force` to apply the modified values.
+
+For backward-compatibility reasons, this setting is `false` by default.
+
 ### Specifying custom concurrency level
 
 By default, `s3_website` does 3 operations in parallel. An operation can be an

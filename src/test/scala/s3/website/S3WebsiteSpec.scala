@@ -684,6 +684,55 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequests.length must equalTo(1)
     }
   }
+
+  "the setting treat_zero_length_objects_as_redirects" should {
+    "skip application of redirect on a zero-length S3 object" in new BasicSetup {
+      config =
+        """
+          |treat_zero_length_objects_as_redirects: true
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin
+      setRedirectObject("index.php")
+      push
+      noUploadsOccurred
+    }
+
+    "not delete the redirect objects on the bucket" in new BasicSetup {
+      config =
+        """
+          |treat_zero_length_objects_as_redirects: true
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin
+      setRedirectObject("index.php")
+      push
+      noDeletesOccurred
+    }
+
+    "apply redirects that are missing from S3" in new BasicSetup {
+      config =
+        """
+          |treat_zero_length_objects_as_redirects: true
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin
+      push
+      sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
+    }
+
+    "apply all redirects when the user invokes `push --force`" in new ForcePush {
+      config =
+        """
+          |treat_zero_length_objects_as_redirects: true
+          |redirects:
+          |  index.php: /index.html
+        """.stripMargin
+      setRedirectObject("index.php")
+      push
+      sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
+    }
+  }
   
   trait BasicSetup extends SiteLocationFromCliArg with EmptySite with MockAWS with DefaultRunMode
 
@@ -773,11 +822,16 @@ class S3WebsiteSpec extends Specification {
       s3Keys.map(setS3File(_))
     }
 
-    def setS3File(s3Key: String, md5: String = "") {
+    def setRedirectObject(s3Key: String) {
+      setS3File(s3Key, size = 0)
+    }
+
+    def setS3File(s3Key: String, md5: String = "", size: Int = 10) {
       s3ObjectListing.getObjectSummaries.add({
         val summary = new S3ObjectSummary
         summary.setETag(md5)
         summary.setKey(s3Key)
+        summary.setSize(size)
         summary
       })
     }
