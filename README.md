@@ -326,13 +326,15 @@ helpful:
 treat_zero_length_objects_as_redirects: true
 ```
 
-The setting allows `s3_website push` to infer whether a redirect exists or not.
+The setting allows `s3_website push` to infer whether a redirect exists on the S3 bucket.
 You will experience faster `push` performance when this setting is `true`.
 
 If this setting is enabled and you modify the `redirects` setting in
 *s3_website.yml*, use `push --force` to apply the modified values.
 
 For backward-compatibility reasons, this setting is `false` by default.
+
+In this context, the word *object* refers to object on S3, not a file on the file system.
 
 ### Specifying custom concurrency level
 
