@@ -219,7 +219,9 @@ create a CloudFront distribution for you.
 If you already have a CloudFront distribution that serves data from your website
 S3 bucket, just add the following line into the file `s3_website.yml`:
 
-    cloudfront_distribution_id: your-dist-id
+```yaml
+cloudfront_distribution_id: your-dist-id
+```
 
 Next time you run `s3_website push`, it will invalidate the items on CloudFront and
 thus force the CDN system to reload the changes from your website S3 bucket.
