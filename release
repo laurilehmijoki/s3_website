@@ -33,7 +33,7 @@ run "rake build"
 
 client = Octokit::Client.new(:login => 'laurilehmijoki', :password => ENV['S3_WEBSITE_RELEASE_KEY'])
 release = client.create_release(
-  'laurilehmijoki/s3_website', 
+  'laurilehmijoki/s3_website',
   tag_name,
   :body => "See https://github.com/laurilehmijoki/s3_website/blob/master/changelog.md##{version.gsub('.', '')}"
 )
