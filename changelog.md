@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.1
+
+* Loosen dependency requirements
+
+  See <https://github.com/laurilehmijoki/s3_website/pull/135> for discussion.
+
 ## 2.7.0
 
 * Add setting `treat_zero_length_objects_as_redirects`
