@@ -443,6 +443,7 @@ Contributors (in alphabetical order)
 * Douglas Teoh
 * Greg Karékinian
 * John Allison
+* Jon Frisby
 * Jordan White
 * Justin Latimer
 * László Bácsi
