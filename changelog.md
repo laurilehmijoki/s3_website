@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.2
+
+* Fix Windows issue
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/105> for discussion.
+
 ## 2.7.1
 
 * Loosen dependency requirements
