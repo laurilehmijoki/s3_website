@@ -433,6 +433,7 @@ exist.
 
 Contributors (in alphabetical order)
 * Alan deLevie
+* Almir Sarajčić
 * Cory Kaufman-Schofield
 * Chris Kelly
 * Chris Moos
