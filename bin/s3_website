@@ -138,7 +138,7 @@ def resolve_java_command(command_name)
 end
 
 def run_s3_website_jar(jar_file, logger)
-  java_installed = resolve_exit_status('which java') or resolve_exit_status('java -version')
+  java_installed = (resolve_exit_status('which java') or resolve_exit_status('java -version'))
   unless java_installed
     logger.info_msg "Cannot find Java. s3_website push is implemented in Scala, and it needs Java to run."
     autoinstall_java_or_print_help_and_exit(logger)
