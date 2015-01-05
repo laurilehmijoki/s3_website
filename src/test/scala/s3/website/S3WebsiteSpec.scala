@@ -429,7 +429,7 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
-  "max-age in config" can {
+  "max_age in config" can {
     "be applied to all files" in new BasicSetup {
       config = "max_age: 60"
       setLocalFile("index.html")
