@@ -84,7 +84,7 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
             val matchingMaxAge = (glob: String, maxAge: Int) =>
               rubyRuntime.evalScriptlet(
                 s"""|# encoding: utf-8
-                    |File.fnmatch('$glob', '$s3Key')""".stripMargin)
+                    |File.fnmatch('$glob', "$s3Key")""".stripMargin)
                 .toJava(classOf[Boolean])
                 .asInstanceOf[Boolean]
             val fileGlobMatch = globs find Function.tupled(matchingMaxAge)

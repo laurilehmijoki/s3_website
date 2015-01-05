@@ -437,6 +437,17 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
+    "supports all valid URI characters in the glob setting" in new BasicSetup {
+      config = """
+        |max_age:
+        |  "*.html": 90
+      """.stripMargin
+      val allValidUrlCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" // See http://stackoverflow.com/a/1547940/990356 for discussion
+      setLocalFile(s"$allValidUrlCharacters.html")
+      push
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
+    }
+
     "be applied to files that match the glob" in new BasicSetup {
       config = """
         |max_age:
