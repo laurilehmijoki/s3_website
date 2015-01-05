@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.3
+
+* Support valid URI characters in max_age glob
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/140> for discussion.
+
 ## 2.7.2
 
 * Fix Windows issue
