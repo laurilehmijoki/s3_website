@@ -80,14 +80,16 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
         .right.map(respectMostSpecific)
         .fold(
           (seconds: Int) => Some(seconds),
-          (globs: GlobsSeq) =>
-            globs.find { globAndInt =>
-              (rubyRuntime evalScriptlet
+          (globs: GlobsSeq) => {
+            val matchingMaxAge = (glob: String, maxAge: Int) =>
+              rubyRuntime.evalScriptlet(
                 s"""|# encoding: utf-8
-                    |File.fnmatch('${globAndInt._1}', '$s3Key')""".stripMargin)
+                    |File.fnmatch('$glob', '$s3Key')""".stripMargin)
                 .toJava(classOf[Boolean])
                 .asInstanceOf[Boolean]
-            } map (_._2)
+            val fileGlobMatch = globs find Function.tupled(matchingMaxAge)
+            fileGlobMatch map (_._2)
+          }
         )
     }
   }
