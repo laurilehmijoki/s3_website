@@ -1022,8 +1022,8 @@ class S3WebsiteSpec extends Specification {
            s3Settings: S3Setting,
            cloudFrontSettings: CloudFrontSetting,
            workingDirectory: File) = {
-    implicit val logger = new Logger(verboseOutput = true, logCapturer)
     write(emptyYamlConfig.file, configString.yaml) // Write the yaml config lazily, so that the tests can override the default yaml config
+    implicit val logger = new Logger(verboseOutput = cliArgs.verbose, logCapturer)
     Push.push
   }
 
