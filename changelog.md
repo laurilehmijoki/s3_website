@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.4
+
+* Show a helpful error message if the configured site is missing
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/144> for discussion.
+
 ## 2.7.3
 
 * Support valid URI characters in max_age glob
