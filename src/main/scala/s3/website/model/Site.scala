@@ -91,7 +91,7 @@ object Site {
 
   def noSiteFound(explanation: String) =
     s"""|
-        |$explanation.
+        |$explanation
         |Either use the --site=DIR command-line argument or define the location of the site in s3_website.yml.
         |
         |Here's an example of how you can define the site directory in s3_website.yml:
