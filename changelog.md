@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.5
+
+* Remove superfluous dot from error message
+
 ## 2.7.4
 
 * Show a helpful error message if the configured site is missing
