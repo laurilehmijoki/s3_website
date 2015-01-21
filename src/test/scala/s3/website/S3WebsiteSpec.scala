@@ -395,7 +395,7 @@ class S3WebsiteSpec extends Specification {
   }
 
   "error message" should {
-    "be helpful when the site directory is missing" in new BasicSetup {
+    "be helpful when the site setting in s3_website.yml points to a non-existing file" in new BasicSetup {
       config = "site: nonexisting_site_dir"
       val logEntries = new mutable.MutableList[String]
       push(logCapturer = Some((logEntry: String) =>
