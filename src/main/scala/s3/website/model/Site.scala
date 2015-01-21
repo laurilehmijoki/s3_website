@@ -86,30 +86,61 @@ object Site {
   def loadSite(implicit yamlConfig: S3_website_yml, cliArgs: CliArgs, workingDirectory: File, logger: Logger): Either[ErrorReport, Site] =
     parseConfig.right.flatMap { cfg =>
       implicit val config: Config = cfg
-      val errorOrSiteDir = resolveSiteDir.fold(Left(ErrorReport(noSiteFound)): Either[ErrorReport, File])(Right(_))
-      errorOrSiteDir.right.map(Site(_, config))
+      resolveSiteDir.right.map(Site(_, config))
     }
 
-  val noSiteFound =
-    """|Could not find a website.
-       |Either use the --site=DIR command-line argument or define the location of the site in s3_website.yml.
-       |
-       |Here's an example of how you can define the site directory in s3_website.yml:
-       |   site: dist/website""".stripMargin
+  def noSiteFound(explanation: String) =
+    s"""|
+        |$explanation.
+        |Either use the --site=DIR command-line argument or define the location of the site in s3_website.yml.
+        |
+        |Here's an example of how you can define the site directory in s3_website.yml:
+        |   site: dist/website""".stripMargin
 
-  def resolveSiteDir(implicit yamlConfig: S3_website_yml, config: Config, cliArgs: CliArgs, workingDirectory: File): Option[File] = {
+  def resolveSiteDir(implicit yamlConfig: S3_website_yml, config: Config, cliArgs: CliArgs, workingDirectory: File): Either[ErrorReport, File] = {
     val siteFromAutoDetect = autodetectSiteDir(workingDirectory)
-    val siteFromCliArgs = Option(cliArgs.site).map(new File(_))
+    val errOrSiteFromCliArgs: Either[ErrorReport, Option[File]] = Option(cliArgs.site) match {
+      case Some(siteDirFromCliArgs) =>
+        val f = new File(siteDirFromCliArgs)
+        if (f.exists())
+          Right(Some(f))
+        else
+          Left(ErrorReport(noSiteFound(s"Could not find a site at $siteDirFromCliArgs. Check the --site argument.")))
+      case None => Right(None)
+    }
 
-    siteFromCliArgs orElse siteFromConfig orElse siteFromAutoDetect
+    val errOrAvailableSiteDirs: Either[ErrorReport, List[File]] = for {
+      s1 <- errOrSiteFromCliArgs.right
+      s2 <- siteFromConfig.right
+      s3 <- Right(siteFromAutoDetect).right
+    } yield {
+      (s1 :: s2 :: s3 :: Nil) collect {
+        case Some(file) => file
+      }
+    }
+    errOrAvailableSiteDirs.right.flatMap {
+      case mostPreferredSiteDir :: xs => Right(mostPreferredSiteDir)
+      case Nil => Left(ErrorReport(noSiteFound("Could not find a website.")))
+    }
   }
 
-  def siteFromConfig(implicit yamlConfig: S3_website_yml, config: Config, workingDirectory: File): Option[File] =
-    config
+  def siteFromConfig(implicit yamlConfig: S3_website_yml, config: Config, workingDirectory: File): Either[ErrorReport, Option[File]] = {
+    val siteConfig = config
       .site
       .map(new File(_))
       .map { siteDir =>
         if (siteDir.isAbsolute) siteDir
         else new File(yamlConfig.file.getParentFile, siteDir.getPath)
       }
+
+    siteConfig match {
+      case s @ Some(siteDir) =>
+        if (siteDir.exists())
+          Right(s)
+        else
+          Left(ErrorReport(noSiteFound(s"Could not find a website. (The site setting in s3_website.yml points to a non-existing file $siteDir)")))
+      case None =>
+        Right(None)
+    }
+  }
 }

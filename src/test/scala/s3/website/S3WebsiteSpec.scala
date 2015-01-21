@@ -389,8 +389,21 @@ class S3WebsiteSpec extends Specification {
                  |ignore_on_server:
                  |  - tags/笔记/test.html
                """.stripMargin
-      push
+      push()
       noDeletesOccurred must beTrue
+    }
+  }
+
+  "error message" should {
+    "be helpful when the site directory is missing" in new BasicSetup {
+      config = "site: nonexisting_site_dir"
+      val logEntries = new mutable.MutableList[String]
+      push(logCapturer = Some((logEntry: String) =>
+        logEntries += logEntry
+      ))
+      logEntries must contain(
+        s"Could not find a website. (The site setting in s3_website.yml points to a non-existing file $siteDirectory/nonexisting_site_dir)"
+      )
     }
   }
 
@@ -407,7 +420,7 @@ class S3WebsiteSpec extends Specification {
     }
 
     "not override the --site command-line switch" in new BasicSetup {
-      config = s"site: dir-that-does-not-exist"
+      config = s"site: ${System.getProperty("java.io.tmpdir")}"
       setLocalFile(".vimrc") // This creates a file in the directory into which the --site CLI arg points
       push()
       sentPutObjectRequest.getKey must equalTo(".vimrc")
