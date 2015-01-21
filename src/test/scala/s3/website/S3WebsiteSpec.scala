@@ -1014,7 +1014,8 @@ class S3WebsiteSpec extends Specification {
       }
   }
 
-  def push(logCapturer: Option[(String) => _] = None)(implicit
+  def push(logCapturer: Option[(String) => _] = None)
+          (implicit
            emptyYamlConfig: S3_website_yml,
            configString: ConfigString,
            cliArgs: CliArgs,
