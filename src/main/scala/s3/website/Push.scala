@@ -32,9 +32,11 @@ object Push {
 
   def main(args: Array[String]) {
     implicit val cliArgs = parseArguments(classOf[CliArgs], args:_*)
+    implicit val logger: Logger = new Logger(cliArgs.verbose)
     implicit val s3Settings = S3Setting()
     implicit val cloudFrontSettings = CloudFrontSetting()
     implicit val workingDirectory = new File(System.getProperty("user.dir")).getAbsoluteFile
+
     System exit push
   }
 
@@ -48,8 +50,7 @@ object Push {
     @Option(longName = Array("force")) def force: Boolean
   }
 
-  def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File): ExitCode = {
-    implicit val logger: Logger = new Logger(cliArgs.verbose)
+  def push(implicit cliArgs: CliArgs, s3Settings: S3Setting, cloudFrontSettings: CloudFrontSetting, workingDirectory: File, logger: Logger): ExitCode = {
     implicit val pushOptions = new PushOptions {
       def dryRun = cliArgs.dryRun
       def force  = cliArgs.force

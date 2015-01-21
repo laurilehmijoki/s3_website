@@ -26,6 +26,7 @@ import s3.website.model.Ssg.automaticallySupportedSiteGenerators
 import s3.website.model._
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.Random
 
@@ -36,7 +37,7 @@ class S3WebsiteSpec extends Specification {
       config = "gzip: true"
       setLocalFileWithContent(("styles.css", "<h1>hi again</h1>"))
       setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo("styles.css")
     }
 
@@ -44,7 +45,7 @@ class S3WebsiteSpec extends Specification {
       config = "gzip: true"
       setLocalFileWithContent(("styles.css", "<h1>hi</h1>"))
       setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
-      push
+      push()
       noUploadsOccurred must beTrue
     }
   }
@@ -60,7 +61,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFileWithContent(("file.xml", "<h1>hi again</h1>"))
       setS3File("file.xml", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo("file.xml")
     }
   }
@@ -69,33 +70,33 @@ class S3WebsiteSpec extends Specification {
     "not upload a file if it has not changed" in new BasicSetup {
       setLocalFileWithContent(("index.html", "<div>hello</div>"))
       setS3File("index.html", md5Hex("<div>hello</div>"))
-      push
+      push()
       noUploadsOccurred must beTrue
     }
 
     "update a file if it has changed" in new BasicSetup {
       setLocalFileWithContent(("index.html", "<h1>old text</h1>"))
       setS3File("index.html", md5Hex("<h1>new text</h1>"))
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
     "create a file if does not exist on S3" in new BasicSetup {
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
 
     "delete files that are on S3 but not on local file system" in new BasicSetup {
       setS3File("old.html", md5Hex("<h1>old text</h1>"))
-      push
+      push()
       sentDelete must equalTo("old.html")
     }
 
     "try again if the upload fails" in new BasicSetup {
       setLocalFile("index.html")
       uploadFailsAndThenSucceeds(howManyFailures = 5)
-      push
+      push()
       verify(amazonS3Client, times(6)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
@@ -106,7 +107,7 @@ class S3WebsiteSpec extends Specification {
         e.setStatusCode(403)
         e
       }
-      push
+      push()
       verify(amazonS3Client, times(1)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
@@ -126,21 +127,21 @@ class S3WebsiteSpec extends Specification {
         }
       }
       setLocalFile("index.html")
-      val exitStatus = push
+      val exitStatus = push()
       verify(amazonS3Client, times(2)).putObject(Matchers.any(classOf[PutObjectRequest]))
     }
 
     "try again if the delete fails" in new BasicSetup {
       setS3File("old.html", md5Hex("<h1>old text</h1>"))
       deleteFailsAndThenSucceeds(howManyFailures = 5)
-      push
+      push()
       verify(amazonS3Client, times(6)).deleteObject(Matchers.anyString(), Matchers.anyString())
     }
 
     "try again if the object listing fails" in new BasicSetup {
       setS3File("old.html", md5Hex("<h1>old text</h1>"))
       objectListingFailsAndThenSucceeds(howManyFailures = 5)
-      push
+      push()
       verify(amazonS3Client, times(6)).listObjects(Matchers.any(classOf[ListObjectsRequest]))
     }
   }
@@ -150,14 +151,14 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFiles("css/test.css", "articles/index.html")
       setOutdatedS3Keys("css/test.css", "articles/index.html")
-      push
+      push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/css/test.css" :: "/articles/index.html" :: Nil).sorted)
     }
 
     "not send CloudFront invalidation requests on new objects"  in new BasicSetup {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("newfile.js")
-      push
+      push()
       noInvalidationsOccurred must beTrue
     }
 
@@ -167,7 +168,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |  /index.php: index.html
       """.stripMargin
-      push
+      push()
       noInvalidationsOccurred must beTrue
     }
 
@@ -176,7 +177,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      push must equalTo(0) // The retries should finally result in a success
+      push() must equalTo(0) // The retries should finally result in a success
       sentInvalidationRequests.length must equalTo(4)
     }
 
@@ -185,7 +186,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      push
+      push()
       sentInvalidationRequests.length must equalTo(6)
     }
 
@@ -193,7 +194,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("articles/arnold's file.html")
       setOutdatedS3Keys("articles/arnold's file.html")
-      push
+      push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
     }
 
@@ -201,7 +202,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("maybe-index.html")
       setOutdatedS3Keys("maybe-index.html")
-      push
+      push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/maybe-index.html" :: Nil).sorted)
     }
   }
@@ -214,7 +215,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFile("articles/index.html")
       setOutdatedS3Keys("articles/index.html")
-      push
+      push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq must contain("/articles/")
     }
 
@@ -225,7 +226,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFile("articles/index.html")
       setOutdatedS3Keys("articles/index.html")
-      push
+      push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq must contain("/index.html")
     }
   }
@@ -236,7 +237,7 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFiles(files:_*)
       setOutdatedS3Keys(files:_*)
-      push
+      push()
       sentInvalidationRequests.length must equalTo(2)
       sentInvalidationRequests(0).getInvalidationBatch.getPaths.getItems.length must equalTo(1000)
       sentInvalidationRequests(1).getInvalidationBatch.getPaths.getItems.length must equalTo(2)
@@ -246,13 +247,13 @@ class S3WebsiteSpec extends Specification {
   "push exit status" should {
     "be 0 all uploads succeed" in new BasicSetup {
       setLocalFiles("file.txt")
-      push must equalTo(0)
+      push() must equalTo(0)
     }
 
     "be 1 if any of the uploads fails" in new BasicSetup {
       setLocalFiles("file.txt")
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
-      push must equalTo(1)
+      push() must equalTo(1)
     }
 
     "be 1 if any of the redirects fails" in new BasicSetup {
@@ -261,14 +262,14 @@ class S3WebsiteSpec extends Specification {
         |  index.php: /index.html
       """.stripMargin
       when(amazonS3Client.putObject(Matchers.any(classOf[PutObjectRequest]))).thenThrow(new AmazonServiceException("AWS failed"))
-      push must equalTo(1)
+      push() must equalTo(1)
     }
 
     "be 0 if CloudFront invalidations and uploads succeed"in new BasicSetup {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      push must equalTo(0)
+      push() must equalTo(0)
     }
 
     "be 1 if CloudFront is unreachable or broken"in new BasicSetup {
@@ -276,32 +277,32 @@ class S3WebsiteSpec extends Specification {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("test.css")
       setOutdatedS3Keys("test.css")
-      push must equalTo(1)
+      push() must equalTo(1)
     }
 
     "be 0 if upload retry succeeds" in new BasicSetup {
       setLocalFile("index.html")
       uploadFailsAndThenSucceeds(howManyFailures = 1)
-      push must equalTo(0)
+      push() must equalTo(0)
     }
 
     "be 1 if delete retry fails" in new BasicSetup {
       setLocalFile("index.html")
       uploadFailsAndThenSucceeds(howManyFailures = 6)
-      push must equalTo(1)
+      push() must equalTo(1)
     }
 
     "be 1 if an object listing fails" in new BasicSetup {
       setS3File("old.html", md5Hex("<h1>old text</h1>"))
       objectListingFailsAndThenSucceeds(howManyFailures = 6)
-      push must equalTo(1)
+      push() must equalTo(1)
     }
   }
 
   "s3_website.yml file" should {
     "never be uploaded" in new BasicSetup {
       setLocalFile("s3_website.yml")
-      push
+      push()
       noUploadsOccurred must beTrue
     }
   }
@@ -309,7 +310,7 @@ class S3WebsiteSpec extends Specification {
   ".env file" should { // The .env file is the https://github.com/bkeepers/dotenv file
     "never be uploaded" in new BasicSetup {
       setLocalFile(".env")
-      push
+      push()
       noUploadsOccurred must beTrue
     }
   }
@@ -318,7 +319,7 @@ class S3WebsiteSpec extends Specification {
     "result in matching files not being uploaded" in new BasicSetup {
       config = "exclude_from_upload: .DS_.*?"
       setLocalFile(".DS_Store")
-      push
+      push()
       noUploadsOccurred must beTrue
     }
   }
@@ -335,7 +336,7 @@ class S3WebsiteSpec extends Specification {
         |  - logs
       """.stripMargin
       setLocalFiles(".DS_Store", "logs/test.log")
-      push
+      push()
       noUploadsOccurred must beTrue
     }
   }
@@ -344,14 +345,14 @@ class S3WebsiteSpec extends Specification {
     "not delete the S3 objects that match the ignore value" in new BasicSetup {
       config = "ignore_on_server: logs"
       setS3File("logs/log.txt")
-      push
+      push()
       noDeletesOccurred must beTrue
     }
 
     "support non-US-ASCII files"  in new BasicSetup {
       setS3File("tags/笔记/test.html", "")
       config = "ignore_on_server: tags/笔记/test.html"
-      push
+      push()
       noDeletesOccurred must beTrue
     }
   }
@@ -362,7 +363,7 @@ class S3WebsiteSpec extends Specification {
         |ignore_on_server: $DELETE_NOTHING_MAGIC_WORD
       """.stripMargin
       setS3File("file.txt")
-      push
+      push()
       noDeletesOccurred
     }
   }
@@ -378,7 +379,7 @@ class S3WebsiteSpec extends Specification {
         |  - .*txt
       """.stripMargin
       setS3File("logs/log.txt", "")
-      push
+      push()
       noDeletesOccurred must beTrue
     }
 
@@ -401,14 +402,14 @@ class S3WebsiteSpec extends Specification {
       new File(siteDirectory, ".vimrc").exists() must beTrue // Sanity check
       siteDirectory must not equalTo workingDirectory // Sanity check
 
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
 
     "not override the --site command-line switch" in new BasicSetup {
       config = s"site: dir-that-does-not-exist"
       setLocalFile(".vimrc") // This creates a file in the directory into which the --site CLI arg points
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
 
@@ -417,7 +418,7 @@ class S3WebsiteSpec extends Specification {
         addContentToAutomaticallyDetectedSite(workingDirectory)
         config = s"site: $siteDirectory"
         setLocalFile(".vimrc") // Add content to the custom site directory
-        push
+        push()
         sentPutObjectRequest.getKey must equalTo(".vimrc")
       }
 
@@ -433,7 +434,7 @@ class S3WebsiteSpec extends Specification {
     "be applied to all files" in new BasicSetup {
       config = "max_age: 60"
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
     }
 
@@ -444,7 +445,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       val allValidUrlCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" // See http://stackoverflow.com/a/1547940/990356 for discussion
       setLocalFile(s"$allValidUrlCharacters.html")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
@@ -454,7 +455,7 @@ class S3WebsiteSpec extends Specification {
         |  "*.html": 90
       """.stripMargin
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
@@ -464,7 +465,7 @@ class S3WebsiteSpec extends Specification {
         |  "assets/**/*.js": 90
       """.stripMargin
       setLocalFile("assets/lib/jquery.js")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
 
@@ -474,14 +475,14 @@ class S3WebsiteSpec extends Specification {
         |  "*.js": 90
       """.stripMargin
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must beNull
     }
 
     "be used to disable caching" in new BasicSetup {
       config = "max_age: 0"
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache; max-age=0")
     }
 
@@ -491,7 +492,7 @@ class S3WebsiteSpec extends Specification {
         |  "*": 21600
       """.stripMargin
       setLocalFile("tags/笔记/index.html")
-      push must equalTo(0)
+      push() must equalTo(0)
     }
   }
 
@@ -503,7 +504,7 @@ class S3WebsiteSpec extends Specification {
         |  "assets/*.gif": 86400
       """.stripMargin
       setLocalFiles("assets/jquery.js", "assets/picture.gif")
-      push
+      push()
       sentPutObjectRequests.find(_.getKey == "assets/jquery.js").get.getMetadata.getCacheControl must equalTo("max-age=150")
       sentPutObjectRequests.find(_.getKey == "assets/picture.gif").get.getMetadata.getCacheControl must equalTo("max-age=86400")
     }
@@ -513,7 +514,7 @@ class S3WebsiteSpec extends Specification {
     "result in uploads being marked with reduced redundancy" in new BasicSetup {
       config = "s3_reduced_redundancy: true"
       setLocalFile("file.exe")
-      push
+      push()
       sentPutObjectRequest.getStorageClass must equalTo("REDUCED_REDUNDANCY")
     }
   }
@@ -522,7 +523,7 @@ class S3WebsiteSpec extends Specification {
     "result in uploads being marked with the default storage class" in new BasicSetup {
       config = "s3_reduced_redundancy: false"
       setLocalFile("file.exe")
-      push
+      push()
       sentPutObjectRequest.getStorageClass must beNull
     }
   }
@@ -533,7 +534,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |  index.php: /index.html
       """.stripMargin
-      push
+      push()
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
 
@@ -542,7 +543,7 @@ class S3WebsiteSpec extends Specification {
                  |redirects:
                  |  index.php: index.html
                """.stripMargin
-      push
+      push()
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
 
@@ -551,7 +552,7 @@ class S3WebsiteSpec extends Specification {
                  |redirects:
                  |  index.php: http://www.youtube.com/watch?v=dQw4w9WgXcQ
                """.stripMargin
-      push
+      push()
       sentPutObjectRequest.getRedirectLocation must equalTo("http://www.youtube.com/watch?v=dQw4w9WgXcQ")
     }
 
@@ -560,7 +561,7 @@ class S3WebsiteSpec extends Specification {
                  |redirects:
                  |  index.php: https://www.youtube.com/watch?v=dQw4w9WgXcQ
                """.stripMargin
-      push
+      push()
       sentPutObjectRequest.getRedirectLocation must equalTo("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     }
 
@@ -569,7 +570,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |  index.php: /index.html
       """.stripMargin
-      push
+      push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=0, no-cache")
     }
   }
@@ -582,7 +583,7 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       setLocalFile("index.php")
       setS3File("index.php", "md5")
-      push
+      push()
       noDeletesOccurred must beTrue
     }
   }
@@ -590,7 +591,7 @@ class S3WebsiteSpec extends Specification {
   "dotfiles" should {
     "be included in the pushed files" in new BasicSetup {
       setLocalFile(".vimrc")
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo(".vimrc")
     }
   }
@@ -598,25 +599,25 @@ class S3WebsiteSpec extends Specification {
   "content type inference" should {
     "add charset=utf-8 to all html documents" in new BasicSetup {
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
     }
 
     "add charset=utf-8 to all text documents" in new BasicSetup {
       setLocalFile("index.txt")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/plain; charset=utf-8")
     }
 
     "add charset=utf-8 to all json documents" in new BasicSetup {
       setLocalFile("data.json")
-      push
+      push()
       sentPutObjectRequest.getMetadata.getContentType must equalTo("application/json; charset=utf-8")
     }
 
     "resolve the content type from file contents" in new BasicSetup {
       setLocalFileWithContent(("index", "<html><body><h1>hi</h1></body></html>"))
-      push
+      push()
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
     }
   }
@@ -627,7 +628,7 @@ class S3WebsiteSpec extends Specification {
         |redirects:
         |<%= ('a'..'f').to_a.map do |t| '  '+t+ ': /'+t+'.html' end.join('\n')%>
       """.stripMargin
-      push
+      push()
       sentPutObjectRequests.length must equalTo(6)
       sentPutObjectRequests.forall(_.getRedirectLocation != null) must beTrue
     }
@@ -637,7 +638,7 @@ class S3WebsiteSpec extends Specification {
     "push all the files whether they have changed or not" in new ForcePush {
       setLocalFileWithContent(("index.html", "<h1>hi</h1>"))
       setS3File("index.html", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
-      push
+      push()
       sentPutObjectRequest.getKey must equalTo("index.html")
     }
   }
@@ -646,7 +647,7 @@ class S3WebsiteSpec extends Specification {
     "not push updates" in new DryRun {
       setLocalFileWithContent(("index.html", "<div>new</div>"))
       setS3File("index.html", md5Hex("<div>old</div>"))
-      push
+      push()
       noUploadsOccurred must beTrue
     }
 
@@ -656,26 +657,26 @@ class S3WebsiteSpec extends Specification {
           |redirects:
           |  index.php: /index.html
         """.stripMargin
-      push
+      push()
       noUploadsOccurred must beTrue
     }
 
     "not push deletes" in new DryRun {
       setS3File("index.html", md5Hex("<div>old</div>"))
-      push
+      push()
       noUploadsOccurred must beTrue
     }
 
     "not push new files" in new DryRun {
       setLocalFile("index.html")
-      push
+      push()
       noUploadsOccurred must beTrue
     }
 
     "not invalidate files" in new DryRun {
       config = "cloudfront_invalidation_id: AABBCC"
       setS3File("index.html", md5Hex("<div>old</div>"))
-      push
+      push()
       noInvalidationsOccurred must beTrue
     }
   }
@@ -683,7 +684,7 @@ class S3WebsiteSpec extends Specification {
   "Jekyll site" should {
     "be detected automatically" in new JekyllSite with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequests.length must equalTo(1)
     }
   }
@@ -691,7 +692,7 @@ class S3WebsiteSpec extends Specification {
   "Nanoc site" should {
     "be detected automatically" in new NanocSite with EmptySite with MockAWS with DefaultRunMode {
       setLocalFile("index.html")
-      push
+      push()
       sentPutObjectRequests.length must equalTo(1)
     }
   }
@@ -705,7 +706,7 @@ class S3WebsiteSpec extends Specification {
           |  index.php: /index.html
         """.stripMargin
       setRedirectObject("index.php")
-      push
+      push()
       noUploadsOccurred
     }
 
@@ -717,7 +718,7 @@ class S3WebsiteSpec extends Specification {
           |  index.php: /index.html
         """.stripMargin
       setRedirectObject("index.php")
-      push
+      push()
       noDeletesOccurred
     }
 
@@ -728,7 +729,7 @@ class S3WebsiteSpec extends Specification {
           |redirects:
           |  index.php: /index.html
         """.stripMargin
-      push
+      push()
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
 
@@ -740,7 +741,7 @@ class S3WebsiteSpec extends Specification {
           |  index.php: /index.html
         """.stripMargin
       setRedirectObject("index.php")
-      push
+      push()
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
   }
@@ -1000,13 +1001,14 @@ class S3WebsiteSpec extends Specification {
       }
   }
 
-  def push(implicit
+  def push(logCapturer: Option[(String) => _] = None)(implicit
            emptyYamlConfig: S3_website_yml,
            configString: ConfigString,
            cliArgs: CliArgs,
            s3Settings: S3Setting,
            cloudFrontSettings: CloudFrontSetting,
            workingDirectory: File) = {
+    implicit val logger = new Logger(verboseOutput = true, logCapturer)
     write(emptyYamlConfig.file, configString.yaml) // Write the yaml config lazily, so that the tests can override the default yaml config
     Push.push
   }
