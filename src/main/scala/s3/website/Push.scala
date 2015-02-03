@@ -92,17 +92,15 @@ object Push {
       errorOrUploads <- resolveUploads(s3FilesFuture)
     } yield errorOrUploads.right.map(_.map(S3 uploadFile _))
 
-    val deleteReports = {
-      val errorsOrDeleteReports = redirectsFuture.flatMap { errOrRedirects =>
-        errOrRedirects.fold(
-          err => Future(Left(err)),
-          redirects => resolveDeletes(s3FilesFuture, redirects)
-        )
-      }.map { deletes =>
-        deletes.right.map(keysToDelete => keysToDelete.map(S3 delete _))
-      }
-      errorsOrDeleteReports
+    val deleteReports = redirectsFuture flatMap { errOrRedirects =>
+      errOrRedirects.fold(
+        err => Future(Left(err)),
+        redirects => resolveDeletes(s3FilesFuture, redirects)
+      )
+    } map { deletes =>
+      deletes.right.map(keysToDelete => keysToDelete.map(S3 delete _))
     }
+
     val allReports = Future.sequence(redirectReports :: uploadReports :: deleteReports :: Nil) map { reports =>
       reports.foldLeft(Nil: PushReports) { (memo, report: Either[ErrorReport, Seq[Future[PushErrorOrSuccess]]]) =>
         report match {
