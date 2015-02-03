@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.7.6
+
+* Null-check the result of File.listFiles
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/145> for discussion.
+
 ## 2.7.5
 
 * Remove superfluous dot from error message
