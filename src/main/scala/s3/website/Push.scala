@@ -114,7 +114,7 @@ object Push {
     val finishedPushOps = awaitForResults(Await.result(allReports, 1 day))
     val invalidationSucceeded = invalidateCloudFrontItems(finishedPushOps)
     
-    afterPushFinished(finishedPushOps, invalidationSucceeded)
+    report(finishedPushOps, invalidationSucceeded)
   }
   
   def invalidateCloudFrontItems
@@ -151,7 +151,7 @@ object Push {
 
   type InvalidationSucceeded = Boolean
 
-  def afterPushFinished(finishedPushOps: FinishedPushOperations, invalidationSucceeded: Option[Boolean])
+  def report(finishedPushOps: FinishedPushOperations, invalidationSucceeded: Option[Boolean])
                        (implicit config: Config, logger: Logger, pushOptions: PushOptions): ExitCode = {
     val pushCounts = resolvePushCounts(finishedPushOps)
     logger.info(s"Summary: ${pushCountsToString(pushCounts)}")
