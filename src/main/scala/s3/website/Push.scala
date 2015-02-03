@@ -89,9 +89,8 @@ object Push {
         errOrRedirects.right.map(_.filter(_.needsUpload).map(S3 uploadRedirect _))
       }
 
-    val uploadFutures: FutureUploads = resolveUploads(s3FilesFuture)
     val uploadReports = for {
-      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- uploadFutures
+      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveUploads(s3FilesFuture)
     } yield errorOrUploads.right.map(_.map(S3 uploadFile _))
 
     val deleteReports = {
