@@ -128,7 +128,10 @@ object Upload {
 object Files {
   def recursiveListFiles(f: File): Seq[File] = {
     val these = f.listFiles
-    these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
+    if (these != null)
+      these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
+    else
+      Nil
   }
 
   def listSiteFiles(implicit site: Site, logger: Logger) = {
