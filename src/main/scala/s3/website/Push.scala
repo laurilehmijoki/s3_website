@@ -84,21 +84,21 @@ object Push {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val s3FilesFuture = resolveS3Files()
     val redirectsFuture = resolveRedirects(s3FilesFuture)
-    val redirectReports = redirectsFuture.map { (errOrRedirects: Either[ErrorReport, Seq[Redirect]]) =>
+    val redirectReports = redirectsFuture.map { errOrRedirects =>
       errOrRedirects.right.map(_.filter(_.needsUpload).map(S3 uploadRedirect _))
     }
 
     val uploadReports = for {
-      errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveUploads(s3FilesFuture)
+      errorOrUploads <- resolveUploads(s3FilesFuture)
     } yield errorOrUploads.right.map(_.map(S3 uploadFile _))
 
     val deleteReports = {
-      val errorsOrDeleteReports = redirectsFuture.flatMap { (errOrRedirects: Either[ErrorReport, Seq[Redirect]]) =>
+      val errorsOrDeleteReports = redirectsFuture.flatMap { errOrRedirects =>
         errOrRedirects.fold(
           err => Future(Left(err)),
           redirects => resolveDeletes(s3FilesFuture, redirects)
         )
-      }.map { (deletes: Either[ErrorReport, Seq[S3Key]]) =>
+      }.map { deletes =>
         deletes.right.map(keysToDelete => keysToDelete.map(S3 delete _))
       }
       errorsOrDeleteReports
