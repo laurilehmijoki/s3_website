@@ -83,11 +83,11 @@ object Push {
                 ): ExitCode = {
     logger.info(s"${Deploy.renderVerb} ${site.rootDirectory}/* to ${site.config.s3_bucket}")
     val s3FilesFuture = resolveS3Files()
-    val redirectsFuture: Redirects = resolveRedirects(s3FilesFuture)
     val redirectReports =
       redirectsFuture.map { (errOrRedirects: Either[ErrorReport, Seq[Redirect]]) =>
         errOrRedirects.right.map(_.filter(_.needsUpload).map(S3 uploadRedirect _))
       }
+    val redirectsFuture = resolveRedirects(s3FilesFuture)
 
     val uploadReports = for {
       errorOrUploads: Either[ErrorReport, Seq[Upload]] <- resolveUploads(s3FilesFuture)
