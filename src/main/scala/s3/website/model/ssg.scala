@@ -2,7 +2,6 @@ package s3.website.model
 
 import java.io.File
 import s3.website.model.Files.recursiveListFiles
-import s3.website.{ErrorOrFile, ErrorReport}
 
 // ssg = static site generator
 trait Ssg {
