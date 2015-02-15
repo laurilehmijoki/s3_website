@@ -16,7 +16,7 @@ import scala.util.Try
 
 object Encoding {
 
-  val defaultGzipExtensions = ".html" :: ".css" :: ".js" :: ".txt" :: Nil
+  val defaultGzipExtensions = ".html" :: ".css" :: ".js" :: ".txt" :: ".ico" :: Nil
 
   case class Gzip()
   case class Zopfli()

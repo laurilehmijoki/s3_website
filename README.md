@@ -127,7 +127,7 @@ gzip: true
 ```
 
 Note that you can additionally specify the file extensions you want to Gzip
-(`.html`, `.css`, `.js`, and `.txt` will be compressed when `gzip: true`):
+(`.html`, `.css`, `.js`, `.ico`, and `.txt` will be compressed when `gzip: true`):
 
 ```yaml
 gzip:
