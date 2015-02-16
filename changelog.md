@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.8.0
+
+* Automatically gzip `.ico` files, if `gzip: true`
+
 ## 2.7.6
 
 * Null-check the result of File.listFiles
