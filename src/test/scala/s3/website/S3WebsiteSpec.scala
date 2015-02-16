@@ -48,6 +48,15 @@ class S3WebsiteSpec extends Specification {
       push()
       noUploadsOccurred must beTrue
     }
+
+    (".html" :: ".css" :: ".js" :: ".txt" :: ".ico" :: Nil).foreach((fileExtension) =>
+      s"gzip files that end with $fileExtension" in new BasicSetup {
+        config = "gzip: true"
+        setLocalFileWithContent((s"file.$fileExtension", "file contents"))
+        push()
+        sentPutObjectRequest.getMetadata.getContentEncoding must equalTo("gzip")
+      }
+    )
   }
 
   """
