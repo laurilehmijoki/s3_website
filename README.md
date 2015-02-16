@@ -443,6 +443,7 @@ Contributors (in alphabetical order)
 * David Raffensperger
 * Douglas Teoh
 * Greg Karékinian
+* Ian Hattendorf
 * John Allison
 * Jon Frisby
 * Jordan White
