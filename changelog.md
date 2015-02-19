@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.8.1
+
+* Change CloudFront `OriginProtocolPolicy` to `http-only`
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/152> for discussion.
+
 ## 2.8.0
 
 * Automatically gzip `.ico` files, if `gzip: true`
