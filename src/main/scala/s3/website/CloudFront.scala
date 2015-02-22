@@ -71,7 +71,7 @@ object CloudFront {
     val invalidationPaths: Seq[String] = {
       def withDefaultPathIfNeeded(paths: Seq[String]) = {
         // This is how we support the Default Root Object @ CloudFront (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html)
-        // We do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
+        // We could do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
         // and reading the Default Root Object from there.
         val containsPotentialDefaultRootObject = paths
           .exists(
