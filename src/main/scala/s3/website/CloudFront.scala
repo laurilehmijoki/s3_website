@@ -86,7 +86,7 @@ object CloudFront {
 
     val invalidationPaths: Seq[String] = {
       val paths = pushSuccessReports
-        .filter(needsInvalidation) // Assume that redirect objects are never cached.
+        .filter(needsInvalidation)
         .map(toInvalidationPath)
         .map(applyInvalidateRootSetting)
 
