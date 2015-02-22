@@ -80,11 +80,9 @@ object CloudFront {
         )
       if (containsPotentialDefaultRootObject) Some("/") else None
     }
-    def indexPath: Option[String] =
-      if (config.cloudfront_invalidate_root.contains(true) && pushSuccessReports.nonEmpty)
-        Some("/index.html")
-      else
-        None
+    val indexPath = config.cloudfront_invalidate_root collect {
+      case true if pushSuccessReports.nonEmpty => "/index.html"
+    }
 
     val invalidationPaths: Seq[String] = {
       val paths = pushSuccessReports
