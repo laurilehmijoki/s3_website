@@ -81,9 +81,11 @@ object CloudFront {
           )
         if (containsPotentialDefaultRootObject) paths :+ "/" else paths
       }
-      def withIndexPathIfNeeded(paths: Seq[String]) = {
-        if (config.cloudfront_invalidate_root.contains(true)) paths :+ "/index.html" else paths
-      }
+      def withIndexPathIfNeeded(paths: Seq[String]) =
+        if (config.cloudfront_invalidate_root.contains(true) && pushSuccessReports.nonEmpty)
+          paths :+ "/index.html"
+        else
+          paths
       val paths = pushSuccessReports
         .filter(needsInvalidation) // Assume that redirect objects are never cached.
         .map(toInvalidationPath)

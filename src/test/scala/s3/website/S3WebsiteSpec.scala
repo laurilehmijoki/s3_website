@@ -238,6 +238,15 @@ class S3WebsiteSpec extends Specification {
       push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq must contain("/index.html")
     }
+
+    "not invalidate anything if there was nothing to push" in new BasicSetup {
+      config = """
+        |cloudfront_distribution_id: EGM1J2JJX9Z
+        |cloudfront_invalidate_root: true
+      """.stripMargin
+      push()
+      noInvalidationsOccurred
+    }
   }
 
   "a site with over 1000 items" should {
