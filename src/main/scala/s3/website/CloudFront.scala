@@ -69,7 +69,7 @@ object CloudFront {
 
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
     val invalidationPaths: Seq[String] = {
-      def withDefaultPathIfNeeded(paths: Seq[String]) = {
+      def defaultPath(paths: Seq[String]): Option[String] = {
         // This is how we support the Default Root Object @ CloudFront (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html)
         // We could do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
         // and reading the Default Root Object from there.
@@ -79,18 +79,23 @@ object CloudFront {
               .replaceFirst("^/", "") // S3 keys do not begin with a slash
               .contains("/") == false // See if the S3 key is a top-level key (i.e., it is not within a directory)
           )
-        if (containsPotentialDefaultRootObject) paths :+ "/" else paths
+        if (containsPotentialDefaultRootObject) Some("/") else None
       }
-      def withIndexPathIfNeeded(paths: Seq[String]) =
+      def indexPath(paths: Seq[String]): Option[String] =
         if (config.cloudfront_invalidate_root.contains(true) && pushSuccessReports.nonEmpty)
-          paths :+ "/index.html"
+          Some("/index.html")
         else
-          paths
+          None
       val paths = pushSuccessReports
         .filter(needsInvalidation) // Assume that redirect objects are never cached.
         .map(toInvalidationPath)
         .map(applyInvalidateRootSetting)
-      withIndexPathIfNeeded(withDefaultPathIfNeeded(paths))
+
+      val extraPathItems = defaultPath(paths) :: indexPath(paths) :: Nil collect {
+        case Some(path) => path
+      }
+
+      paths ++ extraPathItems
     }
 
     invalidationPaths
