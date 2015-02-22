@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.8.3
+
+* Fix bug where the setting `cloudfront_invalidate_root: true` resulted in a
+  CloudFront invalidation even if there were no changes to push.
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/149> for discussion.
+
 ## 2.8.1
 
 * Change CloudFront `OriginProtocolPolicy` to `http-only`
