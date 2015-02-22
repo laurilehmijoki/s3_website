@@ -68,30 +68,31 @@ object CloudFront {
   def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient(awsCredentials(config))
 
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
+    def defaultPath(paths: Seq[String]): Option[String] = {
+      // This is how we support the Default Root Object @ CloudFront (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html)
+      // We could do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
+      // and reading the Default Root Object from there.
+      val containsPotentialDefaultRootObject = paths
+        .exists(
+          _
+            .replaceFirst("^/", "") // S3 keys do not begin with a slash
+            .contains("/") == false // See if the S3 key is a top-level key (i.e., it is not within a directory)
+        )
+      if (containsPotentialDefaultRootObject) Some("/") else None
+    }
+    def indexPath: Option[String] =
+      if (config.cloudfront_invalidate_root.contains(true) && pushSuccessReports.nonEmpty)
+        Some("/index.html")
+      else
+        None
+
     val invalidationPaths: Seq[String] = {
-      def defaultPath(paths: Seq[String]): Option[String] = {
-        // This is how we support the Default Root Object @ CloudFront (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html)
-        // We could do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
-        // and reading the Default Root Object from there.
-        val containsPotentialDefaultRootObject = paths
-          .exists(
-            _
-              .replaceFirst("^/", "") // S3 keys do not begin with a slash
-              .contains("/") == false // See if the S3 key is a top-level key (i.e., it is not within a directory)
-          )
-        if (containsPotentialDefaultRootObject) Some("/") else None
-      }
-      def indexPath(paths: Seq[String]): Option[String] =
-        if (config.cloudfront_invalidate_root.contains(true) && pushSuccessReports.nonEmpty)
-          Some("/index.html")
-        else
-          None
       val paths = pushSuccessReports
         .filter(needsInvalidation) // Assume that redirect objects are never cached.
         .map(toInvalidationPath)
         .map(applyInvalidateRootSetting)
 
-      val extraPathItems = defaultPath(paths) :: indexPath(paths) :: Nil collect {
+      val extraPathItems = defaultPath(paths) :: indexPath :: Nil collect {
         case Some(path) => path
       }
 
