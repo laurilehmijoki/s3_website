@@ -204,7 +204,7 @@ class S3WebsiteSpec extends Specification {
       setLocalFile("articles/arnold's file.html")
       setOutdatedS3Keys("articles/arnold's file.html")
       push()
-      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold's%20file.html" :: Nil).sorted)
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold%27s%20file.html" :: Nil).sorted)
     }
 
     "invalidate the root object '/' if a top-level object is updated or deleted" in new BasicSetup {

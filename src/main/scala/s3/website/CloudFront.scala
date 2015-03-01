@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import s3.website.S3.{SuccessfulDelete, PushSuccessReport, SuccessfulUpload}
 import com.amazonaws.auth.BasicAWSCredentials
-import java.net.URI
+import java.net.{URLEncoder, URI}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import s3.website.model.Config.awsCredentials
 
@@ -117,12 +117,8 @@ object CloudFront {
   def toInvalidationPath(report: PushSuccessReport) = "/" + report.s3Key
 
   def encodeUnsafeChars(invalidationPath: String) =
-    new URI(
-      "http",
-      "cloudfront",
-      invalidationPath,
-      ""
-    ).toURL.getPath
+    new URI("http", "cloudfront", invalidationPath, "").toURL.getPath
+      .replaceAll("'", URLEncoder.encode("'", "UTF-8")) // CloudFront does not accept ' in invalidation path
 
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
