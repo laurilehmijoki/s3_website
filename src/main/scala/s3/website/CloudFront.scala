@@ -88,6 +88,7 @@ object CloudFront {
       val paths = pushSuccessReports
         .filter(needsInvalidation)
         .map(toInvalidationPath)
+        .map(encodeUnsafeChars)
         .map(applyInvalidateRootSetting)
 
       val extraPathItems = defaultPath(paths) :: indexPath :: Nil collect {
@@ -113,17 +114,15 @@ object CloudFront {
     else
       path
 
-  def toInvalidationPath(report: PushSuccessReport) = {
-    def encodeUnsafeChars(path: String) =
-      new URI(
-        "http",
-        "cloudfront", // We want to use the encoder in the URI class. These must be passed in.
-        "/" + report.s3Key,  // CloudFront keys have the slash in front
-        path
-      ).toURL.getPath // The URL class encodes the unsafe characters
-    val invalidationPath = "/" + report.s3Key  // CloudFront keys have the slash in front
-    encodeUnsafeChars(invalidationPath)
-  }
+  def toInvalidationPath(report: PushSuccessReport) = "/" + report.s3Key
+
+  def encodeUnsafeChars(invalidationPath: String) =
+    new URI(
+      "http",
+      "cloudfront",
+      invalidationPath,
+      ""
+    ).toURL.getPath
 
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
