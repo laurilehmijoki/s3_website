@@ -436,6 +436,7 @@ exist.
 Contributors (in alphabetical order)
 * Alan deLevie
 * Almir Sarajčić
+* Andrew T. Baker
 * Cory Kaufman-Schofield
 * Chris Kelly
 * Chris Moos
