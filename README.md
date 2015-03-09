@@ -214,6 +214,8 @@ When you run the command `s3_website cfg apply`, it will ask you whether you
 want to deliver your website via CloudFront. If you answer yes, the command will
 create a CloudFront distribution for you.
 
+If you do not want to receive this prompt, or if you are running the command in a non-interactive session, you can use `s3_website cfg apply --headless`.
+
 #### Using your existing CloudFront distribution
 
 If you already have a CloudFront distribution that serves data from your website
