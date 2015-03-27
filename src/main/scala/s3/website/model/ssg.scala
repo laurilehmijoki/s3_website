@@ -9,7 +9,7 @@ trait Ssg {
 }
 
 object Ssg {
-  val automaticallySupportedSiteGenerators = Jekyll :: Nanoc :: Nil
+  val automaticallySupportedSiteGenerators = Jekyll :: Nanoc :: Middleman :: Nil
 
   val maxAutodetectDepth = automaticallySupportedSiteGenerators.map(_.outputDirectory).map(_.split(File.separatorChar).length).max
 
@@ -25,4 +25,8 @@ case object Jekyll extends Ssg {
 
 case object Nanoc extends Ssg {
   def outputDirectory = s"public${File.separatorChar}output"
+}
+
+case object Middleman extends Ssg {
+  def outputDirectory = "build"
 }
