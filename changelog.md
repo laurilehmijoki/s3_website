@@ -8,7 +8,7 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ## 2.8.4
 
-* URL encude ' in invalidation path
+* URL encode ' in invalidation path
 
   See <https://github.com/laurilehmijoki/s3_website/issues/63> for discussion.
 
