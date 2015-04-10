@@ -117,9 +117,16 @@ object CloudFront {
   def toInvalidationPath(report: PushSuccessReport) = "/" + report.s3Key
 
   def encodeUnsafeChars(invalidationPath: String) =
-    new URI("http", "cloudfront", invalidationPath, "").toURL.getPath
+    new URI("http", "cloudfront", invalidationPath, "")
+      .toURL
+      .getPath
       .replaceAll("'", URLEncoder.encode("'", "UTF-8")) // CloudFront does not accept ' in invalidation path
-
+      .flatMap(chr => {
+        if (Seq("ä", "ö", "ü").contains(chr.toString.toLowerCase))
+          URLEncoder.encode(chr.toString, "UTF-8")
+        else
+          chr.toString
+      })
 
   def needsInvalidation: PartialFunction[PushSuccessReport, Boolean] = {
     case succ: SuccessfulUpload => succ.details.fold(_.uploadType, _.uploadType) == FileUpdate

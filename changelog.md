@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.8.5
+
+* URL encode (ä|ö|ü) in invalidation path
+
 ## 2.8.4
 
 * URL encude ' in invalidation path

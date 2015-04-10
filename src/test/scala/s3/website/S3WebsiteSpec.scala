@@ -207,6 +207,14 @@ class S3WebsiteSpec extends Specification {
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/arnold%27s%20file.html" :: Nil).sorted)
     }
 
+    "encode unsafe characters in the keys" in new BasicSetup {
+      config = "cloudfront_distribution_id: EGM1J2JJX9Z"
+      setLocalFile("articles/Äöü.html")
+      setOutdatedS3Keys("articles/Äöü.html")
+      push()
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/%C3%84%C3%B6%C3%BC.html" :: Nil).sorted)
+    }
+
     "invalidate the root object '/' if a top-level object is updated or deleted" in new BasicSetup {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
       setLocalFile("maybe-index.html")
