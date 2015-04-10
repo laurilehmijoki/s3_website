@@ -24,10 +24,10 @@ object UploadHelper {
       errorOrS3Files.right.flatMap { s3Files =>
         Try {
           val s3KeyIndex = s3Files.map(_.s3Key).toSet
-          val s3Md5Index = s3Files.map(_.md5).toSet
+          val s3Md5Index = s3Files.map(s3File => (s3File.s3Key, s3File.md5)).toSet
           val siteFiles = listSiteFiles
           val existsOnS3 = (f: File) => s3KeyIndex contains site.resolveS3Key(f)
-          val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains upload.md5.get)
+          val isChangedOnS3 = (upload: Upload) => !(s3Md5Index contains (upload.s3Key, upload.md5.get))
           val newUploads = siteFiles collect {
             case file if !existsOnS3(file) => Upload(file, NewFile)
           }

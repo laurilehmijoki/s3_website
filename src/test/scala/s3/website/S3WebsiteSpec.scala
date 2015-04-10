@@ -83,6 +83,14 @@ class S3WebsiteSpec extends Specification {
       noUploadsOccurred must beTrue
     }
 
+    "detect a changed file even though another file has the same contents as the changed file" in new BasicSetup {
+      setLocalFilesWithContent(("1.txt", "foo"), ("2.txt", "foo"))
+      setS3File("1.txt", md5Hex("bar"))
+      setS3File("2.txt", md5Hex("foo"))
+      push()
+      sentPutObjectRequest.getKey must equalTo("1.txt")
+    }
+
     "update a file if it has changed" in new BasicSetup {
       setLocalFileWithContent(("index.html", "<h1>old text</h1>"))
       setS3File("index.html", md5Hex("<h1>new text</h1>"))
