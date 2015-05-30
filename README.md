@@ -157,6 +157,8 @@ s3_endpoint: ap-northeast-1
 The valid `s3_endpoint` values consist of the [S3 location constraint
 values](http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region).
 
+Note that at the moment s3_website does not support the *eu-central-1* region.
+
 ### Ignoring files you want to keep on AWS
 
 Sometimes there are files or directories you want to keep on S3, but not on
