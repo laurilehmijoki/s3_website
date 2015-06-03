@@ -4,6 +4,7 @@ class Logger(val verboseOutput: Boolean, onLog: Option[(String) => _] = None) {
   def debug(msg: String) = if (verboseOutput) log(Debug, msg)
   def info(msg: String) = log(Info, msg)
   def fail(msg: String) = log(Failure, msg)
+  def warn(msg: String) = log(Warn, msg)
 
   def info(report: SuccessReport) = log(Success, report.reportMessage)
   def info(report: ErrorReport) = fail(report.reportMessage)
@@ -35,6 +36,9 @@ class Logger(val verboseOutput: Boolean, onLog: Option[(String) => _] = None) {
   }
   case object Wait extends LogType {
     val prefix = "wait".yellow
+  }
+  case object Warn extends LogType {
+    val prefix = "warn".yellow
   }
 
   /**
