@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.9.0
+
+* Add setting `cache_control`
+
 ## 2.8.6
 
 * Detect changed file even though the file has the same contents with another file on the S3 bucket
