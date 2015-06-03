@@ -40,6 +40,7 @@ object Site {
           s3_endpoint <- loadEndpoint.right
           site <- loadOptionalString("site").right
           max_age <- loadMaxAge.right
+          cache_control <- loadOptionalString("cache_control").right
           gzip <- loadOptionalBooleanOrStringSeq("gzip").right
           gzip_zopfli <- loadOptionalBoolean("gzip_zopfli").right
           extensionless_mime_type <- loadOptionalString("extensionless_mime_type").right
@@ -66,6 +67,7 @@ object Site {
             s3_endpoint getOrElse S3Endpoint.defaultEndpoint,
             site,
             max_age,
+            cache_control,
             gzip,
             gzip_zopfli,
             ignore_on_server = ignore_on_server,

@@ -477,6 +477,38 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "cache_control in config" should {
+    "be applied to all files" in new BasicSetup {
+      config = "cache_control: public, no-transform, max-age=1200, s-maxage=1200"
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, no-transform, max-age=1200, s-maxage=1200")
+    }
+
+    "should take precedence over max_age" in new BasicSetup {
+      config = """
+                 |max_age: 120
+                 |cache_control: public, max-age=90
+               """.stripMargin
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, max-age=90")
+    }
+
+    "log a warning if both cache_control and max_age are present" in new BasicSetup {
+      val logEntries = new mutable.MutableList[String]
+      config = """
+                 |max_age: 120
+                 |cache_control: public, max-age=90
+               """.stripMargin
+      setLocalFile("index.html")
+      push(logCapturer = Some((logEntry: String) =>
+        logEntries += logEntry
+      ))
+      logEntries must contain("[\u001B[33mwarn\u001B[0m] Overriding the max_age setting with the cache_control settin")
+    }
+  }
+
   "cache control" can {
     "be undefined" in new BasicSetup {
       setLocalFile("index.html")

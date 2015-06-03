@@ -15,6 +15,7 @@ case class Config(
   s3_endpoint:                S3Endpoint,
   site:                       Option[String],
   max_age:                    Option[Either[Int, Map[String, Int]]],
+  cache_control:              Option[String],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
   ignore_on_server:           Option[Either[String, Seq[String]]],

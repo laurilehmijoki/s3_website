@@ -61,7 +61,7 @@ object S3 {
       retryAction  = newAttempt => this.delete(s3Key, newAttempt)
     )
 
-  def toPutObjectRequest(source: Either[Upload, Redirect])(implicit config: Config): Try[PutObjectRequest] =
+  def toPutObjectRequest(source: Either[Upload, Redirect])(implicit config: Config, logger: Logger): Try[PutObjectRequest] =
     source.fold(
       upload =>
         for {
@@ -72,14 +72,20 @@ object S3 {
           md setContentLength uploadFile.length
           md setContentType contentType
           upload.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
-          upload.maxAge foreach { seconds =>
-            md.setCacheControl(
-              if (seconds == 0)
-                s"no-cache; max-age=$seconds"
-              else
-                s"max-age=$seconds"
-            )
+          val cacheControl: Option[String] = (upload.maxAge, config.cache_control) match {
+            case (maxAge: Some[Int], cacheCtrl: Some[String]) =>
+              logger.warn("Overriding the max_age setting with the cache_control setting")
+              cacheCtrl
+            case (_, cacheCtrl: Some[String]) =>
+              cacheCtrl
+            case (maxAgeSeconds: Some[int], None) =>
+              maxAgeSeconds.map({
+                case seconds if seconds == 0 => s"no-cache; max-age=0"
+                case seconds                 => s"max-age=$seconds"
+              })
+            case (None, None) => None
           }
+          cacheControl foreach { md.setCacheControl }
           val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, new FileInputStream(uploadFile), md)
           config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
           req

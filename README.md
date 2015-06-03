@@ -91,8 +91,12 @@ incomprehensible or inconsistent.
 
 ### Cache Control
 
-You can use the `max_age` configuration option to enable more effective browser
-caching of your static assets. There are two possible ways to use the option:
+You can use either the setting `max_age` or `cache_control`to enable more 
+effective browser caching of your static assets. 
+
+#### max_age
+
+There are two possible ways to use the option:
 you can specify a single age (in seconds) like so:
 
 ```yaml
@@ -108,9 +112,21 @@ max_age:
   "*": 300
 ```
 
-Place the configuration into the file `s3_website.yml`.
-
 After changing the `max_age` setting, push with the `--force` option.
+Force-pushing allows you to update the S3 object metadata of existing files.
+
+#### cache_control
+
+The `cache_control` setting allows you to define an arbitrary string that s3_website 
+will put on all the S3 objects of your website.
+  
+Here's an example:  
+
+```yaml
+cache_control: public, no-transform, max-age=1200, s-maxage=1200
+```
+
+After changing the `cache_control` setting, push with the `--force` option.
 Force-pushing allows you to update the S3 object metadata of existing files.
 
 ### Gzip Compression
