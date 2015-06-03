@@ -477,6 +477,14 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "cache control" can {
+    "be undefined" in new BasicSetup {
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must beNull
+    }
+  }
+
   "max_age in config" can {
     "be applied to all files" in new BasicSetup {
       config = "max_age: 60"
