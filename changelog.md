@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.10.0
+
+* Support glob hashes in `cache_control`
+
 ## 2.9.0
 
 * Add setting `cache_control`
