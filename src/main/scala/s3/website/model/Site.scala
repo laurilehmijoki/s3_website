@@ -40,7 +40,7 @@ object Site {
           s3_endpoint <- loadEndpoint.right
           site <- loadOptionalString("site").right
           max_age <- loadMaxAge.right
-          cache_control <- loadOptionalString("cache_control").right
+          cache_control <- loadCacheControl.right
           gzip <- loadOptionalBooleanOrStringSeq("gzip").right
           gzip_zopfli <- loadOptionalBoolean("gzip_zopfli").right
           extensionless_mime_type <- loadOptionalString("extensionless_mime_type").right

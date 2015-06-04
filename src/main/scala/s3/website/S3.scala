@@ -72,7 +72,7 @@ object S3 {
           md setContentLength uploadFile.length
           md setContentType contentType
           upload.encodingOnS3.map(_ => "gzip") foreach md.setContentEncoding
-          val cacheControl: Option[String] = (upload.maxAge, config.cache_control) match {
+          val cacheControl: Option[String] = (upload.maxAge, upload.cacheControl) match {
             case (maxAge: Some[Int], cacheCtrl: Some[String]) =>
               logger.warn("Overriding the max_age setting with the cache_control setting")
               cacheCtrl

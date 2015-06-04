@@ -507,6 +507,56 @@ class S3WebsiteSpec extends Specification {
       ))
       logEntries must contain("[\u001B[33mwarn\u001B[0m] Overriding the max_age setting with the cache_control settin")
     }
+
+    "supports all valid URI characters in the glob setting" in new BasicSetup {
+      config = """
+                 |cache_control:
+                 |  "*.html": public, max-age=120
+               """.stripMargin
+      val allValidUrlCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=" // See http://stackoverflow.com/a/1547940/990356 for discussion
+      setLocalFile(s"$allValidUrlCharacters.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, max-age=120")
+    }
+
+    "be applied to files that match the glob" in new BasicSetup {
+      config = """
+                 |cache_control:
+                 |  "*.html": no-store
+               """.stripMargin
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-store")
+    }
+
+    "be applied to directories that match the glob" in new BasicSetup {
+      config = """
+                 |cache_control:
+                 |  "assets/**/*.js": no-cache, no-store
+               """.stripMargin
+      setLocalFile("assets/lib/jquery.js")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache, no-store")
+    }
+
+    "not be applied if the glob doesn't match" in new BasicSetup {
+      config = """
+                 |cache_control:
+                 |  "*.js": max-age=120
+               """.stripMargin
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must beNull
+    }
+
+    "support non-US-ASCII directory names"  in new BasicSetup {
+      config = """
+                 |cache_control:
+                 |  "*": no-cache
+               """.stripMargin
+      setLocalFile("tags/笔记/index.html")
+      push() must equalTo(0)
+    }
   }
 
   "cache control" can {

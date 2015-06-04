@@ -126,6 +126,15 @@ Here's an example:
 cache_control: public, no-transform, max-age=1200, s-maxage=1200
 ```
 
+You can also specify a hash of globs, and all files matching those globs will have
+the specified cache-control string:
+
+```yaml
+cache_control:
+  "assets/*": public, max-age=3600
+  "*": no-cache, no-store
+```
+
 After changing the `cache_control` setting, push with the `--force` option.
 Force-pushing allows you to update the S3 object metadata of existing files.
 
