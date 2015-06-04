@@ -642,6 +642,17 @@ class S3WebsiteSpec extends Specification {
       setLocalFile("tags/笔记/index.html")
       push() must equalTo(0)
     }
+
+    "have overlapping definitions in the glob, and then the most specific glob will win" in new BasicSetup {
+      config = """
+                 |max_age:
+                 |  "*.js": 33
+                 |  "assets/**/*.js": 90
+               """.stripMargin
+      setLocalFile("assets/lib/jquery.js")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
+    }
   }
 
   "max-age in config" should {
