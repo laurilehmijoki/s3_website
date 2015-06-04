@@ -557,6 +557,17 @@ class S3WebsiteSpec extends Specification {
       setLocalFile("tags/笔记/index.html")
       push() must equalTo(0)
     }
+
+    "have overlapping definitions in the glob, and then the most specific glob will win" in new BasicSetup {
+      config = """
+                 |cache_control:
+                 |  "*.js": no-cache, no-store
+                 |  "assets/**/*.js": public, must-revalidate, max-age=120
+               """.stripMargin
+      setLocalFile("assets/lib/jquery.js")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, must-revalidate, max-age=120")
+    }
   }
 
   "cache control" can {
