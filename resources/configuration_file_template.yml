@@ -7,6 +7,9 @@ s3_bucket: your.blog.bucket.com
 
 # site: path-to-your-website
 
+# index_document: index.html
+# error_document: error.html
+
 # max_age:
 #   "assets/*": 6000
 #   "*": 300
