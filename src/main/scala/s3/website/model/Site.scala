@@ -16,10 +16,6 @@ import scala.util.Success
 
 case class Site(rootDirectory: File, config: Config) {
   def resolveS3Key(file: File) = file.getAbsolutePath.replace(rootDirectory.getAbsolutePath, "").replace(File.separator,"/").replaceFirst("^/", "")
-
-  def resolveFile(s3File: S3File): File = resolveFile(s3File.s3Key)
-
-  def resolveFile(s3Key: S3Key): File = new File(s"$rootDirectory/$s3Key")
 }
 
 object Site {
