@@ -59,8 +59,8 @@ object UploadHelper {
           val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
           remoteS3Keys filterNot { s3Key =>
             val ignoreOnServer = site.config.ignore_on_server.exists(_.fold(
-              (ignoreRegex: String) => rubyRegexMatches(s3Key, ignoreRegex),
-              (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3Key, _))
+              (ignoreRegex: String) => rubyRegexMatches(s3Key.key, ignoreRegex),
+              (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3Key.key, _))
             ))
             if (ignoreOnServer) logger.debug(s"Ignoring $s3Key on server")
             (keysToRetain contains s3Key) || ignoreOnServer

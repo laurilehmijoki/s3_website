@@ -5,7 +5,7 @@ import java.io.File
 import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
-import s3.website.ErrorReport
+import s3.website.{S3Key, ErrorReport}
 import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 
 case class Config(
@@ -23,7 +23,7 @@ case class Config(
   s3_reduced_redundancy:      Option[Boolean],
   cloudfront_distribution_id: Option[String],
   cloudfront_invalidate_root: Option[Boolean],
-  redirects:                  Option[Map[String, String]],
+  redirects:                  Option[Map[S3Key, String]],
   concurrency_level:          Int,
   treat_zero_length_objects_as_redirects: Option[Boolean]
 )
@@ -106,12 +106,16 @@ object Config {
       }
     }
 
-  def loadRedirects(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Map[String, String]]] = {
+  def loadRedirects(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Map[S3Key, String]]] = {
     val key = "redirects"
     val yamlValue = for {
       redirectsOption <- loadOptionalValue(key)
-      redirects <- Try(redirectsOption.map(_.asInstanceOf[java.util.Map[String,String]].toMap))
-    } yield Right(redirects)
+      redirectsOption <- Try(redirectsOption.map(_.asInstanceOf[java.util.Map[String,String]].toMap))
+    } yield Right(redirectsOption.map(
+        redirects => redirects.map(
+          ((key: String, value: String) => (S3Key(key), value)).tupled
+        )
+      ))
 
     yamlValue getOrElse Left(ErrorReport(s"The key $key has to have a (string -> string) value"))
   }

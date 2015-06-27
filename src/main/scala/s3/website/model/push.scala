@@ -21,11 +21,11 @@ object Encoding {
   case class Gzip()
   case class Zopfli()
 
-  def encodingOnS3(s3Key: String)(implicit config: Config): Option[Either[Gzip, Zopfli]] =
+  def encodingOnS3(s3Key: S3Key)(implicit config: Config): Option[Either[Gzip, Zopfli]] =
     config.gzip.flatMap { (gzipSetting: Either[Boolean, Seq[String]]) =>
       val shouldZipThisFile = gzipSetting.fold(
-        shouldGzip => defaultGzipExtensions exists s3Key.endsWith,
-        fileExtensions => fileExtensions exists s3Key.endsWith
+        shouldGzip => defaultGzipExtensions exists s3Key.key.endsWith,
+        fileExtensions => fileExtensions exists s3Key.key.endsWith
       )
       if (shouldZipThisFile && config.gzip_zopfli.isDefined)
         Some(Right(Zopfli()))
@@ -158,15 +158,15 @@ object Files {
   }
 
   def listSiteFiles(implicit site: Site, logger: Logger) = {
-    def excludeFromUpload(s3Key: String) = {
+    def excludeFromUpload(s3Key: S3Key) = {
       val excludeByConfig = site.config.exclude_from_upload exists {
         _.fold(
           // For backward compatibility, use Ruby regex matching
-          (exclusionRegex: String) => rubyRegexMatches(s3Key, exclusionRegex),
-          (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(s3Key, _))
+          (exclusionRegex: String) => rubyRegexMatches(s3Key.key, exclusionRegex),
+          (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(s3Key.key, _))
         )
       }
-      val neverUpload = "s3_website.yml" :: ".env" :: Nil
+      val neverUpload = "s3_website.yml" :: ".env" :: Nil map (k => S3Key(k))
       val doNotUpload = excludeByConfig || (neverUpload contains s3Key)
       if (doNotUpload) logger.debug(s"Excluded $s3Key from upload")
       doNotUpload
@@ -177,11 +177,11 @@ object Files {
   }
 }
 
-case class Redirect(s3Key: String, redirectTarget: String, needsUpload: Boolean) {
+case class Redirect(s3Key: S3Key, redirectTarget: String, needsUpload: Boolean) {
   def uploadType = RedirectFile
 }
 
-private case class RedirectSetting(source: String, target: String)
+private case class RedirectSetting(source: S3Key, target: String)
 
 object Redirect {
   type Redirects = Future[Either[ErrorReport, Seq[Redirect]]]
@@ -225,8 +225,8 @@ object Redirect {
       Redirect(redirectSetting.source, redirectSetting.target, needsUpload)
 }
 
-case class S3File(s3Key: String, md5: MD5, size: Long)
+case class S3File(s3Key: S3Key, md5: MD5, size: Long)
 
 object S3File {
-  def apply(summary: S3ObjectSummary): S3File = S3File(summary.getKey, summary.getETag, summary.getSize)
+  def apply(summary: S3ObjectSummary): S3File = S3File(S3Key(summary.getKey), summary.getETag, summary.getSize)
 }

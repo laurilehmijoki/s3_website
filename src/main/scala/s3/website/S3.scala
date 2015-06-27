@@ -52,7 +52,7 @@ object S3 {
             (implicit config: Config, s3Settings: S3Setting, pushOptions: PushOptions, executor: ExecutionContextExecutor, logger: Logger):
   Future[Either[FailedDelete, SuccessfulDelete]] =
     Future {
-      if (!pushOptions.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key)
+      if (!pushOptions.dryRun) s3Settings.s3Client(config) deleteObject(config.s3_bucket, s3Key.key)
       val report = SuccessfulDelete(s3Key)
       logger.info(report)
       Right(report)
@@ -86,13 +86,13 @@ object S3 {
             case (None, None) => None
           }
           cacheControl foreach { md.setCacheControl }
-          val req = new PutObjectRequest(config.s3_bucket, upload.s3Key, new FileInputStream(uploadFile), md)
+          val req = new PutObjectRequest(config.s3_bucket, upload.s3Key.key, new FileInputStream(uploadFile), md)
           config.s3_reduced_redundancy.filter(_ == true) foreach (_ => req setStorageClass ReducedRedundancy)
           req
         }
       ,
       redirect => {
-        val req = new PutObjectRequest(config.s3_bucket, redirect.s3Key, redirect.redirectTarget)
+        val req = new PutObjectRequest(config.s3_bucket, redirect.s3Key.key, redirect.redirectTarget)
         req.setMetadata({
           val md = new ObjectMetadata()
           md.setContentLength(0) // Otherwise the AWS SDK will log a warning
@@ -149,7 +149,7 @@ object S3 {
 
   sealed trait PushFailureReport extends ErrorReport
   sealed trait PushSuccessReport extends SuccessReport {
-    def s3Key: String
+    def s3Key: S3Key
   }
 
   case class SuccessfulRedirectDetails(uploadType: UploadType, redirectTarget: String)
@@ -211,15 +211,15 @@ object S3 {
     }
   }
 
-  case class SuccessfulDelete(s3Key: String)(implicit pushOptions: PushOptions) extends PushSuccessReport {
+  case class SuccessfulDelete(s3Key: S3Key)(implicit pushOptions: PushOptions) extends PushSuccessReport {
     def reportMessage = s"${Deleted.renderVerb} $s3Key"
   }
 
-  case class FailedUpload(s3Key: String, error: Throwable)(implicit logger: Logger) extends PushFailureReport {
+  case class FailedUpload(s3Key: S3Key, error: Throwable)(implicit logger: Logger) extends PushFailureReport {
     def reportMessage = errorMessage(s"Failed to upload $s3Key", error)
   }
 
-  case class FailedDelete(s3Key: String, error: Throwable)(implicit logger: Logger) extends PushFailureReport {
+  case class FailedDelete(s3Key: S3Key, error: Throwable)(implicit logger: Logger) extends PushFailureReport {
     def reportMessage = errorMessage(s"Failed to delete $s3Key", error)
   }
 

@@ -52,7 +52,9 @@ package object website {
     def force: Boolean
   }
 
-  type S3Key = String
+  case class S3Key(key: String) {
+    override def toString = key
+  }
 
   type UploadDuration = Long
 
