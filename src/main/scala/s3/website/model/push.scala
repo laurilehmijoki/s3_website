@@ -132,7 +132,7 @@ object Files {
       val excludeByConfig = site.config.exclude_from_upload exists {
         _.s3KeyRegexes.exists(_ matches s3Key)
       }
-      val neverUpload = "s3_website.yml" :: ".env" :: Nil map (k => S3Key(k))
+      val neverUpload = "s3_website.yml" :: ".env" :: Nil map (k => S3Key.build(k, site.config.s3_key_prefix))
       val doNotUpload = excludeByConfig || (neverUpload contains s3Key)
       if (doNotUpload) logger.debug(s"Excluded $s3Key from upload")
       doNotUpload
@@ -157,7 +157,7 @@ object Redirect {
     val redirectSettings = config.redirects.fold(Nil: Seq[RedirectSetting]) { sourcesToTargets =>
       sourcesToTargets.foldLeft(Seq(): Seq[RedirectSetting]) {
         (redirects, sourceToTarget) =>
-          redirects :+ RedirectSetting(sourceToTarget._1, applySlashIfNeeded(sourceToTarget._2))
+          redirects :+ RedirectSetting(sourceToTarget._1, applyRedirectRules(sourceToTarget._2))
       }
     }
     def redirectsWithExistsOnS3Info =
@@ -178,13 +178,13 @@ object Redirect {
       allConfiguredRedirects
   }
 
-  private def applySlashIfNeeded(redirectTarget: String) = {
+  private def applyRedirectRules(redirectTarget: String)(implicit config: Config) = {
     val isExternalRedirect = redirectTarget.matches("https?:\\/\\/.*")
     val isInSiteRedirect = redirectTarget.startsWith("/")
     if (isInSiteRedirect || isExternalRedirect)
       redirectTarget
     else
-      "/" + redirectTarget // let the user have redirect settings like "index.php: index.html" in s3_website.ml
+      s"${config.s3_key_prefix.map(prefix => s"/$prefix").getOrElse("")}/$redirectTarget"
   }
 
   def apply(redirectSetting: RedirectSetting, needsUpload: Boolean): Redirect =
@@ -194,5 +194,6 @@ object Redirect {
 case class S3File(s3Key: S3Key, md5: MD5, size: Long)
 
 object S3File {
-  def apply(summary: S3ObjectSummary): S3File = S3File(S3Key(summary.getKey), summary.getETag, summary.getSize)
+  def apply(summary: S3ObjectSummary)(implicit site: Site): S3File =
+    S3File(S3Key.build(summary.getKey, None), summary.getETag, summary.getSize)
 }

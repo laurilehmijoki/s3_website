@@ -60,8 +60,18 @@ package object website {
     def matches(s3Key: S3Key) = rubyRegexMatches(s3Key.key, keyRegex.pattern.pattern())
   }
 
-  case class S3Key(key: String) {
+  trait S3Key {
+    val key: String
     override def toString = key
+  }
+
+  object S3Key {
+    def prefix(s3_key_prefix: Option[String]) = s3_key_prefix.map(prefix => if (prefix.endsWith("/")) prefix else prefix + "/").getOrElse("")
+
+    def isIgnoredBecauseOfPrefix(s3Key: S3Key)(implicit site: Site) = s3Key.key.startsWith(prefix(site.config.s3_key_prefix))
+
+    case class S3KeyClass(key: String) extends S3Key
+    def build(key: String, s3_key_prefix: Option[String]): S3Key = S3KeyClass(prefix(s3_key_prefix) + key)
   }
   
   case class S3KeyGlob[T](globs: Map[String, T]) {

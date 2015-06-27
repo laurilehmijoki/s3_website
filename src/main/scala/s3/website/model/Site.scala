@@ -15,7 +15,10 @@ import s3.website.model.Config.UnsafeYaml
 import scala.util.Success
 
 case class Site(rootDirectory: File, config: Config) {
-  def resolveS3Key(file: File) = S3Key(file.getAbsolutePath.replace(rootDirectory.getAbsolutePath, "").replace(File.separator,"/").replaceFirst("^/", ""))
+  def resolveS3Key(file: File) = S3Key.build(
+    file.getAbsolutePath.replace(rootDirectory.getAbsolutePath, "").replace(File.separator,"/").replaceFirst("^/", ""),
+    config.s3_key_prefix
+  )
 }
 
 object Site {
@@ -40,13 +43,14 @@ object Site {
           gzip <- loadOptionalBooleanOrStringSeq("gzip").right
           gzip_zopfli <- loadOptionalBoolean("gzip_zopfli").right
           extensionless_mime_type <- loadOptionalString("extensionless_mime_type").right
+          s3_key_prefix <- loadOptionalString("s3_key_prefix").right
           ignore_on_server <- loadOptionalS3KeyRegexes("ignore_on_server").right
           exclude_from_upload <- loadOptionalS3KeyRegexes("exclude_from_upload").right
           s3_reduced_redundancy <- loadOptionalBoolean("s3_reduced_redundancy").right
           cloudfront_distribution_id <- loadOptionalString("cloudfront_distribution_id").right
           cloudfront_invalidate_root <- loadOptionalBoolean("cloudfront_invalidate_root").right
           concurrency_level <- loadOptionalInt("concurrency_level").right
-          redirects <- loadRedirects.right
+          redirects <- loadRedirects(s3_key_prefix).right
           treat_zero_length_objects_as_redirects <- loadOptionalBoolean("treat_zero_length_objects_as_redirects").right
         } yield {
           gzip_zopfli.foreach(_ => logger.info(
@@ -66,6 +70,7 @@ object Site {
             cache_control,
             gzip,
             gzip_zopfli,
+            s3_key_prefix,
             ignore_on_server = ignore_on_server,
             exclude_from_upload = exclude_from_upload,
             s3_reduced_redundancy,
