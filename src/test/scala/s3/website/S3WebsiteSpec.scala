@@ -653,15 +653,13 @@ class S3WebsiteSpec extends Specification {
       push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=90")
     }
-  }
 
-  "max-age in config" should {
     "respect the more specific glob" in new BasicSetup {
       config = """
-        |max_age:
-        |  "assets/*": 150
-        |  "assets/*.gif": 86400
-      """.stripMargin
+                 |max_age:
+                 |  "assets/*": 150
+                 |  "assets/*.gif": 86400
+               """.stripMargin
       setLocalFiles("assets/jquery.js", "assets/picture.gif")
       push()
       sentPutObjectRequests.find(_.getKey == "assets/jquery.js").get.getMetadata.getCacheControl must equalTo("max-age=150")
