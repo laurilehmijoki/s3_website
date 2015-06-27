@@ -71,28 +71,13 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
       mimeType
   }
 
-  lazy val maxAge: Option[Int] = {
-    type GlobsMap = Map[String, Int]
-    site.config.max_age.flatMap { (intOrGlobs: Either[Int, GlobsMap]) =>
-      type GlobsSeq = Seq[(String, Int)]
-      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1.length).reverse
-      intOrGlobs
-        .right.map(respectMostSpecific)
-        .fold(
-          (seconds: Int) => Some(seconds),
-          (globs: GlobsSeq) => {
-            val matchingMaxAge = (glob: String, maxAge: Int) =>
-              rubyRuntime.evalScriptlet(
-                s"""|# encoding: utf-8
-                    |File.fnmatch('$glob', "$s3Key")""".stripMargin)
-                .toJava(classOf[Boolean])
-                .asInstanceOf[Boolean]
-            val fileGlobMatch = globs find Function.tupled(matchingMaxAge)
-            fileGlobMatch map (_._2)
-          }
-        )
-    }
-  }
+  lazy val maxAge: Option[Int] =
+    site.config.max_age.flatMap(
+      _ fold(
+        (maxAge: Int) => Some(maxAge),
+        (globs: S3KeyGlob[Int]) => globs.globMatch(s3Key)
+      )
+    )
 
   lazy val cacheControl: Option[String] =
     site.config.cache_control.flatMap(
