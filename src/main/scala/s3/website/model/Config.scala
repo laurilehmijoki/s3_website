@@ -15,7 +15,7 @@ case class Config(
   s3_bucket:                  String,
   s3_endpoint:                S3Endpoint,
   site:                       Option[String],
-  max_age:                    Option[Either[Int, Map[String, Int]]],
+  max_age:                    Option[Either[Int, S3KeyGlob[Int]]],
   cache_control:              Option[Either[String, S3KeyGlob[String]]],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
@@ -70,16 +70,20 @@ object Config {
     yamlValue getOrElse Left(ErrorReport(s"The key $key has to have a string or [string] value"))
   }
 
-  def loadMaxAge(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Int, Map[String, Int]]]] = {
+  def loadMaxAge(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Int, S3KeyGlob[Int]]]] = {
     val key = "max_age"
     val yamlValue = for {
       maxAgeOption <- loadOptionalValue(key)
     } yield {
-      Right(maxAgeOption.map {
-        case maxAge if maxAge.isInstanceOf[Int] => Left(maxAge.asInstanceOf[Int])
-        case maxAge if maxAge.isInstanceOf[java.util.Map[_,_]] => Right(maxAge.asInstanceOf[java.util.Map[String,Int]].toMap)
-      })
-    }
+        // TODO below we are using an unsafe call to asInstance of – we should implement error handling
+        Right(maxAgeOption.map {
+          case maxAge if maxAge.isInstanceOf[Int] =>
+            Left(maxAge.asInstanceOf[Int])
+          case maxAge if maxAge.isInstanceOf[java.util.Map[_,_]] =>
+            val globs: Map[String, Int] = maxAge.asInstanceOf[util.Map[String, Int]].toMap
+            Right(S3KeyGlob(globs))
+        })
+      }
 
     yamlValue getOrElse Left(ErrorReport(s"The key $key has to have an int or (string -> int) value"))
   }
