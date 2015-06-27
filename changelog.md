@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## NEXT
+
+* Add the `s3_key_prefix` setting
+
 ## 2.10.0
 
 * Support glob hashes in `cache_control`

@@ -81,7 +81,7 @@ object CloudFront {
       if (containsPotentialDefaultRootObject) Some("/") else None
     }
     val indexPath = config.cloudfront_invalidate_root collect {
-      case true if pushSuccessReports.nonEmpty => "/index.html"
+      case true if pushSuccessReports.nonEmpty => config.s3_key_prefix.map(prefix => s"/$prefix").getOrElse("") + "/index.html"
     }
 
     val invalidationPaths: Seq[String] = {

@@ -1,5 +1,6 @@
 package s3.website
 
+import s3.website.S3Key.isIgnoredBecauseOfPrefix
 import s3.website.model.Files.listSiteFiles
 import s3.website.model._
 import s3.website.Ruby.rubyRegexMatches
@@ -47,7 +48,7 @@ object UploadHelper {
   def resolveDeletes(s3Files: Future[Either[ErrorReport, Seq[S3File]]], redirects: Seq[Redirect])
                     (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] =
     if (site.config.ignore_on_server exists (
-      ignoreRegexes => ignoreRegexes.s3KeyRegexes exists( regex => regex matches S3Key(DELETE_NOTHING_MAGIC_WORD))
+      ignoreRegexes => ignoreRegexes.s3KeyRegexes exists( regex => regex matches S3Key.build(DELETE_NOTHING_MAGIC_WORD, site.config.s3_key_prefix))
     )) {
       logger.debug(s"Ignoring all files on the bucket, since the setting $DELETE_NOTHING_MAGIC_WORD is on.")
       Future(Right(Nil))
@@ -58,7 +59,10 @@ object UploadHelper {
         for {
           remoteS3Keys <- s3Files.right.map(_ map (_.s3Key)).right
         } yield {
-          val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
+          val keysIgnoredBecauseOf_s3_key_prefix = remoteS3Keys.filterNot(isIgnoredBecauseOfPrefix)
+          val keysToRetain = (
+            localS3Keys ++ (redirects map { _.s3Key }) ++ keysIgnoredBecauseOf_s3_key_prefix
+          ).toSet
           remoteS3Keys filterNot { s3Key =>
             val ignoreOnServer = site.config.ignore_on_server.exists(_ matches s3Key)
             if (ignoreOnServer) logger.debug(s"Ignoring $s3Key on server")

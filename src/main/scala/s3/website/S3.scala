@@ -116,21 +116,28 @@ object S3 {
   def awsS3Client(config: Config) = new AmazonS3Client(awsCredentials(config))
 
   def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
-                              (implicit config: Config, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushOptions: PushOptions):
+                              (implicit site: Site, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushOptions: PushOptions):
   Future[Either[ErrorReport, Seq[S3File]]] = Future {
     logger.debug(nextMarker.fold
       ("Querying S3 files")
       {m => s"Querying more S3 files (starting from $m)"}
     )
-    val objects: ObjectListing = s3Settings.s3Client(config).listObjects({
+    val objects: ObjectListing = s3Settings.s3Client(site.config).listObjects({
       val req = new ListObjectsRequest()
-      req.setBucketName(config.s3_bucket)
+      req.setBucketName(site.config.s3_bucket)
       nextMarker.foreach(req.setMarker)
       req
     })
     objects
   } flatMap { (objects: ObjectListing) =>
-    val s3Files = alreadyResolved ++ (objects.getObjectSummaries.toIndexedSeq.toSeq map (S3File(_)))
+
+    /**
+     * We could filter the keys by prefix already on S3, but unfortunately s3_website test infrastructure does not currently support testing of that.
+     * Hence fetch all the keys from S3 and then filter by s3_key_prefix.
+     */
+    def matchesPrefix(os: S3ObjectSummary) = site.config.s3_key_prefix.fold(true)(prefix => os.getKey.startsWith(prefix))
+
+    val s3Files = alreadyResolved ++ (objects.getObjectSummaries.filter(matchesPrefix).toIndexedSeq.toSeq map (S3File(_)))
     Option(objects.getNextMarker)
       .fold(Future(Right(s3Files)): Future[Either[ErrorReport, Seq[S3File]]]) // We've received all the S3 keys from the bucket
       { nextMarker => // There are more S3 keys on the bucket. Fetch them.

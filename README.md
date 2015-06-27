@@ -323,6 +323,14 @@ redirects:
   music-files/promo.mp4: http://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
 
+On terminology: the left value is the redirect source and the right value is the redirect
+target. For example above, *about.php* is the redirect source and */about.html* the target.
+
+If the `s3_key_prefix` setting is defined, it will be applied to the redirect
+target if and only if the redirect target points to a site-local resource and
+does not start with a slash. E.g., `about.php: about.html` will be translated
+into `about.php: VALUE-OF-S3_KEY_PREFIX/about.html`.
+
 #### Routing Rules
 
 You can configure more complex redirect rules by adding the following
@@ -395,6 +403,17 @@ operation would actually do if run without the dry switch.
 
 You can use the dry run mode if you are unsure what kind of effects the `push`
 operation would cause to your live website.
+
+### S3 website in a subdirectory of the bucket
+
+If your S3 website shares the same S3 bucket with other applications, you can
+push your website into a "subdirectory" on the bucket.
+
+Define the subdirectory like so:
+
+```yaml
+s3_key_prefix: your-subdirectory
+```
 
 ## Migrating from v1 to v2
 

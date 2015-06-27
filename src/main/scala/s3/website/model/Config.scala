@@ -20,6 +20,7 @@ case class Config(
   cache_control:              Option[Either[String, S3KeyGlob[String]]],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
+  s3_key_prefix:              Option[String],
   ignore_on_server:           Option[S3KeyRegexes],
   exclude_from_upload:        Option[S3KeyRegexes],
   s3_reduced_redundancy:      Option[Boolean],
@@ -119,14 +120,14 @@ object Config {
       }
     }
 
-  def loadRedirects(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Map[S3Key, String]]] = {
+  def loadRedirects(s3_key_prefix: Option[String])(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Map[S3Key, String]]] = {
     val key = "redirects"
     val yamlValue = for {
       redirectsOption <- loadOptionalValue(key)
       redirectsOption <- Try(redirectsOption.map(_.asInstanceOf[java.util.Map[String,String]].toMap))
     } yield Right(redirectsOption.map(
         redirects => redirects.map(
-          ((key: String, value: String) => (S3Key(key), value)).tupled
+          ((key: String, value: String) => (S3Key.build(key, s3_key_prefix), value)).tupled
         )
       ))
 

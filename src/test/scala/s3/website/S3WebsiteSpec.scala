@@ -83,6 +83,14 @@ class S3WebsiteSpec extends Specification {
       noUploadsOccurred must beTrue
     }
 
+    "not upload a file if it has not changed and s3_key_prefix is defined" in new BasicSetup {
+      config = "s3_key_prefix: test"
+      setLocalFileWithContent(("index.html", "<div>hello</div>"))
+      setS3File("test/index.html", md5Hex("<div>hello</div>"))
+      push()
+      noUploadsOccurred must beTrue
+    }
+
     "detect a changed file even though another file has the same contents as the changed file" in new BasicSetup {
       setLocalFilesWithContent(("1.txt", "foo"), ("2.txt", "foo"))
       setS3File("1.txt", md5Hex("bar"))
@@ -108,6 +116,27 @@ class S3WebsiteSpec extends Specification {
       setS3File("old.html", md5Hex("<h1>old text</h1>"))
       push()
       sentDelete must equalTo("old.html")
+    }
+
+    "delete files that match the s3_key_prefix" in new BasicSetup {
+      config = "s3_key_prefix: production"
+      setS3File("production/old.html", md5Hex("<h1>old text</h1>"))
+      push()
+      sentDelete must equalTo("production/old.html")
+    }
+
+    "retain files that do not match the s3_key_prefix" in new BasicSetup {
+      config = "s3_key_prefix: production"
+      setS3File("old.html", md5Hex("<h1>old text</h1>"))
+      push()
+      noDeletesOccurred
+    }
+
+    "retain files that do not match the s3_key_prefix" in new BasicSetup {
+      config = "s3_key_prefix: test"
+      setS3File("test1.html")
+      push()
+      noDeletesOccurred
     }
 
     "try again if the upload fails" in new BasicSetup {
@@ -230,6 +259,17 @@ class S3WebsiteSpec extends Specification {
       push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/" :: "/maybe-index.html" :: Nil).sorted)
     }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config = """
+                 |cloudfront_distribution_id: EGM1J2JJX9Z
+                 |s3_key_prefix: production
+               """.stripMargin
+      setLocalFile("index.html")
+      setOutdatedS3Keys("production/index.html")
+      push()
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/production/index.html" :: Nil).sorted)
+    }
   }
 
   "cloudfront_invalidate_root: true" should {
@@ -253,6 +293,20 @@ class S3WebsiteSpec extends Specification {
       setOutdatedS3Keys("articles/index.html")
       push()
       sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq must contain("/index.html")
+    }
+
+    "treat the s3_key_prefix as the root path" in new BasicSetup {
+      config = """
+                 |cloudfront_distribution_id: EGM1J2JJX9Z
+                 |cloudfront_invalidate_root: true
+                 |s3_key_prefix: test
+               """.stripMargin
+      setLocalFile("articles/index.html")
+      setOutdatedS3Keys("test/articles/index.html")
+      push()
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(
+        ("/test/index.html" :: "/test/articles/" :: Nil).sorted
+      )
     }
 
     "not invalidate anything if there was nothing to push" in new BasicSetup {
@@ -333,8 +387,31 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "s3_key_prefix in config" should {
+    "apply the prefix into all the S3 keys" in new BasicSetup {
+      config = "s3_key_prefix: production"
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getKey must equalTo("production/index.html")
+    }
+
+    "work with slash" in new BasicSetup {
+      config = "s3_key_prefix: production/"
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getKey must equalTo("production/index.html")
+    }
+  }
+
   "s3_website.yml file" should {
     "never be uploaded" in new BasicSetup {
+      setLocalFile("s3_website.yml")
+      push()
+      noUploadsOccurred must beTrue
+    }
+
+    "never be uploaded even when s3_key_prefix is defined" in new BasicSetup {
+      config = "s3_key_prefix: production"
       setLocalFile("s3_website.yml")
       push()
       noUploadsOccurred must beTrue
@@ -347,12 +424,29 @@ class S3WebsiteSpec extends Specification {
       push()
       noUploadsOccurred must beTrue
     }
+
+    "never be uploaded even when s3_key_prefix is defined" in new BasicSetup {
+      config = "s3_key_prefix: production"
+      setLocalFile(".env")
+      push()
+      noUploadsOccurred must beTrue
+    }
   }
 
   "exclude_from_upload: string" should {
     "result in matching files not being uploaded" in new BasicSetup {
       config = "exclude_from_upload: .DS_.*?"
       setLocalFile(".DS_Store")
+      push()
+      noUploadsOccurred must beTrue
+    }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config = """
+                 |s3_key_prefix: production
+                 |exclude_from_upload: hello.txt
+               """.stripMargin
+      setLocalFile("hello.txt")
       push()
       noUploadsOccurred must beTrue
     }
@@ -373,6 +467,17 @@ class S3WebsiteSpec extends Specification {
       push()
       noUploadsOccurred must beTrue
     }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config = """
+                 |s3_key_prefix: production
+                 |exclude_from_upload:
+                 |- hello.txt
+               """.stripMargin
+      setLocalFile("hello.txt")
+      push()
+      noUploadsOccurred must beTrue
+    }
   }
 
   "ignore_on_server: value" should {
@@ -389,12 +494,32 @@ class S3WebsiteSpec extends Specification {
       push()
       noDeletesOccurred must beTrue
     }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config = """
+                 |s3_key_prefix: production
+                 |ignore_on_server: hello.txt
+               """.stripMargin
+      setS3File("hello.txt")
+      push()
+      noDeletesOccurred must beTrue
+    }
   }
 
   "ignore_on_server: _DELETE_NOTHING_ON_THE_S3_BUCKET_" should {
     "result in no files being deleted on the S3 bucket" in new BasicSetup {
       config = s"""
         |ignore_on_server: $DELETE_NOTHING_MAGIC_WORD
+      """.stripMargin
+      setS3File("file.txt")
+      push()
+      noDeletesOccurred
+    }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config = s"""
+                  |s3_key_prefix: production
+                  |ignore_on_server: $DELETE_NOTHING_MAGIC_WORD
       """.stripMargin
       setS3File("file.txt")
       push()
@@ -423,6 +548,17 @@ class S3WebsiteSpec extends Specification {
                  |ignore_on_server:
                  |  - tags/笔记/test.html
                """.stripMargin
+      push()
+      noDeletesOccurred must beTrue
+    }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config = """
+                 |s3_key_prefix: production
+                 |ignore_on_server:
+                 |- hello.*
+               """.stripMargin
+      setS3File("hello.txt")
       push()
       noDeletesOccurred must beTrue
     }
@@ -480,6 +616,17 @@ class S3WebsiteSpec extends Specification {
   "cache_control in config" should {
     "be applied to all files" in new BasicSetup {
       config = "cache_control: public, no-transform, max-age=1200, s-maxage=1200"
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, no-transform, max-age=1200, s-maxage=1200")
+    }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config =
+        """
+          |cache_control: public, no-transform, max-age=1200, s-maxage=1200
+          |s3_key_prefix: foo
+        """.stripMargin
       setLocalFile("index.html")
       push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, no-transform, max-age=1200, s-maxage=1200")
@@ -568,6 +715,18 @@ class S3WebsiteSpec extends Specification {
       push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, must-revalidate, max-age=120")
     }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config =
+        """
+          |cache_control:
+          |  "*.html": public, no-transform, max-age=1200, s-maxage=1200
+          |s3_key_prefix: foo
+        """.stripMargin
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("public, no-transform, max-age=1200, s-maxage=1200")
+    }
   }
 
   "cache control" can {
@@ -581,6 +740,17 @@ class S3WebsiteSpec extends Specification {
   "max_age in config" can {
     "be applied to all files" in new BasicSetup {
       config = "max_age: 60"
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
+    }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config =
+        """
+          |max_age: 60
+          |s3_key_prefix: test
+        """.stripMargin
       setLocalFile("index.html")
       push()
       sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
@@ -665,6 +835,18 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequests.find(_.getKey == "assets/jquery.js").get.getMetadata.getCacheControl must equalTo("max-age=150")
       sentPutObjectRequests.find(_.getKey == "assets/picture.gif").get.getMetadata.getCacheControl must equalTo("max-age=86400")
     }
+
+    "work with s3_key_prefix" in new BasicSetup {
+      config =
+        """
+          |max_age:
+          |  "*.html": 60
+          |s3_key_prefix: test
+        """.stripMargin
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("max-age=60")
+    }
   }
 
   "s3_reduced_redundancy: true in config" should {
@@ -693,6 +875,28 @@ class S3WebsiteSpec extends Specification {
       """.stripMargin
       push()
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
+    }
+
+    "refer to site root when the s3_key_prefix is defined and the redirect target starts with a slash" in new BasicSetup {
+      config = """
+                 |s3_key_prefix: production
+                 |redirects:
+                 |  index.php: /index.html
+               """.stripMargin
+      push()
+      sentPutObjectRequest.getKey must equalTo("production/index.php")
+      sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
+    }
+
+    "use s3_key_prefix as the root when the redirect target does not start with a slash" in new BasicSetup {
+      config = """
+                 |s3_key_prefix: production
+                 |redirects:
+                 |  index.php: index.html
+               """.stripMargin
+      push()
+      sentPutObjectRequest.getKey must equalTo("production/index.php")
+      sentPutObjectRequest.getRedirectLocation must equalTo("/production/index.html")
     }
 
     "add slash to the redirect target" in new BasicSetup {
