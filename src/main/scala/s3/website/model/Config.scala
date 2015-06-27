@@ -1,11 +1,12 @@
 package s3.website.model
 
 import java.io.File
+import java.util
 
 import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
-import s3.website.{S3Key, ErrorReport}
+import s3.website.{S3KeyGlob, S3Key, ErrorReport}
 import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 
 case class Config(
@@ -15,7 +16,7 @@ case class Config(
   s3_endpoint:                S3Endpoint,
   site:                       Option[String],
   max_age:                    Option[Either[Int, Map[String, Int]]],
-  cache_control:              Option[Either[String, Map[String, String]]],
+  cache_control:              Option[Either[String, S3KeyGlob[String]]],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
   ignore_on_server:           Option[Either[String, Seq[String]]],
@@ -83,14 +84,18 @@ object Config {
     yamlValue getOrElse Left(ErrorReport(s"The key $key has to have an int or (string -> int) value"))
   }
 
-  def loadCacheControl(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[String, Map[String, String]]]] = {
+  def loadCacheControl(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[String, S3KeyGlob[String]]]] = {
     val key = "cache_control"
     val yamlValue = for {
       cacheControlOption <- loadOptionalValue(key)
     } yield {
+        // TODO below we are using an unsafe call to asInstance of – we should implement error handling
         Right(cacheControlOption.map {
-          case cacheControl if cacheControl.isInstanceOf[String] => Left(cacheControl.asInstanceOf[String])
-          case cacheControl if cacheControl.isInstanceOf[java.util.Map[_,_]] => Right(cacheControl.asInstanceOf[java.util.Map[String,String]].toMap) // TODO an unsafe call to asInstanceOf
+          case cacheControl if cacheControl.isInstanceOf[String] =>
+            Left(cacheControl.asInstanceOf[String])
+          case cacheControl if cacheControl.isInstanceOf[java.util.Map[_,_]] =>
+            val globs: Map[String, String] = cacheControl.asInstanceOf[util.Map[String, String]].toMap
+            Right(S3KeyGlob(globs))
         })
       }
 

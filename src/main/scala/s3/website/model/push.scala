@@ -94,28 +94,13 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
     }
   }
 
-  lazy val cacheControl: Option[String] = {
-    type GlobsMap = Map[String, String]
-    site.config.cache_control.flatMap { (intOrGlobs: Either[String, GlobsMap]) =>
-      type GlobsSeq = Seq[(String, String)]
-      def respectMostSpecific(globs: GlobsMap): GlobsSeq = globs.toSeq.sortBy(_._1.length).reverse
-      intOrGlobs
-        .right.map(respectMostSpecific)
-        .fold(
-          (cacheCtrl: String) => Some(cacheCtrl),
-          (globs: GlobsSeq) => {
-            val matchingCacheControl = (glob: String, cacheControl: String) =>
-              rubyRuntime.evalScriptlet(
-                s"""|# encoding: utf-8
-                   |File.fnmatch('$glob', "$s3Key")""".stripMargin)
-                .toJava(classOf[Boolean])
-                .asInstanceOf[Boolean]
-            val fileGlobMatch = globs find Function.tupled(matchingCacheControl)
-            fileGlobMatch map (_._2)
-          }
-        )
-    }
-  }
+  lazy val cacheControl: Option[String] =
+    site.config.cache_control.flatMap(
+      _ fold(
+        (cacheCtrl: String) => Some(cacheCtrl),
+        (globs: S3KeyGlob[String]) => globs.globMatch(s3Key)
+      )
+    )
 
   /**
    * May throw an exception, so remember to call this in a Try or Future monad

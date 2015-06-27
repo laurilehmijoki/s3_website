@@ -1,5 +1,7 @@
 package s3
 
+import s3.website.Ruby._
+
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.concurrent.duration.{TimeUnit, Duration}
 import s3.website.S3.{PushSuccessReport, PushFailureReport}
@@ -54,6 +56,20 @@ package object website {
 
   case class S3Key(key: String) {
     override def toString = key
+  }
+  
+  case class S3KeyGlob[T](globs: Map[String, T]) {
+    def globMatch(s3Key: S3Key): Option[T] = {
+      def respectMostSpecific(globs: Map[String, T]) = globs.toSeq.sortBy(_._1.length).reverse
+      val matcher = (glob: String, value: T) =>
+        rubyRuntime.evalScriptlet(
+          s"""|# encoding: utf-8
+             |File.fnmatch('$glob', "$s3Key")""".stripMargin)
+          .toJava(classOf[Boolean])
+          .asInstanceOf[Boolean]
+      val fileGlobMatch = respectMostSpecific(globs) find Function.tupled(matcher)
+      fileGlobMatch map (_._2)
+    }
   }
 
   type UploadDuration = Long
