@@ -3,10 +3,11 @@ package s3.website.model
 import java.io.File
 import java.util
 
+import scala.util.matching.Regex
 import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
-import s3.website.{S3KeyGlob, S3Key, ErrorReport}
+import s3.website._
 import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 
 case class Config(
@@ -19,8 +20,8 @@ case class Config(
   cache_control:              Option[Either[String, S3KeyGlob[String]]],
   gzip:                       Option[Either[Boolean, Seq[String]]],
   gzip_zopfli:                Option[Boolean],
-  ignore_on_server:           Option[Either[String, Seq[String]]],
-  exclude_from_upload:        Option[Either[String, Seq[String]]],
+  ignore_on_server:           Option[S3KeyRegexes],
+  exclude_from_upload:        Option[S3KeyRegexes],
   s3_reduced_redundancy:      Option[Boolean],
   cloudfront_distribution_id: Option[String],
   cloudfront_invalidate_root: Option[Boolean],
@@ -57,13 +58,16 @@ object Config {
     yamlValue getOrElse Left(ErrorReport(s"The key $key has to have a boolean or [string] value"))
   }
 
-  def loadOptionalStringOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[String, Seq[String]]]] = {
+  def loadOptionalS3KeyRegexes(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[S3KeyRegexes]] = {
     val yamlValue = for {
       valueOption <- loadOptionalValue(key)
     } yield {
+      def toS3KeyRegexes(xs: Seq[String]) = S3KeyRegexes(xs map (str => str.r) map S3KeyRegex)
       Right(valueOption.map {
-        case value if value.isInstanceOf[String] => Left(value.asInstanceOf[String])
-        case value if value.isInstanceOf[java.util.List[_]] => Right(value.asInstanceOf[java.util.List[String]].toIndexedSeq)
+        case value if value.isInstanceOf[String] =>
+          toS3KeyRegexes(value.asInstanceOf[String] :: Nil)
+        case value if value.isInstanceOf[java.util.List[_]] =>
+          toS3KeyRegexes(value.asInstanceOf[java.util.List[String]].toIndexedSeq)
       })
     }
 

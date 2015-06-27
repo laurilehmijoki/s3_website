@@ -40,8 +40,8 @@ object Site {
           gzip <- loadOptionalBooleanOrStringSeq("gzip").right
           gzip_zopfli <- loadOptionalBoolean("gzip_zopfli").right
           extensionless_mime_type <- loadOptionalString("extensionless_mime_type").right
-          ignore_on_server <- loadOptionalStringOrStringSeq("ignore_on_server").right
-          exclude_from_upload <- loadOptionalStringOrStringSeq("exclude_from_upload").right
+          ignore_on_server <- loadOptionalS3KeyRegexes("ignore_on_server").right
+          exclude_from_upload <- loadOptionalS3KeyRegexes("exclude_from_upload").right
           s3_reduced_redundancy <- loadOptionalBoolean("s3_reduced_redundancy").right
           cloudfront_distribution_id <- loadOptionalString("cloudfront_distribution_id").right
           cloudfront_invalidate_root <- loadOptionalBoolean("cloudfront_invalidate_root").right

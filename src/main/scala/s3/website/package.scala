@@ -9,6 +9,8 @@ import com.amazonaws.AmazonServiceException
 import s3.website.model.{Config, Site}
 import java.io.File
 
+import scala.util.matching.Regex
+
 package object website {
   trait Report {
     def reportMessage: String
@@ -54,6 +56,10 @@ package object website {
     def force: Boolean
   }
 
+  case class S3KeyRegex(keyRegex: Regex) {
+    def matches(s3Key: S3Key) = rubyRegexMatches(s3Key.key, keyRegex.pattern.pattern())
+  }
+
   case class S3Key(key: String) {
     override def toString = key
   }
@@ -70,6 +76,12 @@ package object website {
       val fileGlobMatch = respectMostSpecific(globs) find Function.tupled(matcher)
       fileGlobMatch map (_._2)
     }
+  }
+  
+  case class S3KeyRegexes(s3KeyRegexes: Seq[S3KeyRegex]) {
+    def matches(s3Key: S3Key) = s3KeyRegexes exists (
+      (keyRegex: S3KeyRegex) => keyRegex matches s3Key
+    )
   }
 
   type UploadDuration = Long
