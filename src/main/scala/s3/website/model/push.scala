@@ -130,11 +130,7 @@ object Files {
   def listSiteFiles(implicit site: Site, logger: Logger) = {
     def excludeFromUpload(s3Key: S3Key) = {
       val excludeByConfig = site.config.exclude_from_upload exists {
-        _.fold(
-          // For backward compatibility, use Ruby regex matching
-          (exclusionRegex: String) => rubyRegexMatches(s3Key.key, exclusionRegex),
-          (exclusionRegexes: Seq[String]) => exclusionRegexes exists (rubyRegexMatches(s3Key.key, _))
-        )
+        _.s3KeyRegexes.exists(_ matches s3Key)
       }
       val neverUpload = "s3_website.yml" :: ".env" :: Nil map (k => S3Key(k))
       val doNotUpload = excludeByConfig || (neverUpload contains s3Key)

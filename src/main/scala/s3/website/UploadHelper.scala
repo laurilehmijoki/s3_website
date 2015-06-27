@@ -46,7 +46,9 @@ object UploadHelper {
 
   def resolveDeletes(s3Files: Future[Either[ErrorReport, Seq[S3File]]], redirects: Seq[Redirect])
                     (implicit site: Site, logger: Logger, executor: ExecutionContextExecutor): Future[Either[ErrorReport, Seq[S3Key]]] =
-    if (site.config.ignore_on_server.contains(Left(DELETE_NOTHING_MAGIC_WORD))) {
+    if (site.config.ignore_on_server exists (
+      ignoreRegexes => ignoreRegexes.s3KeyRegexes exists( regex => regex matches S3Key(DELETE_NOTHING_MAGIC_WORD))
+    )) {
       logger.debug(s"Ignoring all files on the bucket, since the setting $DELETE_NOTHING_MAGIC_WORD is on.")
       Future(Right(Nil))
     } else {
@@ -58,10 +60,7 @@ object UploadHelper {
         } yield {
           val keysToRetain = (localS3Keys ++ (redirects map { _.s3Key })).toSet
           remoteS3Keys filterNot { s3Key =>
-            val ignoreOnServer = site.config.ignore_on_server.exists(_.fold(
-              (ignoreRegex: String) => rubyRegexMatches(s3Key.key, ignoreRegex),
-              (ignoreRegexes: Seq[String]) => ignoreRegexes.exists(rubyRegexMatches(s3Key.key, _))
-            ))
+            val ignoreOnServer = site.config.ignore_on_server.exists(_ matches s3Key)
             if (ignoreOnServer) logger.debug(s"Ignoring $s3Key on server")
             (keysToRetain contains s3Key) || ignoreOnServer
           }
