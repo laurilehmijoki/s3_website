@@ -1009,7 +1009,7 @@ class S3WebsiteSpec extends Specification {
 
     def setS3Files(s3Files: S3File*) {
       s3Files.foreach { s3File =>
-        setS3File(s3File.s3Key, s3File.md5)
+        setS3File(s3File.s3Key.key, s3File.md5)
       }
     }
 
