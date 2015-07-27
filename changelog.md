@@ -2,7 +2,7 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## NEXT
+## 2.11.0
 
 * Add the `s3_key_prefix` setting
 
