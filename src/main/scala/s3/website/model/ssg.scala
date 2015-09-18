@@ -12,7 +12,7 @@ object Ssg {
   val automaticallySupportedSiteGenerators = Jekyll :: Nanoc :: Nil
 
   def autodetectSiteDir(workingDirectory: File): Option[File] =
-    recursiveListFiles(workingDirectory).find { file =>
+    recursiveListFiles()(workingDirectory).find { file =>
       file.isDirectory && automaticallySupportedSiteGenerators.exists(ssg => file.getAbsolutePath.endsWith(ssg.outputDirectory))
     }
 }

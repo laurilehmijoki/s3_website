@@ -119,10 +119,10 @@ object Upload {
 }
 
 object Files {
-  def recursiveListFiles(f: File): Seq[File] = {
+  def recursiveListFiles(maxDepth: Int = Integer.MAX_VALUE)(f: File): Seq[File] = {
     val these = f.listFiles
     if (these != null)
-      these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles)
+      these ++ these.filter(_.isDirectory).flatMap(recursiveListFiles(maxDepth - 1))
     else
       Nil
   }
@@ -137,7 +137,7 @@ object Files {
       if (doNotUpload) logger.debug(s"Excluded $s3Key from upload")
       doNotUpload
     }
-    recursiveListFiles(site.rootDirectory)
+    recursiveListFiles()(site.rootDirectory)
       .filterNot(_.isDirectory)
       .filterNot(f => excludeFromUpload(site.resolveS3Key(f)))
   }
