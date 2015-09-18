@@ -22,5 +22,5 @@ case object Jekyll extends Ssg {
 }
 
 case object Nanoc extends Ssg {
-  def outputDirectory = "public/output"
+  def outputDirectory = s"public${File.separatorChar}output"
 }
