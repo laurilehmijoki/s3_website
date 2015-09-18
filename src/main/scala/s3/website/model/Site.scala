@@ -101,7 +101,7 @@ object Site {
         |   site: dist/website""".stripMargin
 
   def resolveSiteDir(implicit yamlConfig: S3_website_yml, config: Config, cliArgs: CliArgs, workingDirectory: File): Either[ErrorReport, File] = {
-    val siteFromAutoDetect = autodetectSiteDir(workingDirectory)
+    val siteFromAutoDetect = if (config.site.isEmpty) { autodetectSiteDir(workingDirectory) } else { None }
     val errOrSiteFromCliArgs: Either[ErrorReport, Option[File]] = Option(cliArgs.site) match {
       case Some(siteDirFromCliArgs) =>
         val f = new File(siteDirFromCliArgs)

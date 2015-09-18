@@ -11,10 +11,8 @@ trait Ssg {
 object Ssg {
   val automaticallySupportedSiteGenerators = Jekyll :: Nanoc :: Nil
 
-  val maxAutodetectDepth = automaticallySupportedSiteGenerators.map(_.outputDirectory).map(_.split(File.separatorChar).length).max
-
   def autodetectSiteDir(workingDirectory: File): Option[File] =
-    recursiveListFiles(maxAutodetectDepth)(workingDirectory).find { file =>
+    recursiveListFiles(workingDirectory).find { file =>
       file.isDirectory && automaticallySupportedSiteGenerators.exists(ssg => file.getAbsolutePath.endsWith(ssg.outputDirectory))
     }
 }

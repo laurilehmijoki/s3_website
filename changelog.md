@@ -2,6 +2,11 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.11.2
+
+* A new fix based on
+  <https://github.com/laurilehmijoki/s3_website/issues/181#issuecomment-141397992>
+
 ## 2.11.1
 
 * Prevent runaway recursion in file listing
