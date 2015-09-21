@@ -503,6 +503,7 @@ Contributors (in alphabetical order)
 * Philip I. Thomas
 * Philippe Creux
 * Piotr Janik
+* PJ Kelly
 * Rodrigo Reis
 * Ross Hunter
 * Shigeaki Matsumura
