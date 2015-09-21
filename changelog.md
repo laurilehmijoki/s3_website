@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.12.1
+
+* Fix broken build
+
 ## 2.12.0
 
 * Automatically detect Middleman generated websites
