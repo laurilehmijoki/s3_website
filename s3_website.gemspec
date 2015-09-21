@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
   s.files         = `git ls-files`
                       .split("\n")
                       .reject { |f| f.match('sbt-launch.jar') } # Reject the SBT jar, as it is a big file
+                      .push('resources/s3_website.jar.md5') # Include the checksum file in the gem
   s.test_files    = `git ls-files -- src/test/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
