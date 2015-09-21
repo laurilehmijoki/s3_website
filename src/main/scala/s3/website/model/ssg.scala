@@ -9,7 +9,7 @@ trait Ssg {
 }
 
 object Ssg {
-  val automaticallySupportedSiteGenerators = Jekyll :: Nanoc :: Nil
+  val automaticallySupportedSiteGenerators = Jekyll :: Nanoc :: Middleman :: Nil
 
   def autodetectSiteDir(workingDirectory: File): Option[File] =
     recursiveListFiles(workingDirectory).find { file =>
@@ -23,4 +23,8 @@ case object Jekyll extends Ssg {
 
 case object Nanoc extends Ssg {
   def outputDirectory = s"public${File.separatorChar}output"
+}
+
+case object Middleman extends Ssg {
+  def outputDirectory = "build"
 }

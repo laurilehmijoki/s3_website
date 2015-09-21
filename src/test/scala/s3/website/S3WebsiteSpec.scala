@@ -1058,6 +1058,14 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "Middleman site" should {
+    "be detected automatically" in new MiddlemanSite with EmptySite with MockAWS with DefaultRunMode {
+      setLocalFile("index.html")
+      push()
+      sentPutObjectRequests.length must equalTo(1)
+    }
+  }
+
   "the setting treat_zero_length_objects_as_redirects" should {
     "skip application of redirect on a zero-length S3 object" in new BasicSetup {
       config =
@@ -1106,11 +1114,11 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getRedirectLocation must equalTo("/index.html")
     }
   }
-  
+
   trait BasicSetup extends SiteLocationFromCliArg with EmptySite with MockAWS with DefaultRunMode
 
   trait ForcePush extends SiteLocationFromCliArg with EmptySite with MockAWS with ForcePushMode
-  
+
   trait DryRun extends SiteLocationFromCliArg with EmptySite with MockAWS with DryRunMode
 
   trait DefaultRunMode {
@@ -1308,6 +1316,11 @@ class S3WebsiteSpec extends Specification {
 
   trait NanocSite extends Directories {
     val siteDirectory = new File(workingDirectory, "public/output")
+    val siteDirFromCLIArg = false
+  }
+
+  trait MiddlemanSite extends Directories {
+    val siteDirectory = new File(workingDirectory, "build")
     val siteDirFromCLIArg = false
   }
 

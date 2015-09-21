@@ -7,7 +7,7 @@
 
 * Create and configure an S3 website for you
 * Upload your static website to AWS S3
- * Jekyll and Nanoc are automatically supported
+* [Jekyll](http://jekyllrb.com/), [Nanoc](http://nanoc.ws/), and [Middleman](https://middlemanapp.com/) are automatically supported
 * Help you use AWS Cloudfront to distribute your website
 * Improve page speed with HTTP cache control and gzipping
 * Set HTTP redirects for your website
@@ -74,8 +74,7 @@ syntax information.
 * Let the user have all the S3 website configurations in a file
 * Minimise or remove the need to use the AWS Console
 * Allow the user to deliver the website via CloudFront
-* Automatically detect the most common static website tools, such as Jekyll or
-  Nanoc
+* Automatically detect the most common static website tools, such as [Jekyll](http://jekyllrb.com/), [Nanoc](http://nanoc.ws/), and [Middleman](https://middlemanapp.com/).
 * Be simple to use: require only the S3 credentials and the name of the S3
   bucket
 * Let the power users benefit from advanced S3 website features such as
