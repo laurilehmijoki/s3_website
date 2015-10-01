@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 1.8.2
+
+* do not match files like denver.html with a bad regex
+
 ## 1.8.1
 
 * Do not push the *.env* file
