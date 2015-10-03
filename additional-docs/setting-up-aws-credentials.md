@@ -26,6 +26,7 @@ Here is the IAM Policy Document of the above setup:
 
 ```json
 {
+  "Version": "2008-10-17",
   "Statement": [
     {
       "Action": [
