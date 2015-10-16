@@ -122,7 +122,7 @@ object CloudFront {
       .getPath
       .replaceAll("'", URLEncoder.encode("'", "UTF-8")) // CloudFront does not accept ' in invalidation path
       .flatMap(chr => {
-        if (Seq("ä", "ö", "ü").contains(chr.toString.toLowerCase))
+        if (("[^\\x00-\\x7F]".r findFirstIn chr.toString).isDefined)
           URLEncoder.encode(chr.toString, "UTF-8")
         else
           chr.toString
