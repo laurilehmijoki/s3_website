@@ -246,10 +246,10 @@ class S3WebsiteSpec extends Specification {
 
     "encode unsafe characters in the keys" in new BasicSetup {
       config = "cloudfront_distribution_id: EGM1J2JJX9Z"
-      setLocalFile("articles/Äöü.html")
-      setOutdatedS3Keys("articles/Äöü.html")
+      setLocalFile("articles/Äöüßñé.html")
+      setOutdatedS3Keys("articles/Äöüßñé.html")
       push()
-      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/%C3%84%C3%B6%C3%BC.html" :: Nil).sorted)
+      sentInvalidationRequest.getInvalidationBatch.getPaths.getItems.toSeq.sorted must equalTo(("/articles/%C3%84%C3%B6%C3%BC%C3%9F%C3%B1%C3%A9.html" :: Nil).sorted)
     }
 
     "invalidate the root object '/' if a top-level object is updated or deleted" in new BasicSetup {
