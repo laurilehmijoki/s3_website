@@ -479,6 +479,7 @@ Creux](https://github.com/pcreux) on
 exist.
 
 Contributors (in alphabetical order)
+* Akshay Karle
 * Alan deLevie
 * Almir Sarajčić
 * Andrew T. Baker
