@@ -32,6 +32,10 @@ Here's how you can get started:
 * Run `s3_website cfg apply`. This will configure your bucket to function as an
   S3 website. If the bucket does not exist, the command will create it for you.
 * Run `s3_website push` to push your website to S3. Congratulations! You are live.
+* At any later time when you would like to synchronise your local website with
+  the S3 website, simply run `s3_website push` again.
+  (It will calculate the difference, update the changed files,
+  upload the new files and delete the obsolete files.)
 
 ### Specifying the location of your website
 
