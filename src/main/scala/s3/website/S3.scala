@@ -80,7 +80,7 @@ object S3 {
               cacheCtrl
             case (maxAgeSeconds: Some[int], None) =>
               maxAgeSeconds.map({
-                case seconds if seconds == 0 => s"no-cache; max-age=0"
+                case seconds if seconds == 0 => s"no-cache, max-age=0"
                 case seconds                 => s"max-age=$seconds"
               })
             case (None, None) => None

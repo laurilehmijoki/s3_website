@@ -801,7 +801,7 @@ class S3WebsiteSpec extends Specification {
       config = "max_age: 0"
       setLocalFile("index.html")
       push()
-      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache; max-age=0")
+      sentPutObjectRequest.getMetadata.getCacheControl must equalTo("no-cache, max-age=0")
     }
 
     "support non-US-ASCII directory names"  in new BasicSetup {
