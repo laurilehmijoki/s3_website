@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.12.3
+
+* Fix <https://github.com/laurilehmijoki/s3_website/issues/208>
+
 ## 2.12.2
 
 * Merge <https://github.com/laurilehmijoki/s3_website/pull/190>
