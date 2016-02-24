@@ -429,7 +429,12 @@ maintenance mode. This means that v1 will see only critical bugfix releases.
 
 ## Example configurations
 
-See [example-configurations](additional-docs/example-configurations.md).
+- [Minimal configuration](additional-docs/example-configurations.md#minimal)
+- [CloudFront optimisation](additional-docs/example-configurations.md#optimised-for-speed)
+- [CloudFront multiple CNAMEs](additional-docs/example-configurations.md#multiple-cnames)
+- [Using redirects](additional-docs/example-configurations.md#using-redirects)
+
+See more [example-configurations](additional-docs/example-configurations.md)
 
 ## On security
 

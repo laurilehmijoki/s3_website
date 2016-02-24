@@ -44,6 +44,8 @@ environment variables. It's convenient, since you can keep the `s3_website.yml`
 in a public Git repo, and thus have your deployment configurations
 version-controlled.
 
+## Multiple CNAMEs
+
 Sometimes you want to use multiple CNAMEs aliases in your CloudFront distribution:
 
 ````yaml
