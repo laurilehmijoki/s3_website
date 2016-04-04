@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.13.0
+
+* Add support for `dnf`, a Linux package manager
+
 ## 2.12.3
 
 * Fix <https://github.com/laurilehmijoki/s3_website/issues/208>
