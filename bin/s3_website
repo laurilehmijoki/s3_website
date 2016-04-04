@@ -164,6 +164,10 @@ def autoinstall_java_or_print_help_and_exit(logger)
     {
       :package_manager_lookup => 'which yum',
       :install_command => 'sudo yum install --assumeyes java-1.7.0-openjdk'
+    },
+    {
+      :package_manager_lookup => 'which dnf',
+      :install_command => 'sudo dnf install --assumeyes java-1.7.0-openjdk'
     }
   ]
 
