@@ -476,6 +476,11 @@ If you are not sure how to test your pull request, you can ask the [gem owners
 However, by including proper tests, you increase the chances of your pull
 request being incorporated into future releases.
 
+## Alternatives
+
+* <https://pages.github.com/>
+* <https://pages.gitlab.io/>
+
 ## License
 
 MIT. See the LICENSE file for more information.
