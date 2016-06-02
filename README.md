@@ -529,6 +529,10 @@ Contributors (in alphabetical order)
 * Trevor Fitzgerald
 * Zee Spencer
 
+## Community articles
+
+* [Deploying websites to FTP or Amazon S3 with BitBucket Pipelines](https://www.savjee.be/2016/06/Deploying-website-to-ftp-or-amazon-s3-with-BitBucket-Pipelines/)
+
 ## Donations
 
 [![Support via Gittip](https://rawgithub.com/twolfson/gittip-badge/0.2.0/dist/gittip.png)](https://www.gittip.com/laurilehmijoki/)
