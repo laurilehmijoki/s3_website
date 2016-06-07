@@ -50,6 +50,7 @@ object Site {
           cloudfront_distribution_id <- loadOptionalString("cloudfront_distribution_id").right
           cloudfront_invalidate_root <- loadOptionalBoolean("cloudfront_invalidate_root").right
           concurrency_level <- loadOptionalInt("concurrency_level").right
+          cloudfront_wildcard_invalidation <- loadOptionalBoolean("cloudfront_wildcard_invalidation").right
           redirects <- loadRedirects(s3_key_prefix).right
           treat_zero_length_objects_as_redirects <- loadOptionalBoolean("treat_zero_length_objects_as_redirects").right
         } yield {
@@ -78,6 +79,7 @@ object Site {
             cloudfront_invalidate_root,
             redirects,
             concurrency_level.fold(20)(_ max 20),
+            cloudfront_wildcard_invalidation,
             treat_zero_length_objects_as_redirects
           )
         }

@@ -11,23 +11,24 @@ import s3.website._
 import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 
 case class Config(
-  s3_id:                      Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
-  s3_secret:                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
-  s3_bucket:                  String,
-  s3_endpoint:                S3Endpoint,
-  site:                       Option[String],
-  max_age:                    Option[Either[Int, S3KeyGlob[Int]]],
-  cache_control:              Option[Either[String, S3KeyGlob[String]]],
-  gzip:                       Option[Either[Boolean, Seq[String]]],
-  gzip_zopfli:                Option[Boolean],
-  s3_key_prefix:              Option[String],
-  ignore_on_server:           Option[S3KeyRegexes],
-  exclude_from_upload:        Option[S3KeyRegexes],
-  s3_reduced_redundancy:      Option[Boolean],
-  cloudfront_distribution_id: Option[String],
-  cloudfront_invalidate_root: Option[Boolean],
-  redirects:                  Option[Map[S3Key, String]],
-  concurrency_level:          Int,
+  s3_id:                                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
+  s3_secret:                              Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
+  s3_bucket:                              String,
+  s3_endpoint:                            S3Endpoint,
+  site:                                   Option[String],
+  max_age:                                Option[Either[Int, S3KeyGlob[Int]]],
+  cache_control:                          Option[Either[String, S3KeyGlob[String]]],
+  gzip:                                   Option[Either[Boolean, Seq[String]]],
+  gzip_zopfli:                            Option[Boolean],
+  s3_key_prefix:                          Option[String],
+  ignore_on_server:                       Option[S3KeyRegexes],
+  exclude_from_upload:                    Option[S3KeyRegexes],
+  s3_reduced_redundancy:                  Option[Boolean],
+  cloudfront_distribution_id:             Option[String],
+  cloudfront_invalidate_root:             Option[Boolean],
+  redirects:                              Option[Map[S3Key, String]],
+  concurrency_level:                      Int,
+  cloudfront_wildcard_invalidation:       Option[Boolean],
   treat_zero_length_objects_as_redirects: Option[Boolean]
 )
 

@@ -277,6 +277,16 @@ cloudfront_distribution_config:
 Once you've saved the configuration into `s3_website.yml`, you can apply them by
 running `s3_website cfg apply`.
 
+#### Invalidating all CloudFront resources (wildcard invalidation)
+
+The following setting is recommended for most users:
+
+```yaml
+cloudfront_wildcard_invalidation: true
+```
+
+Over time, it can reduce your AWS bill significantly. For more information, see <http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html>.
+
 #### Invalidating root resources instead of index.htmls
 
 By default, `s3_website push` calls the CloudFront invalidation API with the

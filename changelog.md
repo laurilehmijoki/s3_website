@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.14.0
+
+* Add support for CloudFront wildcard invalidations
+
+  Introduced a new setting, `cloudfront_wildcard_invalidation: (true|false)`
+
 ## 2.13.0
 
 * Add support for `dnf`, a Linux package manager

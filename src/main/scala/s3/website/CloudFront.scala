@@ -68,6 +68,10 @@ object CloudFront {
   def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient(awsCredentials(config))
 
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
+    def callerReference = s"s3_website gem ${System.currentTimeMillis()}"
+    if (config.cloudfront_wildcard_invalidation.contains(true) && pushSuccessReports.exists(needsInvalidation)) {
+      return Seq(new InvalidationBatch withPaths(new Paths withItems "/*" withQuantity 1) withCallerReference callerReference)
+    }
     def defaultPath(paths: Seq[String]): Option[String] = {
       // This is how we support the Default Root Object @ CloudFront (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DefaultRootObject.html)
       // We could do this more accurately by fetching the distribution config (http://docs.aws.amazon.com/AmazonCloudFront/latest/APIReference/GetConfig.html)
@@ -102,8 +106,7 @@ object CloudFront {
       .grouped(1000) // CloudFront supports max 1000 invalidations in one request (http://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html#InvalidationLimits)
       .map { batchKeys =>
         new InvalidationBatch() withPaths
-          (new Paths() withItems batchKeys withQuantity batchKeys.size) withCallerReference
-          s"s3_website gem ${System.currentTimeMillis()}"
+          (new Paths() withItems batchKeys withQuantity batchKeys.size) withCallerReference callerReference
       }
       .toSeq
   }

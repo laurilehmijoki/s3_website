@@ -43,6 +43,8 @@ s3_bucket: your.blog.bucket.com
 
 # cloudfront_invalidate_root: true
 
+cloudfront_wildcard_invalidation: true
+
 # concurrency_level: 5
 
 # redirects:
