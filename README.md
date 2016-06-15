@@ -72,6 +72,11 @@ in the project's root directory to take advantage of this feature. Please have
 a look at [dotenv's usage guide](https://github.com/bkeepers/dotenv#usage) for
 syntax information.
 
+Your `.env` file should containing the following variables:
+
+    AWS_ACCESS_KEY_ID=FOO
+    AWS_SECRET_ACCESS_KEY=BAR
+
 ## Project goals
 
 * Provide a command-line interface tool for deploying and managing S3 websites
