@@ -1,7 +1,9 @@
 package s3.website
 
-import java.io.File
+import java.io._
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.cloudfront.AmazonCloudFront
@@ -9,8 +11,9 @@ import com.amazonaws.services.cloudfront.model.{CreateInvalidationRequest, Creat
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.model._
 import org.apache.commons.codec.digest.DigestUtils._
-import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FileUtils._
+import org.apache.commons.io.IOUtils.{write => _}
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.mockito.Mockito._
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
@@ -18,9 +21,9 @@ import org.mockito.{ArgumentCaptor, Matchers, Mockito}
 import org.specs2.mutable.{BeforeAfter, Specification}
 import org.specs2.specification.Scope
 import s3.website.CloudFront.CloudFrontSetting
-import s3.website.UploadHelper.DELETE_NOTHING_MAGIC_WORD
-import s3.website.Push.{CliArgs}
+import s3.website.Push.CliArgs
 import s3.website.S3.S3Setting
+import s3.website.UploadHelper.DELETE_NOTHING_MAGIC_WORD
 import s3.website.model.Config.S3_website_yml
 import s3.website.model.Ssg.automaticallySupportedSiteGenerators
 import s3.website.model._
@@ -39,6 +42,30 @@ class S3WebsiteSpec extends Specification {
       setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
       push()
       sentPutObjectRequest.getKey must equalTo("styles.css")
+    }
+
+    "not gzip the file if it's already gzipped" in new BasicSetup {
+      def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
+
+      val gzippedCss: ByteArrayOutputStream = new ByteArrayOutputStream
+      val cssString = "body { color: black }"
+      using(new GZIPOutputStream(gzippedCss)) { stream =>
+        IOUtils.copy(new ByteArrayInputStream(cssString.getBytes(StandardCharsets.UTF_8)), stream)
+      }
+
+      config = "gzip: true"
+
+      setLocalFileWithContent("styles.css", gzippedCss.toByteArray)
+      val putObjectRequestCaptor = ArgumentCaptor.forClass(classOf[PutObjectRequest])
+      push()
+      sentPutObjectRequest.getKey must equalTo("styles.css")
+      verify(amazonS3Client).putObject(putObjectRequestCaptor.capture())
+
+      val bytesToS3: InputStream = putObjectRequestCaptor.getValue.getInputStream
+      val unzippedBytesToS3 = new GZIPInputStream(bytesToS3)
+      val unzippedString = IOUtils.toString(unzippedBytesToS3, StandardCharsets.UTF_8)
+
+      unzippedString must equalTo(cssString)
     }
 
     "not update a gzipped S3 object if the contents has not changed" in new BasicSetup {
@@ -1341,6 +1368,13 @@ class S3WebsiteSpec extends Specification {
       forceMkdir(file.getParentFile)
       file.createNewFile()
       write(file, fileNameAndContent._2)
+    }
+
+    def setLocalFileWithContent(fileName: String, contents: Array[Byte]) = {
+      val file = new File(siteDirectory, fileName)
+      forceMkdir(file.getParentFile)
+      file.createNewFile()
+      FileUtils.writeByteArrayToFile(file, contents)
     }
 
     var config = ""

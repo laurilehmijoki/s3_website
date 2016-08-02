@@ -2,15 +2,20 @@ package s3.website.model
 
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import java.io._
+
 import org.apache.commons.codec.digest.DigestUtils
-import java.util.zip.GZIPOutputStream
+import java.util.zip.{GZIPInputStream, GZIPOutputStream}
+
 import org.apache.tika.Tika
 import s3.website.Ruby._
 import s3.website._
 import s3.website.model.Upload.tika
 import s3.website.model.Encoding.encodingOnS3
 import java.io.File.createTempFile
+
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils.copy
+
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
 
@@ -51,7 +56,7 @@ case object RedirectFile extends UploadType {
   val pushAction = Redirected
 }
 
-case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Site) {
+case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Site, logger: Logger) {
   lazy val s3Key = site.resolveS3Key(originalFile)
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
@@ -96,21 +101,37 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
 object Upload {
   lazy val tika = Try(new Tika())
 
-  def md5(originalFile: File)(implicit site: Site): Try[MD5] =
+  def md5(originalFile: File)(implicit site: Site, logger: Logger): Try[MD5] =
     uploadFile(originalFile) map { file =>
       using(fis { file }) { DigestUtils.md5Hex }
     }
 
-  def uploadFile(originalFile: File)(implicit site: Site): Try[File] =
+  def uploadFile(originalFile: File)(implicit site: Site, logger: Logger): Try[File] =
     encodingOnS3(site resolveS3Key originalFile)
       .fold(Try(originalFile))(algorithm =>
         Try {
-          val tempFile = createTempFile(originalFile.getName, "gzip")
-          tempFile.deleteOnExit()
-          using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
-            copy(fis(originalFile), stream)
+          val isAlreadyGzipped =
+            if (originalFile.length() < 2) {
+              false
+            } else {
+              val fis = new FileInputStream(originalFile)
+              val amountOfMagicGzipBytes = 2
+              val firstTwoBytes = Array.fill[Byte](amountOfMagicGzipBytes)(0)
+              fis.read(firstTwoBytes, 0, amountOfMagicGzipBytes)
+              val head = firstTwoBytes(0) & 0xff | (firstTwoBytes(1) << 8) & 0xff00
+              head == GZIPInputStream.GZIP_MAGIC
+            }
+          if (isAlreadyGzipped) {
+            logger.debug(s"File ${originalFile.getAbsolutePath} is already gzipped. Skipping gzip.")
+            originalFile
+          } else {
+            val tempFile = createTempFile(originalFile.getName, "gzip")
+            tempFile.deleteOnExit()
+            using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
+              copy(fis(originalFile), stream)
+            }
+            tempFile
           }
-          tempFile
         }
       )
 

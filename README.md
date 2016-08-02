@@ -174,6 +174,9 @@ not the pre-processed extensions.
 
 After changing the `gzip` setting, push with the `--force` option.
 
+s3_website will not gzip a file that is already gzipped. This is useful in the
+situations where your build tools gzip a file before you invoke `s3_website push`.
+
 ### Using non-standard AWS regions
 
 By default, `s3_website` uses the US Standard Region. You can upload your

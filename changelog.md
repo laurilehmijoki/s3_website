@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## Next
+
+* Do not gzip a file that is already gzipped
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/229> for discussion
+
 ## 2.14.0
 
 * Add support for CloudFront wildcard invalidations
