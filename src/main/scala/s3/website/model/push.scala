@@ -110,12 +110,12 @@ object Upload {
     encodingOnS3(site resolveS3Key originalFile)
       .fold(Try(originalFile))(algorithm =>
         Try {
+          val amountOfMagicGzipBytes = 2
           val isAlreadyGzipped =
-            if (originalFile.length() < 2) {
+            if (originalFile.length() < amountOfMagicGzipBytes) {
               false
             } else {
               val fis = new FileInputStream(originalFile)
-              val amountOfMagicGzipBytes = 2
               val firstTwoBytes = Array.fill[Byte](amountOfMagicGzipBytes)(0)
               fis.read(firstTwoBytes, 0, amountOfMagicGzipBytes)
               val head = firstTwoBytes(0) & 0xff | (firstTwoBytes(1) << 8) & 0xff00
