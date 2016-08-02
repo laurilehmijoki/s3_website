@@ -2,7 +2,7 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## Next
+## 2.14.1
 
 * Do not gzip a file that is already gzipped
 
