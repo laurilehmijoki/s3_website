@@ -44,18 +44,30 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getKey must equalTo("styles.css")
     }
 
+    "gzips a file" in new BasicSetup {
+      val htmlString = "<h1>hi again</h1>"
+      val gzippedBytes = gzip(htmlString.getBytes(StandardCharsets.UTF_8))
+      config = "gzip: true"
+      setLocalFileWithContent("index.html", gzippedBytes)
+      setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
+      val putObjectRequestCaptor = ArgumentCaptor.forClass(classOf[PutObjectRequest])
+      push()
+      sentPutObjectRequest.getKey must equalTo("index.html")
+      verify(amazonS3Client).putObject(putObjectRequestCaptor.capture())
+
+      val bytesToS3: InputStream = putObjectRequestCaptor.getValue.getInputStream
+      val unzippedBytesToS3 = new GZIPInputStream(bytesToS3)
+      val unzippedString = IOUtils.toString(unzippedBytesToS3, StandardCharsets.UTF_8)
+
+      unzippedString must equalTo(htmlString)
+    }
+
     "not gzip the file if it's already gzipped" in new BasicSetup {
-      def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
-
-      val gzippedCss: ByteArrayOutputStream = new ByteArrayOutputStream
-      val cssString = "body { color: black }"
-      using(new GZIPOutputStream(gzippedCss)) { stream =>
-        IOUtils.copy(new ByteArrayInputStream(cssString.getBytes(StandardCharsets.UTF_8)), stream)
-      }
-
       config = "gzip: true"
 
-      setLocalFileWithContent("styles.css", gzippedCss.toByteArray)
+      val cssString = "body { color: red }"
+      val gzippedCss = gzip(cssString.getBytes(StandardCharsets.UTF_8))
+      setLocalFileWithContent("styles.css", gzippedCss)
       val putObjectRequestCaptor = ArgumentCaptor.forClass(classOf[PutObjectRequest])
       push()
       sentPutObjectRequest.getKey must equalTo("styles.css")
@@ -66,6 +78,16 @@ class S3WebsiteSpec extends Specification {
       val unzippedString = IOUtils.toString(unzippedBytesToS3, StandardCharsets.UTF_8)
 
       unzippedString must equalTo(cssString)
+    }
+
+    def gzip(data: Array[Byte]): Array[Byte] = {
+      def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
+
+      val gzippedOutputStream: ByteArrayOutputStream = new ByteArrayOutputStream
+      using(new GZIPOutputStream(gzippedOutputStream)) { stream =>
+        IOUtils.copy(new ByteArrayInputStream(data), stream)
+      }
+      gzippedOutputStream.toByteArray
     }
 
     "not update a gzipped S3 object if the contents has not changed" in new BasicSetup {
