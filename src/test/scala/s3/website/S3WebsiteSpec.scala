@@ -44,7 +44,7 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getKey must equalTo("styles.css")
     }
 
-    "gzips a file" in new BasicSetup {
+    "gzip a file" in new BasicSetup {
       val htmlString = "<h1>hi again</h1>"
       config = "gzip: true"
       setLocalFileWithContent(("index.html", htmlString))
