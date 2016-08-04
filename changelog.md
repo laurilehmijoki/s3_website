@@ -2,7 +2,7 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## Next
+## 2.14.2
 
 * Apply correct mime type on already-gzipped files
 
