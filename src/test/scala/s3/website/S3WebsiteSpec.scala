@@ -61,6 +61,15 @@ class S3WebsiteSpec extends Specification {
       unzippedString must equalTo(htmlString)
     }
 
+    "apply the correct mime type on an already gzipped file" in new BasicSetup {
+      val htmlString = "<html><body><h1>Hello world</h1></body></html>"
+      val gzippedHtml = gzip(htmlString.getBytes(StandardCharsets.UTF_8))
+      config = "gzip: true"
+      setLocalFileWithContent("index.html", gzippedHtml)
+      push()
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
+    }
+
     "not gzip the file if it's already gzipped" in new BasicSetup {
       config = "gzip: true"
 

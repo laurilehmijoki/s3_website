@@ -63,7 +63,18 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
   lazy val gzipEnabledByConfig: Boolean = encodingOnS3.fold(false)((algorithm: Either[Gzip, Zopfli]) => true)
 
   lazy val contentType: Try[String] = tika map { tika =>
-    val mimeType = tika.detect(originalFile)
+    val file = // This file contains the data that the user should see after decoding the the transport protocol (HTTP) encoding (practically: after ungzipping)
+      if (fileIsGzippedByExternalBuildTool) {
+        val unzippedFile = createTempFile(originalFile.getName, "unzipped")
+        unzippedFile.deleteOnExit()
+        using(new GZIPInputStream(fis(originalFile))) { stream =>
+          IOUtils.copy(stream, new FileOutputStream(unzippedFile))
+        }
+        unzippedFile
+      } else {
+        originalFile
+      }
+    val mimeType = tika.detect(file)
     if (mimeType.startsWith("text/") || mimeType == "application/json")
       mimeType + "; charset=utf-8"
     else

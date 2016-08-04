@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## Next
+
+* Apply correct mime type on already-gzipped files
+
+  See <https://github.com/laurilehmijoki/s3_website/issues/229#issuecomment-237229421> for discussion  
+
 ## 2.14.1
 
 * Do not gzip a file that is already gzipped
