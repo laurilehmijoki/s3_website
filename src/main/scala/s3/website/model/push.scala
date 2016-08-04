@@ -112,6 +112,7 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
           logger.debug(s"File ${originalFile.getAbsolutePath} is already gzipped. Skipping gzip.")
           originalFile
         } else {
+          logger.debug(s"Gzipping file ${originalFile.getName}")
           val tempFile = createTempFile(originalFile.getName, "gzip")
           tempFile.deleteOnExit()
           using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
