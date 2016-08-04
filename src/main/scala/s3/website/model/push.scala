@@ -9,7 +9,7 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import org.apache.tika.Tika
 import s3.website.Ruby._
 import s3.website._
-import s3.website.model.Upload.tika
+import s3.website.model.Upload.{amountOfMagicGzipBytes, tika}
 import s3.website.model.Encoding.{Gzip, Zopfli, encodingOnS3}
 import java.io.File.createTempFile
 
@@ -60,7 +60,7 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
   lazy val s3Key = site.resolveS3Key(originalFile)
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
-  lazy val gzipEnabledByConfig = encodingOnS3.fold(false)((algorithm: Either[Gzip, Zopfli]) => true)
+  lazy val gzipEnabledByConfig: Boolean = encodingOnS3.fold(false)((algorithm: Either[Gzip, Zopfli]) => true)
 
   lazy val contentType: Try[String] = tika map { tika =>
     val mimeType = tika.detect(originalFile)
@@ -97,18 +97,7 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
   lazy val uploadFile: Try[File] =
     if (gzipEnabledByConfig)
       Try {
-        val amountOfMagicGzipBytes = 2
-        val isAlreadyGzipped =
-          if (originalFile.length() < amountOfMagicGzipBytes) {
-            false
-          } else {
-            val fis = new FileInputStream(originalFile)
-            val firstTwoBytes = Array.fill[Byte](amountOfMagicGzipBytes)(0)
-            fis.read(firstTwoBytes, 0, amountOfMagicGzipBytes)
-            val head = firstTwoBytes(0) & 0xff | (firstTwoBytes(1) << 8) & 0xff00
-            head == GZIPInputStream.GZIP_MAGIC
-          }
-        if (isAlreadyGzipped) {
+        if (fileIsGzippedByExternalBuildTool) {
           logger.debug(s"File ${originalFile.getAbsolutePath} is already gzipped. Skipping gzip.")
           originalFile
         } else {
@@ -124,12 +113,26 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
     else
       Try(originalFile)
 
+  private lazy val fileIsGzippedByExternalBuildTool = gzipEnabledByConfig && originalFileIsGzipped
+
+  private lazy val originalFileIsGzipped =
+    if (originalFile.length() < amountOfMagicGzipBytes) {
+      false
+    } else {
+      val fis = new FileInputStream(originalFile)
+      val firstTwoBytes = Array.fill[Byte](amountOfMagicGzipBytes)(0)
+      fis.read(firstTwoBytes, 0, amountOfMagicGzipBytes)
+      val head = firstTwoBytes(0) & 0xff | (firstTwoBytes(1) << 8) & 0xff00
+      head == GZIPInputStream.GZIP_MAGIC
+    }
+
   private[this] def fis(file: File): InputStream = new FileInputStream(file)
   private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
 }
 
 object Upload {
   lazy val tika = Try(new Tika())
+  private val amountOfMagicGzipBytes = 2
 }
 
 object Files {
