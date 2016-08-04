@@ -46,9 +46,8 @@ class S3WebsiteSpec extends Specification {
 
     "gzips a file" in new BasicSetup {
       val htmlString = "<h1>hi again</h1>"
-      val gzippedBytes = gzip(htmlString.getBytes(StandardCharsets.UTF_8))
       config = "gzip: true"
-      setLocalFileWithContent("index.html", gzippedBytes)
+      setLocalFileWithContent(("index.html", htmlString))
       setS3File("styles.css", "1c5117e5839ad8fc00ce3c41296255a1" /* md5 of the gzip of the file contents */)
       val putObjectRequestCaptor = ArgumentCaptor.forClass(classOf[PutObjectRequest])
       push()
