@@ -13,8 +13,8 @@ import s3.website.model.Upload.tika
 import s3.website.model.Encoding.encodingOnS3
 import java.io.File.createTempFile
 
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils.copy
+import org.apache.commons.io.{FileUtils, IOUtils}
+import org.apache.commons.io.IOUtils._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
@@ -61,13 +61,6 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
 
   lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
 
-  /**
-   * This is the file we should upload, because it contains the potentially gzipped contents of the original file.
-   *
-   * May throw an exception, so remember to call this in a Try or Future monad
-   */
-  lazy val uploadFile: Try[File] = Upload uploadFile originalFile
-
   lazy val contentType: Try[String] = tika map { tika =>
     val mimeType = tika.detect(originalFile)
     if (mimeType.startsWith("text/") || mimeType == "application/json")
@@ -95,19 +88,13 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
   /**
    * May throw an exception, so remember to call this in a Try or Future monad
    */
-  lazy val md5 = Upload md5 originalFile
-}
+  lazy val md5 = uploadFile map { file =>
+    using(fis { file }) { DigestUtils.md5Hex }
+  }
 
-object Upload {
-  lazy val tika = Try(new Tika())
-
-  def md5(originalFile: File)(implicit site: Site, logger: Logger): Try[MD5] =
-    uploadFile(originalFile) map { file =>
-      using(fis { file }) { DigestUtils.md5Hex }
-    }
-
-  def uploadFile(originalFile: File)(implicit site: Site, logger: Logger): Try[File] =
-    encodingOnS3(site resolveS3Key originalFile)
+  // This is the file we should try to upload
+  lazy val uploadFile: Try[File] =
+    encodingOnS3
       .fold(Try(originalFile))(algorithm =>
         Try {
           val amountOfMagicGzipBytes = 2
@@ -128,7 +115,7 @@ object Upload {
             val tempFile = createTempFile(originalFile.getName, "gzip")
             tempFile.deleteOnExit()
             using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
-              copy(fis(originalFile), stream)
+              IOUtils.copy(fis(originalFile), stream)
             }
             tempFile
           }
@@ -137,6 +124,10 @@ object Upload {
 
   private[this] def fis(file: File): InputStream = new FileInputStream(file)
   private[this] def using[T <: Closeable, R](cl: T)(f: (T) => R): R = try f(cl) finally cl.close()
+}
+
+object Upload {
+  lazy val tika = Try(new Tika())
 }
 
 object Files {
