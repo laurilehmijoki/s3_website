@@ -65,7 +65,7 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
   lazy val contentType: Try[String] = tika map { tika =>
     val file = // This file contains the data that the user should see after decoding the the transport protocol (HTTP) encoding (practically: after ungzipping)
       if (fileIsGzippedByExternalBuildTool) {
-        val unzippedFile = createTempFile(originalFile.getName, "unzipped")
+        val unzippedFile = createTempFile("unzipped", originalFile.getName)
         unzippedFile.deleteOnExit()
         using(new GZIPInputStream(fis(originalFile))) { stream =>
           IOUtils.copy(stream, new FileOutputStream(unzippedFile))
