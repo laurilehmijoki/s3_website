@@ -513,42 +513,7 @@ Creux](https://github.com/pcreux) on
 [jekyll-s3](https://github.com/laurilehmijoki/jekyll-s3), this project would not
 exist.
 
-Contributors (in alphabetical order)
-* Akshay Karle
-* Alan deLevie
-* Almir Sarajčić
-* Andrew T. Baker
-* Cory Kaufman-Schofield
-* Chris Kelly
-* Chris Moos
-* Christian Grobmeier
-* Christopher Petersen
-* David Michael Barr
-* David Raffensperger
-* Douglas Teoh
-* Greg Karékinian
-* Ian Hattendorf
-* John Allison
-* Jon Frisby
-* Jordan White
-* Justin Latimer
-* László Bácsi
-* Mason Turner
-* Michael Bleigh
-* maxberger
-* Philip I. Thomas
-* Philippe Creux
-* Piotr Janik
-* PJ Kelly
-* Rodrigo Reis
-* Ross Hunter
-* Shigeaki Matsumura
-* stanislas
-* Tate Johnson
-* Toby Marsden
-* Tom Bell
-* Trevor Fitzgerald
-* Zee Spencer
+See the [Contributors](https://github.com/laurilehmijoki/s3_website/graphs/contributors).
 
 ## Community articles
 
