@@ -70,6 +70,18 @@ class S3WebsiteSpec extends Specification {
       sentPutObjectRequest.getMetadata.getContentType must equalTo("text/html; charset=utf-8")
     }
 
+    "apply the correct mime type on an already gzipped .json file" in new BasicSetup {
+      val jsonString = """" {"json": true} """
+      val gzippedJson = gzip(jsonString.getBytes(StandardCharsets.UTF_8))
+      config = """
+        |gzip:
+        |  - .json
+      """
+      setLocalFileWithContent("test.json", gzippedJson)
+      push()
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("application/json; charset=utf-8")
+    }
+
     "not gzip the file if it's already gzipped" in new BasicSetup {
       config = "gzip: true"
 
