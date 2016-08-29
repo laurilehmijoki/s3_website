@@ -49,6 +49,7 @@ object Site {
           s3_reduced_redundancy <- loadOptionalBoolean("s3_reduced_redundancy").right
           cloudfront_distribution_id <- loadOptionalString("cloudfront_distribution_id").right
           cloudfront_invalidate_root <- loadOptionalBoolean("cloudfront_invalidate_root").right
+          content_type <- loadContentType.right
           concurrency_level <- loadOptionalInt("concurrency_level").right
           cloudfront_wildcard_invalidation <- loadOptionalBoolean("cloudfront_wildcard_invalidation").right
           redirects <- loadRedirects(s3_key_prefix).right
@@ -77,6 +78,7 @@ object Site {
             s3_reduced_redundancy,
             cloudfront_distribution_id,
             cloudfront_invalidate_root,
+            content_type,
             redirects,
             concurrency_level.fold(20)(_ max 20),
             cloudfront_wildcard_invalidation,

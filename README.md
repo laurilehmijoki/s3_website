@@ -146,6 +146,18 @@ cache_control:
 After changing the `cache_control` setting, push with the `--force` option.
 Force-pushing allows you to update the S3 object metadata of existing files.
 
+### Content type detection
+
+By default, s3_website automatically detects the content type of a file with the help of Apache Tika.
+
+For some file types Tika's auto detection does not work correctly. Should this problem affect you, use the `content_type`
+setting to override Tika's decision:
+
+```yaml
+content_type:
+  "*.myextension": application/my-custom-type
+```
+
 ### Gzip Compression
 
 If you choose, you can use compress certain file types before uploading them to

@@ -26,6 +26,7 @@ case class Config(
   s3_reduced_redundancy:                  Option[Boolean],
   cloudfront_distribution_id:             Option[String],
   cloudfront_invalidate_root:             Option[Boolean],
+  content_type:                           Option[S3KeyGlob[String]],
   redirects:                              Option[Map[S3Key, String]],
   concurrency_level:                      Int,
   cloudfront_wildcard_invalidation:       Option[Boolean],
@@ -111,6 +112,23 @@ object Config {
 
     yamlValue getOrElse Left(ErrorReport(s"The key $key has to have a string or (string -> string) value"))
   }
+
+  def loadContentType(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[S3KeyGlob[String]]] = {
+    val key = "content_type"
+    val yamlValue = for {
+      contentTypeOption <- loadOptionalValue(key)
+    } yield {
+      // TODO below we are using an unsafe call to asInstance of – we should implement error handling
+      Right(contentTypeOption.map { xs =>
+          val globs: Map[String, String] = xs.asInstanceOf[util.Map[String, String]].toMap
+          S3KeyGlob(globs)
+        }
+      )
+    }
+
+    yamlValue getOrElse Left(ErrorReport(s"The key $key has to have a string or (string -> string) value"))
+  }
+
 
   def loadEndpoint(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[S3Endpoint]] =
     loadOptionalString("s3_endpoint").right flatMap { endpointString =>

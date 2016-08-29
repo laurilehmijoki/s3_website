@@ -74,7 +74,10 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
       } else {
         originalFile
       }
-    val mimeType = tika.detect(file)
+    val mimeType =
+      site.config.content_type
+        .flatMap { _.globMatch(s3Key) }
+        .getOrElse { tika.detect(file) }
     if (mimeType.startsWith("text/") || mimeType == "application/json")
       mimeType + "; charset=utf-8"
     else

@@ -1052,6 +1052,18 @@ class S3WebsiteSpec extends Specification {
     }
   }
 
+  "content_type in config file" should {
+    "override tika's opinion"  in new BasicSetup {
+      config = """
+                 |content_type:
+                 |  "*.html": text/foobar
+               """.stripMargin
+      setLocalFileWithContent(("index.html", "<html><body><h1>hi</h1></body></html>"))
+      push()
+      sentPutObjectRequest.getMetadata.getContentType must equalTo("text/foobar; charset=utf-8")
+    }
+  }
+
   "ERB in config file" should {
     "be evaluated"  in new BasicSetup {
       config = """
