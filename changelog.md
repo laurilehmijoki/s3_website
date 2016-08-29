@@ -2,6 +2,12 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.15.0
+
+* Add new setting `content_type`
+ 
+  See <https://github.com/laurilehmijoki/s3_website/issues/232> for discussion
+
 ## 2.14.3
 
   Fix mime type of an already-gzipped .json file
