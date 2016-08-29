@@ -10,7 +10,7 @@ This project uses [Semantic Versioning](http://semver.org).
 
 ## 2.14.3
 
-  Fix mime type of an already-gzipped .json file
+* Fix mime type of an already-gzipped .json file
   
   See <https://github.com/laurilehmijoki/s3_website/pull/231>
 
