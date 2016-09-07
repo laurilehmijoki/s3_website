@@ -1,24 +1,43 @@
 package s3.website.model
 
-import s3.website.ErrorReport
-
 case class S3Endpoint(
   s3WebsiteHostname: String,
   s3Hostname: String
 )
 
 object S3Endpoint {
-  val defaultEndpoint = S3Endpoint("s3-website-us-east-1.amazonaws.com", "s3.amazonaws.com")
+  def defaultEndpoint = S3Endpoint("us-east-1")
 
-  def forString(locationConstraint: String): Either[ErrorReport, S3Endpoint] = locationConstraint match {
-    case "EU" | "eu-west-1" => Right(S3Endpoint("s3-website-eu-west-1.amazonaws.com",      "s3-eu-west-1.amazonaws.com"))
-    case "us-east-1" =>        Right(defaultEndpoint)
-    case "us-west-1" =>        Right(S3Endpoint("s3-website-us-west-1.amazonaws.com",      "s3-us-west-1.amazonaws.com"))
-    case "us-west-2" =>        Right(S3Endpoint("s3-website-us-west-2.amazonaws.com",      "s3-us-west-2.amazonaws.com"))
-    case "ap-southeast-1" =>   Right(S3Endpoint("s3-website-ap-southeast-1.amazonaws.com", "s3-ap-southeast-1.amazonaws.com"))
-    case "ap-southeast-2" =>   Right(S3Endpoint("s3-website-ap-southeast-2.amazonaws.com", "s3-ap-southeast-2.amazonaws.com"))
-    case "ap-northeast-1" =>   Right(S3Endpoint("s3-website-ap-northeast-1.amazonaws.com", "s3-ap-northeast-1.amazonaws.com"))
-    case "sa-east-1" =>        Right(S3Endpoint("s3-website-sa-east-1.amazonaws.com",      "s3-sa-east-1.amazonaws.com"))
-    case _ =>                  Left(ErrorReport(s"Unrecognised endpoint: $locationConstraint"))
+  val oldRegions = Seq(
+    "us-east-1",
+    "us-west-1",
+    "us-west-2",
+    "ap-southeast-1",
+    "ap-southeast-2",
+    "ap-northeast-1",
+    "eu-west-1",
+    "sa-east-1"
+  )
+
+  def apply(region: String): S3Endpoint = {
+    if (region == "EU") {
+      return S3Endpoint("eu-west-1")
+    }
+
+    val isOldRegion = oldRegions.contains(region)
+    val s3WebsiteHostname =
+      if (isOldRegion)
+        s"s3-website-$region.amazonaws.com"
+      else
+        s"s3-website.$region.amazonaws.com"
+    val s3Hostname =
+      if (region == "us-east-1")
+        "s3.amazonaws.com"
+      else if (isOldRegion)
+        s"s3-$region.amazonaws.com"
+      else
+        s"s3.$region.amazonaws.com"
+
+    S3Endpoint(s3WebsiteHostname = s3WebsiteHostname, s3Hostname = s3Hostname)
   }
 }

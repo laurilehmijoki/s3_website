@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## Next
+
+* Support all AWS regions
+
 ## 2.15.0
 
 * Add new setting `content_type`

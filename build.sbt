@@ -18,7 +18,7 @@ libraryDependencies += "org.yaml" % "snakeyaml" % "1.13"
 
 libraryDependencies += "org.jruby" % "jruby" % "1.7.11"
 
-libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.7.7"
+libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.32"
 
 libraryDependencies += "log4j" % "log4j" % "1.2.17"
 
