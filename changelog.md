@@ -2,7 +2,7 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
-## Next
+## 2.15.1
 
 * Support all AWS regions
 
