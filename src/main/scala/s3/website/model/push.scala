@@ -1,20 +1,16 @@
 package s3.website.model
 
-import com.amazonaws.services.s3.model.S3ObjectSummary
+import java.io.File.createTempFile
 import java.io._
-
-import org.apache.commons.codec.digest.DigestUtils
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
+import com.amazonaws.services.s3.model.S3ObjectSummary
+import org.apache.commons.codec.digest.DigestUtils
+import org.apache.commons.io.IOUtils
 import org.apache.tika.Tika
-import s3.website.Ruby._
 import s3.website._
+import s3.website.model.Encoding.{Gzip, Zopfli}
 import s3.website.model.Upload.{amountOfMagicGzipBytes, tika}
-import s3.website.model.Encoding.{Gzip, Zopfli, encodingOnS3}
-import java.io.File.createTempFile
-
-import org.apache.commons.io.{FileUtils, IOUtils}
-import org.apache.commons.io.IOUtils._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.Try
@@ -25,20 +21,6 @@ object Encoding {
 
   case class Gzip()
   case class Zopfli()
-
-  def encodingOnS3(s3Key: S3Key)(implicit config: Config): Option[Either[Gzip, Zopfli]] =
-    config.gzip.flatMap { (gzipSetting: Either[Boolean, Seq[String]]) =>
-      val shouldZipThisFile = gzipSetting.fold(
-        shouldGzip => defaultGzipExtensions exists s3Key.key.endsWith,
-        fileExtensions => fileExtensions exists s3Key.key.endsWith
-      )
-      if (shouldZipThisFile && config.gzip_zopfli.isDefined)
-        Some(Right(Zopfli()))
-      else if (shouldZipThisFile)
-        Some(Left(Gzip()))
-      else
-        None
-    }
 }
 
 sealed trait UploadType {
@@ -59,7 +41,20 @@ case object RedirectFile extends UploadType {
 case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Site, logger: Logger) {
   lazy val s3Key = site.resolveS3Key(originalFile)
 
-  lazy val encodingOnS3 = Encoding.encodingOnS3(s3Key)
+  lazy val encodingOnS3: Option[Either[Gzip, Zopfli]] =
+    site.config.gzip.flatMap { (gzipSetting: Either[Boolean, Seq[String]]) =>
+      val shouldZipThisFile = gzipSetting.fold(
+        shouldGzip => Encoding.defaultGzipExtensions exists s3Key.key.endsWith,
+        fileExtensions => fileExtensions exists s3Key.key.endsWith
+      )
+      if (shouldZipThisFile && site.config.gzip_zopfli.isDefined)
+        Some(Right(Zopfli()))
+      else if (shouldZipThisFile)
+        Some(Left(Gzip()))
+      else
+        None
+    }
+
   lazy val gzipEnabledByConfig: Boolean = encodingOnS3.fold(false)((algorithm: Either[Gzip, Zopfli]) => true)
 
   lazy val contentType: Try[String] = tika map { tika =>
