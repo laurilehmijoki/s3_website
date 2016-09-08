@@ -132,7 +132,7 @@ object Config {
 
   def loadEndpoint(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[S3Endpoint]] =
     loadOptionalString("s3_endpoint").right map { endpointString =>
-      endpointString.map(S3Endpoint(_))
+      endpointString.map(S3Endpoint.fromString)
     }
 
   def loadRedirects(s3_key_prefix: Option[String])(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Map[S3Key, String]]] = {
