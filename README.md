@@ -25,7 +25,7 @@ and [Java](http://java.com) to run. (S3_website is partly written in Scala, henc
 Here's how you can get started:
 
 * Create API credentials that have sufficient permissions to S3. More info
-  [here](additional-docs/setting-up-aws-credentials.md).
+  [here](//github.com/laurilehmijoki/s3_website/tree/master/additional-docs/setting-up-aws-credentials.md).
 * Go to your website directory
 * Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
