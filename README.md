@@ -547,6 +547,7 @@ Contributors (in alphabetical order)
 ## Community articles
 
 * [Deploying websites to FTP or Amazon S3 with BitBucket Pipelines](https://www.savjee.be/2016/06/Deploying-website-to-ftp-or-amazon-s3-with-BitBucket-Pipelines/)
+* [PageSpeed 100 with Jekyll, S3 and CloudFront](https://habd.as/pagespeed-100-with-jekyll-s3-and-cloudfront/)
 
 ## Donations
 
