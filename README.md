@@ -25,7 +25,7 @@ and [Java](http://java.com) to run. (S3_website is partly written in Scala, henc
 Here's how you can get started:
 
 * Create API credentials that have sufficient permissions to S3. More info
-  [here](additional-docs/setting-up-aws-credentials.md).
+  [here](https://github.com/laurilehmijoki/s3_website/tree/master/additional-docs/setting-up-aws-credentials.md).
 * Go to your website directory
 * Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
@@ -525,6 +525,8 @@ See the [Contributors](https://github.com/laurilehmijoki/s3_website/graphs/contr
 ## Community articles
 
 * [Deploying websites to FTP or Amazon S3 with BitBucket Pipelines](https://www.savjee.be/2016/06/Deploying-website-to-ftp-or-amazon-s3-with-BitBucket-Pipelines/)
+* [How To: Hosting on Amazon S3 with CloudFront](https://paulstamatiou.com/hosting-on-amazon-s3-with-cloudfront/)
+* [PageSpeed 100 with Jekyll, S3 and CloudFront](https://habd.as/pagespeed-100-with-jekyll-s3-and-cloudfront/)
 
 ## Donations
 
