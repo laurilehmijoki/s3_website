@@ -52,30 +52,13 @@ If you want to store the `s3_website.yml` file in a directory other than
 the project's root you can specify the directory like so:
 `s3_website push --config-dir config`.
 
-### Using environment variables
+### Authenticating
 
-You can use ERB in your `s3_website.yml` file which incorporates environment variables:
+s3_website now uses the AWS Java SDK's
+[default credential provider chain](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html#id6).
 
-```yaml
-s3_id: <%= ENV['S3_ID'] %>
-s3_secret: <%= ENV['S3_SECRET'] %>
-s3_bucket: blog.example.com
-```
-
-(If you are using `s3_website` on an [EC2 instance with IAM
-roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
-you can omit the `s3_id` and `s3_secret` keys in the config file.)
-
-S3_website implements supports for reading environment variables from a file using
-the [dotenv](https://github.com/bkeepers/dotenv) gem. You can create a `.env` file
-in the project's root directory to take advantage of this feature. Please have
-a look at [dotenv's usage guide](https://github.com/bkeepers/dotenv#usage) for
-syntax information.
-
-Your `.env` file should containing the following variables:
-
-    AWS_ACCESS_KEY_ID=FOO
-    AWS_SECRET_ACCESS_KEY=BAR
+You can specify your credentials in many ways,
+but they now must be done outside of the s3_website config file.
 
 ## Project goals
 

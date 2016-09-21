@@ -7,10 +7,8 @@ import com.amazonaws.services.cloudfront.model.{TooManyInvalidationsInProgressEx
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import s3.website.S3.{SuccessfulDelete, PushSuccessReport, SuccessfulUpload}
-import com.amazonaws.auth.BasicAWSCredentials
 import java.net.{URLEncoder, URI}
 import scala.concurrent.{ExecutionContextExecutor, Future}
-import s3.website.model.Config.awsCredentials
 
 object CloudFront {
   def invalidate(invalidationBatch: InvalidationBatch, distributionId: String, attempt: Attempt = 1)
@@ -65,7 +63,7 @@ object CloudFront {
     def reportMessage = errorMessage(s"Failed to invalidate the CloudFront distribution", error)
   }
 
-  def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient(awsCredentials(config))
+  def awsCloudFrontClient(config: Config) = new AmazonCloudFrontClient()
 
   def toInvalidationBatches(pushSuccessReports: Seq[PushSuccessReport])(implicit config: Config): Seq[InvalidationBatch] = {
     def callerReference = s"s3_website gem ${System.currentTimeMillis()}"

@@ -12,7 +12,6 @@ import scala.concurrent.duration.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import s3.website.S3.SuccessfulUpload.humanizeUploadSpeed
 import java.io.FileInputStream
-import s3.website.model.Config.awsCredentials
 import scala.util.Try
 
 object S3 {
@@ -113,7 +112,7 @@ object S3 {
     System.currentTimeMillis - start
   }
 
-  def awsS3Client(config: Config) = new AmazonS3Client(awsCredentials(config))
+  def awsS3Client(config: Config) = new AmazonS3Client()
 
   def resolveS3Files(nextMarker: Option[String] = None, alreadyResolved: Seq[S3File] = Nil,  attempt: Attempt = 1)
                               (implicit site: Site, s3Settings: S3Setting, ec: ExecutionContextExecutor, logger: Logger, pushOptions: PushOptions):
