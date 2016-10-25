@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 2.16.0
+
+* Add command `s3_website install`
+
 ## 2.15.1
 
 * Support all AWS regions
