@@ -124,6 +124,17 @@ class Cli < Thor
     end
   end
 
+  desc 'install', 'Download s3_website.jar'
+  long_desc <<-LONGDESC
+    Use `s3_website install` to download the s3_website.jar dependency
+    before you run `s3_website push` (good for CI dependency caching).
+  LONGDESC
+  def install
+    project_root = File.expand_path(File.dirname(__FILE__)+ '/..')
+    logger = Logger.new(options[:verbose])
+    resolve_jar(project_root, logger)
+  end
+
   desc 'cfg SUBCOMMAND ...ARGS', 'Operate on the config file'
   subcommand 'cfg', Cfg
 end
