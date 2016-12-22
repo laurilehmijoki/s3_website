@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rake', '10.1.1'
   s.add_development_dependency 'octokit', '3.1.0'
+  s.add_development_dependency 'mime-types'
 
   s.files         = `git ls-files`
                       .split("\n")
