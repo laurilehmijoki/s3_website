@@ -2,6 +2,16 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.0.0
+
+The CloudFront client now uses the official AWS SDK. If your `s3_website.yml`
+file contains the `cloudfront_distribution_config` setting, you might need to modify
+the it. The modifications should be rather straightforward, just follow the
+[instructions](https://github.com/laurilehmijoki/configure-s3-website/blob/master/changelog.md#200).
+
+In other words, if you don't use CloudFront, upgrading to 3.0.0 should not
+result in any problems.
+
 ## 2.16.0
 
 * Add command `s3_website install`
