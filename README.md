@@ -289,7 +289,7 @@ cloudfront_distribution_config:
   aliases:
     quantity: 1
     items:
-      CNAME: your.website.com
+      - your.website.com
 ```
 
 Once you've saved the configuration into `s3_website.yml`, you can apply them by

@@ -34,7 +34,7 @@ cloudfront_distribution_config:
   aliases:
     quantity: 1
     items:
-      CNAME: your.domain.net
+      - your.domain.net
 max_age: 120
 gzip: true
 ````
@@ -59,9 +59,9 @@ cloudfront_distribution_config:
   aliases:
     quantity: 3
     items:
-      CNAME0: your1.domain.net
-      CNAME1: your2.domain.net
-      CNAME2: your3.domain.net
+      - your1.domain.net
+      - your2.domain.net
+      - your3.domain.net
 max_age: 120
 gzip: true
 ````
