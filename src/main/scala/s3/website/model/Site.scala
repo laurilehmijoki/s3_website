@@ -33,8 +33,6 @@ object Site {
       case Success(yamlObject) =>
         implicit val unsafeYaml = UnsafeYaml(yamlObject)
         for {
-          s3_id <- loadOptionalString("s3_id").right
-          s3_secret <- loadOptionalString("s3_secret").right
           s3_bucket <- loadRequiredString("s3_bucket").right
           s3_endpoint <- loadEndpoint.right
           site <- loadOptionalString("site").right
@@ -63,8 +61,6 @@ object Site {
             s"Ignoring the extensionless_mime_type setting in $yamlConfig. Counting on Apache Tika to infer correct mime types.")
           )
           Config(
-            s3_id,
-            s3_secret,
             s3_bucket,
             s3_endpoint getOrElse S3Endpoint.defaultEndpoint,
             site,

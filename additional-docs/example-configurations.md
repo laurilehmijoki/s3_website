@@ -5,27 +5,14 @@ This document shows examples of complete `s3_website.yml` configurations.
 ## Minimal
 
 ````yaml
-s3_id: abcd
-s3_secret: 2s+x92
 s3_bucket: your.domain.net
 ````
-
-## Minimal with EC2 IAM roles
-
-````yaml
-s3_bucket: your.domain.net
-````
-
-If you run `s3_website` on an EC2 instance with IAM roles, it is possible to omit
-the `s3_id` and `s3_secret`.
 
 ## Optimised for speed
 
 Use CloudFront, gzip, cache headers and greater concurrency:
 
 ````yaml
-s3_id: <%= ENV['your_domain_net_aws_key'] %>
-s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
 s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
@@ -49,8 +36,6 @@ version-controlled.
 Sometimes you want to use multiple CNAMEs aliases in your CloudFront distribution:
 
 ````yaml
-s3_id: <%= ENV['your_domain_net_aws_key'] %>
-s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
 s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
@@ -71,8 +56,6 @@ Always remember to set the 'quantity' property to match the number of items you 
 ## Using redirects
 
 ````yaml
-s3_id: hello
-s3_secret: galaxy
 redirects:
   index.php: /
   about.php: about.html
