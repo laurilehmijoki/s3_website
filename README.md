@@ -74,8 +74,8 @@ syntax information.
 
 Your `.env` file should containing the following variables:
 
-    AWS_ACCESS_KEY_ID=FOO
-    AWS_SECRET_ACCESS_KEY=BAR
+    S3_ID=FOO
+    S3_SECRET=BAR
 
 ## Project goals
 
