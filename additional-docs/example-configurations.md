@@ -21,7 +21,7 @@ the `s3_id` and `s3_secret`.
 
 ## Optimised for speed
 
-Use CloudFront, gzip, HTTP2, cache headers and greater concurrency:
+Use CloudFront, gzip, cache headers and greater concurrency:
 
 ````yaml
 s3_id: <%= ENV['your_domain_net_aws_key'] %>
@@ -46,8 +46,9 @@ version-controlled.
 
 ## Setup for HTTP2 and Custom SNI SSL Certificate
 
-While HTTP/2 does not mandate the use of encryption, it turns out that all of the 
-common web browsers require the use of HTTPS connections in conjunction with HTTP/2.
+To fully utilize HTTP2, you'll need to setup SSL for your distribution. While HTTP/2 does
+not mandate the use of encryption, it turns out that all of the common web browsers 
+require the use of HTTPS connections in conjunction with HTTP/2.
 Therefore, you may need to make some changes to your site or application in order 
 to take full advantage of HTTP/2. While you can test the site by using the Default
 CloudFront Certificate you will likely want to use a custom SSL Certificate. 
