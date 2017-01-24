@@ -51,8 +51,8 @@ common web browsers require the use of HTTPS connections in conjunction with HTT
 Therefore, you may need to make some changes to your site or application in order 
 to take full advantage of HTTP/2. While you can test the site by using the Default
 CloudFront Certificate you will likely want to use a custom SSL Certificate. 
-This isn't yet automated by s3_website, (but is a few manual steps)[https://medium.
-com/@richardkall/setup-lets-encrypt-ssl-certificate-on-amazon-cloudfront-b217669987b2#.7jyust8os], 
+This isn't yet automated by s3_website, [but is a few manual steps](https://medium.
+com/@richardkall/setup-lets-encrypt-ssl-certificate-on-amazon-cloudfront-b217669987b2#.7jyust8os), 
 which is now free thanks to Let's Encrypt. 
 
 ````yaml
