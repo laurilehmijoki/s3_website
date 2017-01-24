@@ -46,7 +46,7 @@ version-controlled.
 
 ## Setup for HTTP2 and Custom SNI SSL Certificate
 
-To fully utilize HTTP2, you'll need to setup SSL for your distribution. While HTTP/2 does
+To fully utilize HTTP2 you'll need to setup SSL for your distribution. While HTTP/2 does
 not mandate the use of encryption, it turns out that all of the common web browsers 
 require the use of HTTPS connections in conjunction with HTTP/2.
 Therefore, you may need to make some changes to your site or application in order 
