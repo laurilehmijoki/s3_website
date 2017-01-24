@@ -21,7 +21,7 @@ the `s3_id` and `s3_secret`.
 
 ## Optimised for speed
 
-Use CloudFront, gzip, cache headers and greater concurrency:
+Use CloudFront, gzip, HTTP2, cache headers and greater concurrency:
 
 ````yaml
 s3_id: <%= ENV['your_domain_net_aws_key'] %>
@@ -35,6 +35,7 @@ cloudfront_distribution_config:
     quantity: 1
     items:
       - your.domain.net
+  http_version: http2
 max_age: 120
 gzip: true
 ````
