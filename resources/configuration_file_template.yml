@@ -35,11 +35,11 @@ s3_bucket: your.blog.bucket.com
 
 # cloudfront_distribution_config:
 #   default_cache_behavior:
-#     min_TTL: <%= 60 * 60 * 24 %>
+#     min_ttl: <%= 60 * 60 * 24 %>
 #   aliases:
 #     quantity: 1
 #     items:
-#       CNAME: your.website.com
+#       - your.website.com
 
 # cloudfront_invalidate_root: true
 
