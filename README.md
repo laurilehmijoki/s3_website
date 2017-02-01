@@ -285,7 +285,7 @@ For example, like this you can define a your own TTL and CNAME:
 ```yaml
 cloudfront_distribution_config:
   default_cache_behavior:
-    min_TTL: <%= 60 * 60 * 24 %>
+    min_ttl: <%= 60 * 60 * 24 %>
   aliases:
     quantity: 1
     items:

@@ -30,7 +30,7 @@ s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
   default_cache_behavior:
-    min_TTL: <%= 60 * 60 * 24 %>
+    min_ttl: <%= 60 * 60 * 24 %>
   aliases:
     quantity: 1
     items:
@@ -62,7 +62,7 @@ s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
   default_cache_behavior:
-    min_TTL: <%= 60 * 60 * 24 %>
+    min_ttl: <%= 60 * 60 * 24 %>
   http_version: http2
 max_age: 120
 gzip: true
@@ -79,7 +79,7 @@ s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
   default_cache_behavior:
-    min_TTL: <%= 60 * 60 * 24 %>
+    min_ttl: <%= 60 * 60 * 24 %>
   aliases:
     quantity: 3
     items:
