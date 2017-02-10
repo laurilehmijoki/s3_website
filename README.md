@@ -526,7 +526,7 @@ See the [Contributors](https://github.com/laurilehmijoki/s3_website/graphs/contr
 
 * [Deploying websites to FTP or Amazon S3 with BitBucket Pipelines](https://www.savjee.be/2016/06/Deploying-website-to-ftp-or-amazon-s3-with-BitBucket-Pipelines/)
 * [How To: Hosting on Amazon S3 with CloudFront](https://paulstamatiou.com/hosting-on-amazon-s3-with-cloudfront/)
-* [PageSpeed 100 with Jekyll, S3 and CloudFront](https://habd.as/pagespeed-100-with-jekyll-s3-and-cloudfront/)
+* [Zero to HTTP/2 with AWS and Hugo](https://habd.as/zero-to-http-2-aws-hugo/)
 
 ## Donations
 
