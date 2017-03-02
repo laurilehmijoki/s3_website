@@ -59,14 +59,15 @@ You can use ERB in your `s3_website.yml` file which incorporates environment var
 ```yaml
 s3_id: <%= ENV['S3_ID'] %>
 s3_secret: <%= ENV['S3_SECRET'] %>
+s3_token: <%= ENV['S3_TOKEN'] %>
 s3_bucket: blog.example.com
 ```
 
 (If you are using `s3_website` on an [EC2 instance with IAM
 roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
-you can omit the `s3_id` and `s3_secret` keys in the config file.)
+you can omit the `s3_id`, `s3_secret` and `s3_token` keys in the config file.)
 
-S3_website implements supports for reading environment variables from a file using
+S3_website implements support for reading environment variables from a file using
 the [dotenv](https://github.com/bkeepers/dotenv) gem. You can create a `.env` file
 in the project's root directory to take advantage of this feature. Please have
 a look at [dotenv's usage guide](https://github.com/bkeepers/dotenv#usage) for
@@ -76,6 +77,9 @@ Your `.env` file should containing the following variables:
 
     S3_ID=FOO
     S3_SECRET=BAR
+    S3_TOKEN=STS_SESSION_TOKEN
+
+Note: the `S3_TOKEN` variable is optional and is for use when acquiring [AWS temporary security credentials](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) (eg: when [assuming IAM roles](http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html))
 
 ## Project goals
 
