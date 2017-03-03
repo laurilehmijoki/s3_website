@@ -59,14 +59,15 @@ You can use ERB in your `s3_website.yml` file which incorporates environment var
 ```yaml
 s3_id: <%= ENV['S3_ID'] %>
 s3_secret: <%= ENV['S3_SECRET'] %>
+s3_token: <%= ENV['S3_TOKEN'] %>
 s3_bucket: blog.example.com
 ```
 
 (If you are using `s3_website` on an [EC2 instance with IAM
 roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html#UsingIAMrolesWithAmazonEC2Instances),
-you can omit the `s3_id` and `s3_secret` keys in the config file.)
+you can omit the `s3_id`, `s3_secret` and `s3_token` keys in the config file.)
 
-S3_website implements supports for reading environment variables from a file using
+S3_website implements support for reading environment variables from a file using
 the [dotenv](https://github.com/bkeepers/dotenv) gem. You can create a `.env` file
 in the project's root directory to take advantage of this feature. Please have
 a look at [dotenv's usage guide](https://github.com/bkeepers/dotenv#usage) for
@@ -74,8 +75,11 @@ syntax information.
 
 Your `.env` file should containing the following variables:
 
-    AWS_ACCESS_KEY_ID=FOO
-    AWS_SECRET_ACCESS_KEY=BAR
+    S3_ID=FOO
+    S3_SECRET=BAR
+    S3_TOKEN=STS_SESSION_TOKEN
+
+Note: the `S3_TOKEN` variable is optional and is for use when acquiring [AWS temporary security credentials](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html) (eg: when [assuming IAM roles](http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html))
 
 ## Project goals
 
@@ -285,11 +289,11 @@ For example, like this you can define a your own TTL and CNAME:
 ```yaml
 cloudfront_distribution_config:
   default_cache_behavior:
-    min_TTL: <%= 60 * 60 * 24 %>
+    min_ttl: <%= 60 * 60 * 24 %>
   aliases:
     quantity: 1
     items:
-      CNAME: your.website.com
+      - your.website.com
 ```
 
 Once you've saved the configuration into `s3_website.yml`, you can apply them by
@@ -526,7 +530,7 @@ See the [Contributors](https://github.com/laurilehmijoki/s3_website/graphs/contr
 
 * [Deploying websites to FTP or Amazon S3 with BitBucket Pipelines](https://www.savjee.be/2016/06/Deploying-website-to-ftp-or-amazon-s3-with-BitBucket-Pipelines/)
 * [How To: Hosting on Amazon S3 with CloudFront](https://paulstamatiou.com/hosting-on-amazon-s3-with-cloudfront/)
-* [PageSpeed 100 with Jekyll, S3 and CloudFront](https://habd.as/pagespeed-100-with-jekyll-s3-and-cloudfront/)
+* [Zero to HTTP/2 with AWS and Hugo](https://habd.as/zero-to-http-2-aws-hugo/)
 
 ## Donations
 

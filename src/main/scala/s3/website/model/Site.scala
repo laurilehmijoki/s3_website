@@ -35,6 +35,7 @@ object Site {
         for {
           s3_id <- loadOptionalString("s3_id").right
           s3_secret <- loadOptionalString("s3_secret").right
+          s3_token <- loadOptionalString("s3_token").right
           s3_bucket <- loadRequiredString("s3_bucket").right
           s3_endpoint <- loadEndpoint.right
           site <- loadOptionalString("site").right
@@ -65,6 +66,7 @@ object Site {
           Config(
             s3_id,
             s3_secret,
+            s3_token,
             s3_bucket,
             s3_endpoint getOrElse S3Endpoint.defaultEndpoint,
             site,
