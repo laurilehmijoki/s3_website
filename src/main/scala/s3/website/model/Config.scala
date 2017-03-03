@@ -13,7 +13,7 @@ import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSes
 case class Config(
   s3_id:                                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
   s3_secret:                              Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
-  s3_token:                               Option[String], // If defined, the AWS Security Token Service session token (http://docs.aws.amazon.com/STS/latest/APIReference/Welcome.html)
+  session_token:                          Option[String], // If defined, the AWS Security Token Service session token (http://docs.aws.amazon.com/STS/latest/APIReference/Welcome.html)
   s3_bucket:                              String,
   s3_endpoint:                            S3Endpoint,
   site:                                   Option[String],
@@ -38,7 +38,7 @@ object Config {
 
   def awsCredentials(config: Config): AWSCredentialsProvider = {
     val credentialsFromConfigFile =
-      if (config.s3_token.isEmpty) {
+      if (config.session_token.isEmpty) {
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
@@ -47,8 +47,8 @@ object Config {
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
-          s3_token <- config.s3_token
-        } yield new BasicSessionCredentials(s3_id, s3_secret, s3_token)
+          session_token <- config.session_token
+        } yield new BasicSessionCredentials(s3_id, s3_secret, session_token)
       }
     credentialsFromConfigFile.fold(new DefaultAWSCredentialsProviderChain: AWSCredentialsProvider)(credentials =>
       new AWSCredentialsProvider {

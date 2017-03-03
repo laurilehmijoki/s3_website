@@ -1436,7 +1436,6 @@ class S3WebsiteSpec extends Specification {
     """
       |s3_id: foo
       |s3_secret: bar
-      |s3_token: baz
       |s3_bucket: bucket
     """.stripMargin
 

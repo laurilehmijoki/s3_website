@@ -24,7 +24,7 @@ the `s3_id` and `s3_secret`.
 ````yaml
 s3_id: abcd
 s3_secret: 2s+x92
-s3_token: hex!xeh
+session_token: hex!xeh
 s3_bucket: your.domain.net
 ````
 
