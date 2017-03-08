@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.1.0
+
+Support for [session tokens](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
+
 ## 3.0.0
 
 The CloudFront client now uses the official AWS SDK. If your `s3_website.yml`
