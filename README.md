@@ -333,26 +333,29 @@ index file, your source bucket in Cloudfront likely is pointing to the S3 Origin
 
 ### Configuring redirects on your S3 website
 
-You can set HTTP redirects on your S3 website in two ways. If you only need
-simple "301 Moved Premanently" redirects for certain keys, use the Simple
-Redirects method. Otherwise, use the Routing Rules method.
+You can set HTTP redirects on your S3 website in three ways. 
 
-#### Simple Redirects
+#### Exact page match for moving a single page
+If a request is received matching a string e.g. /heated-towel-rail/ redirect to a page e.g. /  
 
-For simple redirects `s3_website` uses Amazon S3's
-[`x-amz-website-redirect-location`](http://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html)
-metadata. It will create zero-byte objects for each path you want
-redirected with the appropriate `x-amz-website-redirect-location` value.
-
-For setting up simple redirect rules, simply list each path and target
-as key-value pairs under the `redirects` configuration option:
+This kind of redirect is created in the s3_website.yml file under the ```redirects:``` section as follows: 
 
 ```yaml
 redirects:
   index.php: /
   about.php: /about.html
   music-files/promo.mp4: http://www.youtube.com/watch?v=dQw4w9WgXcQ
+  heated-towel-rail/index.html: /
+  
 ```
+
+Note that the root forward slash is omitted in the requested page path and included in the redirect-to path.  Note also that in the heated-towel-rail example this also matches heated-towel-rail/ since S3 appends index.html to request URLs terminated with a slash. 
+
+This redirect will be created as a 301 redirect from the first URL to the destination URL on the same server with the same http protocol.
+
+Under the hood `s3_website` creates a zero-byte index.html page for each path you want redirected with the appropriate `x-amz-website-redirect-location` value in the metadata for the object. See Amazon S3's
+[`x-amz-website-redirect-location`](http://docs.aws.amazon.com/AmazonS3/latest/dev/how-to-page-redirect.html)
+documentation for more details.
 
 On terminology: the left value is the redirect source and the right value is the redirect
 target. For example above, *about.php* is the redirect source and */about.html* the target.
@@ -362,20 +365,30 @@ target if and only if the redirect target points to a site-local resource and
 does not start with a slash. E.g., `about.php: about.html` will be translated
 into `about.php: VALUE-OF-S3_KEY_PREFIX/about.html`.
 
-#### Routing Rules
+#### Prefix replacement for moving a folder of pages
+Common to content migrations, content pages often move from one subdirectory to another. For example if you're moving all the case studies on your site under /portfolio/work/ to /work/. In this case we use a prefix replacement such that /portfolio/work/walkjogrun/ gets 301 redirected to /work/walkjogrun/.
 
-You can configure more complex redirect rules by adding the following
-configuration into the `s3_website.yml` file:
+To do this we add a new rule to the routing_rules: section as follows:
 
-```yaml
-routing_rules:
-  - condition:
-      key_prefix_equals: blog/some_path
-    redirect:
-      host_name: blog.example.com
-      replace_key_prefix_with: some_new_path/
-      http_redirect_code: 301
 ```
+  - condition:
+        key_prefix_equals: portfolio/work/
+    redirect:
+        protocol: https
+        host_name: <%= ENV['REDIRECT_DOMAIN_NAME'] %>
+        replace_key_prefix_with: work/
+        http_redirect_code: 301
+```
+
+Here:
+
+* ```-condition:``` indicates the start of a new rule. 
+* ```key_prefix_equals:``` introduces the path prefix (also without the leading / per the exact page match). Note that this prefix matches anything underneath it so every case study under that path will be handled by the subsequent redirect
+* ```redirect:``` indicates the start of the redirect definition 
+* ```protocol:``` is optional and defaults to http.
+* ```host_name:``` is optional but the default is the amazonaws.com bucket name not the actual domain name so this also effectively required for our site. In this example we use an environment variable to store the server hostname to support building to different environments. ```REDIRECT_DOMAIN_NAME``` can be configured on a CI server as well any CodePipelines responsible for building the site to different environments.  If you're running locally you'll need to set ```REDIRECT_DOMAIN_NAME=local.myhostname.com```
+* ```replace_key_prefix_with:``` indicates the substitution to use in place of the matched prefix. This is the only field required by `s3_website`, so effectively this rule works like a replace rule e.g. replace portfolio/work with /work in the string portfolio/work/walkjogrun
+* ```http_redirect_code:``` is optional and defaults to 302 Temporary redirect **which is terrible for SEO** since your content temporarily vanishes from the Google index until the response changes for the URL. This is almost never what you want. You *can* use this to temporarily redirect any content you haven't migrated to the new site yet as long as you remove or replace the 302 with a link to a permanent home. This tells Google to forget the old location of the page and use the new content at the new URL. For pages that move you'll see little if any discrepancy in Google traffic. 
 
 After adding the configuration, run the command `s3_website cfg apply` on your
 command-line interface. This will apply the routing rules on your S3 bucket.
@@ -384,6 +397,25 @@ For more information on configuring redirects, see the documentation of the
 [configure-s3-website](https://github.com/laurilehmijoki/configure-s3-website#configuring-redirects)
 gem, which comes as a transitive dependency of the `s3_website` gem. (The
 command `s3_website cfg apply` internally calls the `configure-s3-website` gem.)
+
+#### Prefix coallescing for deleting pages (or consolidating)
+If you 301 redirect lots of content into one new path you're telling Google that the old pages are gone so only the destination page is important moving forward. E.g. if you had 10 services pages and consolidate them into 1 services listing page you'll lose the 10 pages uniquely optimized for different sets of keywords and retain just 1 page with no real keyword focus and hence less SEO value.
+
+For example, we're not porting the entire set of pages under the folder /experience to the new website. Some of these pages still get traffic from either Google or inbound links so we don't want to just show a 404 content not found error. We will 301 redirect them to the most useful replacement page. In the case of /experience we don't have anything better to show than just the home page so that is how the redirect is configured.
+
+Here's how to redirect to indicate a deleted page:
+
+```
+  - condition:
+        key_prefix_equals: experience/
+    redirect:
+        protocol: https
+        host_name: <%= ENV['REDIRECT_DOMAIN_NAME'] %>
+        **replace_key_with**: /
+        http_redirect_code: 301
+```
+
+Note the only difference is that instead of using ```replace_key_prefix_with``` we use ```replace_key_with``` to effectively say "replace the entire path matching the prefix specfied in the condition with the new path".
 
 #### On skipping application of redirects
 
