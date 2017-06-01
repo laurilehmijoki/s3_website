@@ -280,7 +280,7 @@ thus force the CDN system to reload the changes from your website S3 bucket.
 
 `s3_website` lets you define custom settings for your CloudFront distribution.
 
-For example, like this you can define a your own TTL and CNAME:
+For example, like this you can define your own TTL and CNAME:
 
 ```yaml
 cloudfront_distribution_config:
@@ -289,7 +289,7 @@ cloudfront_distribution_config:
   aliases:
     quantity: 1
     items:
-      - your.website.com
+      CNAME: your.website.com
 ```
 
 Once you've saved the configuration into `s3_website.yml`, you can apply them by
