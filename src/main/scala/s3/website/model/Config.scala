@@ -8,7 +8,7 @@ import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
 import s3.website._
-import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSessionCredentials, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSessionCredentials, AWSStaticCredentialsProvider, AWSCredentialsProviderChain, DefaultAWSCredentialsProviderChain}
 
 case class Config(
   s3_id:                                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
@@ -37,25 +37,22 @@ case class Config(
 object Config {
 
   def awsCredentials(config: Config): AWSCredentialsProvider = {
-    val credentialsFromConfigFile =
-      if (config.session_token.isEmpty) {
+    val credentialsFromConfigFile: Option[AWSStaticCredentialsProvider] =
+      if (config.s3_id.isEmpty) {
+         None
+      } else if (config.session_token.isEmpty) {
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
-        } yield new BasicAWSCredentials(s3_id, s3_secret)
+        } yield new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3_id, s3_secret))
       } else {
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
           session_token <- config.session_token
-        } yield new BasicSessionCredentials(s3_id, s3_secret, session_token)
+        } yield new AWSStaticCredentialsProvider(new BasicSessionCredentials(s3_id, s3_secret, session_token))
       }
-    credentialsFromConfigFile.fold(new DefaultAWSCredentialsProviderChain: AWSCredentialsProvider)(credentials =>
-      new AWSCredentialsProvider {
-        def getCredentials = credentials
-        def refresh() = {}
-      }
-    )
+    new AWSCredentialsProviderChain(List(credentialsFromConfigFile, Some(new DefaultAWSCredentialsProviderChain)).flatten)
   }
 
   def loadOptionalBooleanOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Boolean, Seq[String]]]] = {
