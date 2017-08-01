@@ -49,10 +49,9 @@ max_age: 120
 gzip: true
 ````
 
-We keep the CloudFront distribution ID as an environment variables.
-It's convenient, since you can keep the `s3_website.yml`
-in a public Git repo, and thus have your deployment configurations
-version-controlled.
+In this example, we keep the CloudFront distribution ID in an environment variable.
+This is convenient, since you can keep the `s3_website.yml` in a public Git repo, and
+thus have your deployment configurations version-controlled.
 
 ## Setup for HTTP2 and Custom SNI SSL Certificate
 
