@@ -52,7 +52,7 @@ object Config {
           session_token <- config.session_token
         } yield new AWSStaticCredentialsProvider(new BasicSessionCredentials(s3_id, s3_secret, session_token))
       }
-    new AWSCredentialsProviderChain(List(credentialsFromConfigFile, Some(new DefaultAWSCredentialsProviderChain)).flatten)
+    credentialsFromConfigFile getOrElse new DefaultAWSCredentialsProviderChain
   }
 
   def loadOptionalBooleanOrStringSeq(key: String)(implicit unsafeYaml: UnsafeYaml): Either[ErrorReport, Option[Either[Boolean, Seq[String]]]] = {
