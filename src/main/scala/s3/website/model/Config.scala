@@ -8,7 +8,7 @@ import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
 import s3.website._
-import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSessionCredentials, AWSStaticCredentialsProvider, AWSCredentialsProviderChain, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSessionCredentials, AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain}
 
 case class Config(
   s3_id:                                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
