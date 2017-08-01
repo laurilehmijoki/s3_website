@@ -5,19 +5,22 @@ This document shows examples of complete `s3_website.yml` configurations.
 ## Minimal
 
 ````yaml
+s3_bucket: your.domain.net
+````
+
+This configuration will use AWS access credentials from the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`. If those are not set, it will fall back to the credentials saved by `aws configure`.
+
+If you run `s3_website` on an EC2 instance with IAM roles, this configuration will use the instance's role instead.
+
+## Minimal with explicit credentials
+
+````yaml
 s3_id: abcd
 s3_secret: 2s+x92
 s3_bucket: your.domain.net
 ````
 
-## Minimal with EC2 IAM roles
-
-````yaml
-s3_bucket: your.domain.net
-````
-
-If you run `s3_website` on an EC2 instance with IAM roles, it is possible to omit
-the `s3_id` and `s3_secret`.
+Use caution when embedding AWS credentials directly in `s3_website.yml`. Do not commit the file to a public Git repository or share it publicly.
 
 ## Minimal for temporary security credentials
 
@@ -33,8 +36,6 @@ s3_bucket: your.domain.net
 Use CloudFront, gzip, cache headers and greater concurrency:
 
 ````yaml
-s3_id: <%= ENV['your_domain_net_aws_key'] %>
-s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
 s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
@@ -48,8 +49,8 @@ max_age: 120
 gzip: true
 ````
 
-Above, we store the AWS credentials and the id of the CloudFront distribution as
-environment variables. It's convenient, since you can keep the `s3_website.yml`
+We keep the CloudFront distribution ID as an environment variables.
+It's convenient, since you can keep the `s3_website.yml`
 in a public Git repo, and thus have your deployment configurations
 version-controlled.
 
@@ -65,8 +66,6 @@ This isn't yet automated by s3_website, [but is a few manual steps](https://medi
 which is now free thanks to Let's Encrypt. 
 
 ````yaml
-s3_id: <%= ENV['your_domain_net_aws_key'] %>
-s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
 s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
@@ -82,8 +81,6 @@ gzip: true
 Sometimes you want to use multiple CNAMEs aliases in your CloudFront distribution:
 
 ````yaml
-s3_id: <%= ENV['your_domain_net_aws_key'] %>
-s3_secret: <%= ENV['your_domain_net_aws_secret'] %>
 s3_bucket: your.domain.net
 cloudfront_distribution_id: <%= ENV['your_domain_net_cloudfront_distribution_id'] %>
 cloudfront_distribution_config:
@@ -104,8 +101,6 @@ Always remember to set the 'quantity' property to match the number of items you 
 ## Using redirects
 
 ````yaml
-s3_id: hello
-s3_secret: galaxy
 redirects:
   index.php: /
   about.php: about.html
