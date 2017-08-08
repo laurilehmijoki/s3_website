@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.default_executable = %q{s3_website}
 
   s.add_dependency 'thor', '~> 0.18'
-  s.add_dependency 'configure-s3-website', '= 2.0.0'
+  s.add_dependency 'configure-s3-website', '= 2.1.0'
   s.add_dependency 'colored', '1.2'
   s.add_dependency 'dotenv', '~> 1.0'
 
