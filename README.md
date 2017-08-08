@@ -56,6 +56,18 @@ the project's root you can specify the directory like so:
 
 If you omit `s3_id` from your `s3_website.yml`, S3_website will fall back to reading from the [default AWS SDK locations](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html). For instance, if you've used `aws configure` to set up credentials in `~/.aws/credentials`, S3_website can use these.
 
+### Using an AWS profile or a profile that assumes a role
+
+If you omit `s3_id`, `s3_secret`, and `session_token` you can specify an AWS credentials profile to use via the `profile` configuration variable, eg:
+
+    profile: name_of_aws_profile
+
+In addition, if you want this profile to assume a role before executing against S3, use the `profile_assume_role_arn` variable, eg:
+
+    profile_assume_role_arn: arn_of_role_to_assume
+
+(Note: you have to use a regular profile with an ID and SECRET and specify the role ARN via a variable like this instead of a profile that specifies a `role_arn` as documented [here](http://docs.aws.amazon.com/cli/latest/userguide/cli-roles.html) since it does not look like the Java SDK supports that format, yet...)
+
 ### Using environment variables
 
 You can use ERB in your `s3_website.yml` file which incorporates environment variables:
