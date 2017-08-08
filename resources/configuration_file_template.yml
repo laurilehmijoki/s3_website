@@ -1,3 +1,6 @@
+# You can remove these two lines to have credentials read from
+# the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY or
+# ~/.aws/credentials.
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com

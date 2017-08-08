@@ -52,6 +52,10 @@ If you want to store the `s3_website.yml` file in a directory other than
 the project's root you can specify the directory like so:
 `s3_website push --config-dir config`.
 
+### Using standard AWS credentials
+
+If you omit `s3_id` from your `s3_website.yml`, S3_website will fall back to reading from the [default AWS SDK locations](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html). For instance, if you've used `aws configure` to set up credentials in `~/.aws/credentials`, S3_website can use these.
+
 ### Using environment variables
 
 You can use ERB in your `s3_website.yml` file which incorporates environment variables:
@@ -76,6 +80,8 @@ Your `.env` file should containing the following variables:
 
     S3_ID=FOO
     S3_SECRET=BAR
+
+S3_website will also honor environment variables named `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN` (if using STS) automatically if `s3_id` is ommitted from `s3_website.yml`.
 
 ## Project goals
 

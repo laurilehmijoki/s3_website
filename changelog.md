@@ -2,6 +2,10 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## Pending release
+
+* Fall back to [the default credentials sources](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) if `s3_id` is not provided in `s3_website.yml`
+
 ## 3.1.0
 
 Support for [session tokens](http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html)
