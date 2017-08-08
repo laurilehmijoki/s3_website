@@ -2,8 +2,8 @@ s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
 s3_secret: YOUR_AWS_S3_SECRET_ACCESS_KEY
 s3_bucket: your.blog.bucket.com
 
-# set s3_token if using temporary credentials with a session token (eg: when assuming a role)
-# s3_token: YOUR_AWS_S3_SESSION_TOKEN
+# set session_token if using temporary credentials with a session token (eg: when assuming a role)
+# session_token: YOUR_AWS_S3_SESSION_TOKEN
 
 # Below are examples of all the available configurations.
 # See README for more detailed info on each of them.
