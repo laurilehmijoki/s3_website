@@ -41,30 +41,28 @@ object Config {
 
   def awsCredentials(config: Config): AWSCredentialsProvider = {
     val credentialsFromConfigFile: Option[AWSCredentialsProvider] =
-      if (config.s3_id.nonEmpty && config.s3_secret.nonEmpty && config.session_token.nonEmpty) {
+      (
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
           session_token <- config.session_token
         } yield new AWSStaticCredentialsProvider(new BasicSessionCredentials(s3_id, s3_secret, session_token))
-      } else if (config.s3_id.nonEmpty && config.s3_secret.nonEmpty) {
+      ) orElse (
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
         } yield new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3_id, s3_secret))
-      } else if (config.profile_assume_role_arn.nonEmpty) {
+      ) orElse (
         for {
           profile <- config.profile
           profile_assume_role_arn <- config.profile_assume_role_arn
         } yield new STSAssumeRoleSessionCredentialsProvider.Builder(profile_assume_role_arn, "s3_website_assume_role_session")
           .withLongLivedCredentialsProvider(new ProfileCredentialsProvider(profile)).build()
-      } else if (config.profile.nonEmpty) {
+      ) orElse (
         for {
           profile <- config.profile
         } yield new ProfileCredentialsProvider(profile)
-      } else {
-        None
-      }
+      )
     credentialsFromConfigFile getOrElse new DefaultAWSCredentialsProviderChain
   }
 
