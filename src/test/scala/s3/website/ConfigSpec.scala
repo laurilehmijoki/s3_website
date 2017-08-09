@@ -1,5 +1,6 @@
 package s3.website
-import com.amazonaws.auth.{BasicAWSCredentials, BasicSessionCredentials, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.auth.{BasicAWSCredentials, BasicSessionCredentials, DefaultAWSCredentialsProviderChain, STSAssumeRoleSessionCredentialsProvider}
 import org.specs2.mutable.Specification
 import s3.website.model.{Config, S3Endpoint}
 
@@ -67,8 +68,8 @@ class ConfigSpec extends Specification {
         s3_id = None,
         s3_secret = None,
         session_token = None,
-        profile = "profile_name",
-        profile_assume_role_arn = "arn:aws:iam::account-id:role/role-name",
+        profile = Some("profile_name"),
+        profile_assume_role_arn = Some("arn:aws:iam::account-id:role/role-name"),
         s3_bucket = "foo",
         s3_endpoint = S3Endpoint.defaultEndpoint,
         site = None,
@@ -87,15 +88,15 @@ class ConfigSpec extends Specification {
         concurrency_level = 1,
         cloudfront_wildcard_invalidation = None,
         treat_zero_length_objects_as_redirects = None
-      )) must beAnInstanceOf[ProfileCredentialsProvider]
+      )) must beAnInstanceOf[STSAssumeRoleSessionCredentialsProvider]
     }
 
-    s"return ${classOf[STSAssumeRoleSessionCredentialsProvider]} when profile is defined in the config" in {
+    s"return ${classOf[ProfileCredentialsProvider]} when profile is defined in the config" in {
       Config.awsCredentials(Config(
         s3_id = None,
         s3_secret = None,
         session_token = None,
-        profile = "profile_name",
+        profile = Some("profile_name"),
         profile_assume_role_arn = None,
         s3_bucket = "foo",
         s3_endpoint = S3Endpoint.defaultEndpoint,
