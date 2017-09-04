@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.3.0
+
+* Support `http_error_code_returned_equals` in redirect rules
+
+  See <https://github.com/laurilehmijoki/configure-s3-website/pull/21> for
+  discussion
+
 ## 3.2.0
 
 * Fall back to [the default credentials sources](http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) if `s3_id` is not provided in `s3_website.yml`
