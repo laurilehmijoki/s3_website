@@ -1,4 +1,4 @@
-# You can remove these two lines to have credentials read from
+# You can remove the first two lines to have credentials read from
 # the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY or
 # ~/.aws/credentials.
 s3_id: YOUR_AWS_S3_ACCESS_KEY_ID
