@@ -2,6 +2,13 @@
 
 This project uses [Semantic Versioning](http://semver.org).
 
+## 3.4.0
+
+* Add support for default credentials providers in the `s3_website cfg create`
+  `s3_website cfg apply` commands
+
+  See <https://github.com/laurilehmijoki/configure-s3-website/pull/22>
+
 ## 3.3.0
 
 * Support `http_error_code_returned_equals` in redirect rules
