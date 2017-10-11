@@ -36,6 +36,8 @@ object Site {
           s3_id <- loadOptionalString("s3_id").right
           s3_secret <- loadOptionalString("s3_secret").right
           session_token <- loadOptionalString("session_token").right
+          profile <- loadOptionalString("profile").right
+          profile_assume_role_arn <- loadOptionalString("profile_assume_role_arn").right
           s3_bucket <- loadRequiredString("s3_bucket").right
           s3_endpoint <- loadEndpoint.right
           site <- loadOptionalString("site").right
@@ -67,6 +69,8 @@ object Site {
             s3_id,
             s3_secret,
             session_token,
+            profile,
+            profile_assume_role_arn,
             s3_bucket,
             s3_endpoint getOrElse S3Endpoint.defaultEndpoint,
             site,

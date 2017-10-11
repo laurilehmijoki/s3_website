@@ -8,12 +8,15 @@ import scala.util.{Failure, Try}
 import scala.collection.JavaConversions._
 import s3.website.Ruby.rubyRuntime
 import s3.website._
-import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSessionCredentials, AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain}
+import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials, BasicSessionCredentials, AWSStaticCredentialsProvider, DefaultAWSCredentialsProviderChain, STSAssumeRoleSessionCredentialsProvider}
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
 
 case class Config(
   s3_id:                                  Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
   s3_secret:                              Option[String], // If undefined, use IAM Roles (http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/java-dg-roles.html)
   session_token:                          Option[String], // If defined, the AWS Security Token Service session token (http://docs.aws.amazon.com/STS/latest/APIReference/Welcome.html)
+  profile:                                Option[String], // If defined, the AWS profile to use for credentials
+  profile_assume_role_arn:                Option[String], // If defined, the ARN of the role to assume
   s3_bucket:                              String,
   s3_endpoint:                            S3Endpoint,
   site:                                   Option[String],
@@ -37,21 +40,29 @@ case class Config(
 object Config {
 
   def awsCredentials(config: Config): AWSCredentialsProvider = {
-    val credentialsFromConfigFile: Option[AWSStaticCredentialsProvider] =
-      if (config.s3_id.isEmpty) {
-         None
-      } else if (config.session_token.isEmpty) {
-        for {
-          s3_id <- config.s3_id
-          s3_secret <- config.s3_secret
-        } yield new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3_id, s3_secret))
-      } else {
+    val credentialsFromConfigFile: Option[AWSCredentialsProvider] =
+      (
         for {
           s3_id <- config.s3_id
           s3_secret <- config.s3_secret
           session_token <- config.session_token
         } yield new AWSStaticCredentialsProvider(new BasicSessionCredentials(s3_id, s3_secret, session_token))
-      }
+      ) orElse (
+        for {
+          s3_id <- config.s3_id
+          s3_secret <- config.s3_secret
+        } yield new AWSStaticCredentialsProvider(new BasicAWSCredentials(s3_id, s3_secret))
+      ) orElse (
+        for {
+          profile <- config.profile
+          profile_assume_role_arn <- config.profile_assume_role_arn
+        } yield new STSAssumeRoleSessionCredentialsProvider.Builder(profile_assume_role_arn, "s3_website_assume_role_session")
+          .withLongLivedCredentialsProvider(new ProfileCredentialsProvider(profile)).build()
+      ) orElse (
+        for {
+          profile <- config.profile
+        } yield new ProfileCredentialsProvider(profile)
+      )
     credentialsFromConfigFile getOrElse new DefaultAWSCredentialsProviderChain
   }
 
