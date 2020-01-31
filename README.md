@@ -20,7 +20,7 @@ Please note that this project is not actively maintained.
     gem install s3_website
 
 s3_website needs both [Ruby](https://www.ruby-lang.org/en/downloads/)
-and [Java](http://java.com) to run. (S3_website is partly written in Scala, hence the need for Java.)
+and [Java](http://java.com) to run. (S3_website is partly written in Scala, hence the need for Java 1.8 or later.)
 
 ## Usage
 
