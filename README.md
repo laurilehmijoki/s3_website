@@ -7,12 +7,12 @@ Please note that this project is not actively maintained.
 
 ## What `s3_website` can do for you
 
-* Create and configure an S3 website for you
-* Upload your static website to AWS S3
-* [Jekyll](http://jekyllrb.com/), [Nanoc](http://nanoc.ws/), and [Middleman](https://middlemanapp.com/) are automatically supported
-* Help you use AWS Cloudfront to distribute your website
-* Improve page speed with HTTP cache control and gzipping
-* Set HTTP redirects for your website
+* Create and configure an S3 website for you.
+* Upload your static website to AWS S3.
+* [Jekyll](http://jekyllrb.com/), [Nanoc](http://nanoc.ws/), and [Middleman](https://middlemanapp.com/) are automatically supported.
+* Help you use AWS Cloudfront to distribute your website.
+* Improve page speed with HTTP cache control and gzipping.
+* Set HTTP redirects for your website.
 * (for other features, see the documentation below)
 
 ## Install
@@ -26,9 +26,9 @@ and [Java](http://java.com) to run. (S3_website is partly written in Scala, henc
 
 Here's how you can get started:
 
-* Create API credentials that have sufficient permissions to S3. More info
+* Create API credentials that have sufficient permissions to S3. More info.
   [here](https://github.com/laurilehmijoki/s3_website/tree/master/additional-docs/setting-up-aws-credentials.md).
-* Go to your website directory
+* Go to your website directory.
 * Run `s3_website cfg create`. This generates a configuration file called `s3_website.yml`.
 * Put your AWS credentials and the S3 bucket name into the file
 * Run `s3_website cfg apply`. This will configure your bucket to function as an
@@ -99,15 +99,15 @@ S3_website will also honor environment variables named `AWS_ACCESS_KEY_ID`, `AWS
 
 ## Project goals
 
-* Provide a command-line interface tool for deploying and managing S3 websites
-* Let the user have all the S3 website configurations in a file
-* Minimise or remove the need to use the AWS Console
-* Allow the user to deliver the website via CloudFront
+* Provide a command-line interface tool for deploying and managing S3 websites.
+* Let the user have all the S3 website configurations in a file.
+* Minimise or remove the need to use the AWS Console.
+* Allow the user to deliver the website via CloudFront.
 * Automatically detect the most common static website tools, such as [Jekyll](http://jekyllrb.com/), [Nanoc](http://nanoc.ws/), and [Middleman](https://middlemanapp.com/).
 * Be simple to use: require only the S3 credentials and the name of the S3
-  bucket
+  bucket.
 * Let the power users benefit from advanced S3 website features such as
-  redirects, Cache-Control headers and gzip support
+  redirects, Cache-Control headers and gzip support.
 * Be as fast as possible. Do in parallel all that can be done in parallel.
 
 `s3_website` attempts to be a command-line interface tool that is easy to
