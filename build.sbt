@@ -16,7 +16,7 @@ scalacOptions += "-target:jvm-1.6"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.13"
 
-libraryDependencies += "org.jruby" % "jruby" % "1.7.11"
+libraryDependencies += "org.jruby" % "jruby" % "9.2.7.0" % "provided"
 
 libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.11.172"
 
