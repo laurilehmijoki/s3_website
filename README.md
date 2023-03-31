@@ -386,11 +386,12 @@ does not start with a slash. E.g., `about.php: about.html` will be translated
 into `about.php: VALUE-OF-S3_KEY_PREFIX/about.html`.
 
 #### Prefix replacement for moving a folder of pages
-Common to content migrations, content pages often move from one subdirectory to another. For example if you're moving all the case studies on your site under /portfolio/work/ to /work/. In this case we use a prefix replacement such that /portfolio/work/walkjogrun/ gets 301 redirected to /work/walkjogrun/.
+Common to content migrations, content pages often move from one subdirectory to another. For example if you're moving all the case studies on your site under `/portfolio/work/` to `/work/`. In this case we use a prefix replacement such that `/portfolio/work/walkjogrun/` gets 301 redirected to `/work/walkjogrun/`.
 
 To do this we add a new rule to the routing_rules: section as follows:
 
 ```
+routing_rules:
   - condition:
         key_prefix_equals: portfolio/work/
     redirect:
@@ -402,7 +403,7 @@ To do this we add a new rule to the routing_rules: section as follows:
 
 Here:
 
-* ```-condition:``` indicates the start of a new rule. 
+* ```- condition:``` indicates the start of a new rule. 
 * ```key_prefix_equals:``` introduces the path prefix (also without the leading / per the exact page match). Note that this prefix matches anything underneath it so every case study under that path will be handled by the subsequent redirect
 * ```redirect:``` indicates the start of the redirect definition 
 * ```protocol:``` is optional and defaults to http.
@@ -426,6 +427,7 @@ For example, we're not porting the entire set of pages under the folder /experie
 Here's how to redirect to indicate a deleted page:
 
 ```
+routing_rules:
   - condition:
         key_prefix_equals: experience/
     redirect:
