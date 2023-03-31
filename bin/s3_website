@@ -194,7 +194,7 @@ def autoinstall_java_or_print_help_and_exit(logger)
   if automatic_method
     @logger.info_msg "Do you want me to install Java with the command `#{automatic_method.fetch(:install_command)}`? [Y/n]"
     user_answer = $stdin.gets
-    if user_answer.chomp.downcase == 'y' or user_answer == "\n"
+    if user_answer.chomp.downcase == 'y' or user_answer == "\n" or user_answer.nil?
       automatic_method_succeeded = system automatic_method.fetch(:install_command)
       unless automatic_method_succeeded
         @logger.fail_msg "Could not automatically install Java. Try setting it up manually:"
