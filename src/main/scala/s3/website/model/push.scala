@@ -62,8 +62,10 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
       if (fileIsGzippedByExternalBuildTool) {
         val unzippedFile = createTempFile("unzipped", originalFile.getName)
         unzippedFile.deleteOnExit()
-        using(new GZIPInputStream(fis(originalFile))) { stream =>
-          IOUtils.copy(stream, new FileOutputStream(unzippedFile))
+        using(new GZIPInputStream(fis(originalFile))) { inputStream =>
+          using(new FileOutputStream(unzippedFile)) { outputStream =>
+            IOUtils.copy(inputStream, outputStream)
+          }
         }
         unzippedFile
       } else {
@@ -113,8 +115,12 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
           logger.debug(s"Gzipping file ${originalFile.getName}")
           val tempFile = createTempFile(originalFile.getName, "gzip")
           tempFile.deleteOnExit()
-          using(new GZIPOutputStream(new FileOutputStream(tempFile))) { stream =>
-            IOUtils.copy(fis(originalFile), stream)
+          using(new FileOutputStream(tempFile)) { fileOutputStream =>
+            using(new GZIPOutputStream(fileOutputStream)) { gzipOutputStream =>
+              using(fis(originalFile)) { originalFileInputStream =>
+                IOUtils.copy(originalFileInputStream, gzipOutputStream)
+              }
+            }
           }
           tempFile
         }
@@ -128,11 +134,12 @@ case class Upload(originalFile: File, uploadType: UploadType)(implicit site: Sit
     if (originalFile.length() < amountOfMagicGzipBytes) {
       false
     } else {
-      val fis = new FileInputStream(originalFile)
-      val firstTwoBytes = Array.fill[Byte](amountOfMagicGzipBytes)(0)
-      fis.read(firstTwoBytes, 0, amountOfMagicGzipBytes)
-      val head = firstTwoBytes(0) & 0xff | (firstTwoBytes(1) << 8) & 0xff00
-      head == GZIPInputStream.GZIP_MAGIC
+      using(fis(originalFile)) { stream =>
+        val firstTwoBytes = Array.fill[Byte](amountOfMagicGzipBytes)(0)
+        stream.read(firstTwoBytes, 0, amountOfMagicGzipBytes)
+        val head = firstTwoBytes(0) & 0xff | (firstTwoBytes(1) << 8) & 0xff00
+        head == GZIPInputStream.GZIP_MAGIC
+      }
     }
 
   private[this] def fis(file: File): InputStream = new FileInputStream(file)
